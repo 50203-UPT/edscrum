@@ -1,0 +1,47 @@
+package pt.up.edscrum.service;
+
+import org.springframework.stereotype.Service;
+import java.util.List;
+import pt.up.edscrum.model.User;
+import pt.up.edscrum.repository.UserRepository;
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    // Construtor manual (injeção de dependência)
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    // Listar todos os usuários
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    // Buscar usuário por ID
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User não encontrado"));
+    }
+
+    // Criar novo usuário
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    // Atualizar usuário existente
+    public User updateUser(Long id, User userDetails) {
+        User user = getUserById(id);
+        user.setName(userDetails.getName());
+        user.setEmail(userDetails.getEmail());
+        user.setRole(userDetails.getRole());
+        return userRepository.save(user);
+    }
+
+    // Apagar usuário
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+}
