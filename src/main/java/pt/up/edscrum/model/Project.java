@@ -1,7 +1,14 @@
 package pt.up.edscrum.model;
 
-import jakarta.persistence.*;
 import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Project {
@@ -14,13 +21,13 @@ public class Project {
     private String sprintGoals;
 
     @ManyToOne
+    @JoinColumn(name = "course_id")
     private Course course;
 
     @OneToMany(mappedBy = "project")
     private List<Team> teams;
 
     // Getters e Setters
-
     public Long getId() {
         return id;
     }

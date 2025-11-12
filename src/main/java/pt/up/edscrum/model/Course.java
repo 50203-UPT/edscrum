@@ -1,7 +1,13 @@
 package pt.up.edscrum.model;
 
-import jakarta.persistence.*;
 import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Course {
@@ -13,11 +19,10 @@ public class Course {
     private String name;
     private String description;
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Project> projects;
 
     // Getters e Setters
-
     public Long getId() {
         return id;
     }

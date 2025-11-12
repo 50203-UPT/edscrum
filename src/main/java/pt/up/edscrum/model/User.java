@@ -1,6 +1,9 @@
 package pt.up.edscrum.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @Entity
 public class User {
@@ -14,7 +17,6 @@ public class User {
     private String role; // TEACHER ou STUDENT
 
     // Getters e Setters
-
     public Long getId() {
         return id;
     }
