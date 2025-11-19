@@ -22,6 +22,10 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Project> projects;
 
+    @OneToMany(mappedBy = "course")
+private List<Enrollment> enrollments;
+
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -53,5 +57,11 @@ public class Course {
 
     public void setProjects(List<Project> projects) {
         this.projects = projects;
+    }
+    public List<Enrollment> getEnrollments() {
+        return enrollments;
+    }
+    public void setEnrollments(List<Enrollment> enrollments) {
+        this.enrollments = enrollments;
     }
 }

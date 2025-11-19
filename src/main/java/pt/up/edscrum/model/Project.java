@@ -2,6 +2,7 @@ package pt.up.edscrum.model;
 
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,7 +28,11 @@ public class Project {
     @OneToMany(mappedBy = "project")
     private List<Team> teams;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    private List<Sprint> sprints;
+
     // Getters e Setters
+
     public Long getId() {
         return id;
     }
@@ -66,5 +71,13 @@ public class Project {
 
     public void setTeams(List<Team> teams) {
         this.teams = teams;
+    }
+
+    public List<Sprint> getSprints() {
+        return sprints;
+    }
+
+    public void setSprints(List<Sprint> sprints) {
+        this.sprints = sprints;
     }
 }

@@ -75,7 +75,7 @@ public class AwardService {
     // CÁLCULO DA PONTUAÇÃO GLOBAL -----------------------------------------
     public int calculateTotalPoints(Long studentId) {
 
-        List<StudentAward> awards = studentAwardRepository.findByStudentId(studentId);
+        List<StudentAward> awards = studentAwardRepository.findAllByStudentId(studentId);
 
         return awards.stream()
                 .mapToInt(StudentAward::getPointsEarned)
