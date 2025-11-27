@@ -14,9 +14,13 @@ public class TeacherDashboardDTO {
     private List<ProjectProgressDTO> projects;
     private List<AwardStatsDTO> awardStats;
 
+    public TeacherDashboardDTO() {
+    }
+
     public Long getCourseId() {
         return courseId;
     }
+
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
@@ -24,6 +28,7 @@ public class TeacherDashboardDTO {
     public String getCourseName() {
         return courseName;
     }
+
     public void setCourseName(String courseName) {
         this.courseName = courseName;
     }
@@ -31,6 +36,7 @@ public class TeacherDashboardDTO {
     public int getTotalStudents() {
         return totalStudents;
     }
+
     public void setTotalStudents(int totalStudents) {
         this.totalStudents = totalStudents;
     }
@@ -38,6 +44,7 @@ public class TeacherDashboardDTO {
     public int getTotalTeams() {
         return totalTeams;
     }
+
     public void setTotalTeams(int totalTeams) {
         this.totalTeams = totalTeams;
     }
@@ -45,6 +52,7 @@ public class TeacherDashboardDTO {
     public int getTotalProjects() {
         return totalProjects;
     }
+
     public void setTotalProjects(int totalProjects) {
         this.totalProjects = totalProjects;
     }
@@ -52,6 +60,7 @@ public class TeacherDashboardDTO {
     public List<ProjectProgressDTO> getProjects() {
         return projects;
     }
+
     public void setProjects(List<ProjectProgressDTO> projects) {
         this.projects = projects;
     }
@@ -59,6 +68,7 @@ public class TeacherDashboardDTO {
     public List<AwardStatsDTO> getAwardStats() {
         return awardStats;
     }
+
     public void setAwardStats(List<AwardStatsDTO> awardStats) {
         this.awardStats = awardStats;
     }

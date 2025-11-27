@@ -1,13 +1,19 @@
 package pt.up.edscrum.controller;
 
-import pt.up.edscrum.dto.dashboard.*;
-import pt.up.edscrum.service.DashboardService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import pt.up.edscrum.dto.dashboard.RankingDTO;
+import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
+import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
+import pt.up.edscrum.service.DashboardService;
+
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/dashboard")
 public class DashboardController {
 
     private final DashboardService dashboardService;

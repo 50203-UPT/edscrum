@@ -23,8 +23,7 @@ public class Course {
     private List<Project> projects;
 
     @OneToMany(mappedBy = "course")
-private List<Enrollment> enrollments;
-
+    private List<Enrollment> enrollments;
 
     // Getters e Setters
     public Long getId() {
@@ -58,9 +57,11 @@ private List<Enrollment> enrollments;
     public void setProjects(List<Project> projects) {
         this.projects = projects;
     }
+
     public List<Enrollment> getEnrollments() {
         return enrollments;
     }
+
     public void setEnrollments(List<Enrollment> enrollments) {
         this.enrollments = enrollments;
     }

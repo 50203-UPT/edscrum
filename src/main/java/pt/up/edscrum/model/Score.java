@@ -1,6 +1,11 @@
 package pt.up.edscrum.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class Score {
@@ -14,8 +19,10 @@ public class Score {
     @OneToOne
     private User user;
 
-    // Getters e Setters
+    @ManyToOne
+    private Team team;
 
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -38,5 +45,13 @@ public class Score {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
     }
 }

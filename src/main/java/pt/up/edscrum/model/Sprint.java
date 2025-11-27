@@ -1,9 +1,16 @@
 package pt.up.edscrum.model;
 
 import java.time.LocalDate;
-import jakarta.persistence.*;
-import pt.up.edscrum.enums.SprintStatus;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import pt.up.edscrum.enums.SprintStatus;
 
 @Entity
 public class Sprint {
@@ -18,7 +25,7 @@ public class Sprint {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    private SprintStatus status; // TODO, IN_PROGRESS, DONE
+    private SprintStatus status; //TODO, IN_PROGRESS, DONE
 
     @ManyToOne
     @JoinColumn(name = "project_id")

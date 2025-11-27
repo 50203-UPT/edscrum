@@ -4,7 +4,13 @@ public class RankingDTO {
 
     private Long id;
     private String name;
-    private int totalPoints;
+    private Long totalPoints;
+
+    public RankingDTO(Long id, String name, Long totalPoints) {
+        this.id = id;
+        this.name = name;
+        this.totalPoints = totalPoints;
+    }
 
     public Long getId() {
         return id;
@@ -22,11 +28,11 @@ public class RankingDTO {
         this.name = name;
     }
 
-    public int getTotalPoints() {
+    public Long getTotalPoints() {
         return totalPoints;
     }
 
-    public void setTotalPoints(int totalPoints) {
+    public void setTotalPoints(Long totalPoints) {
         this.totalPoints = totalPoints;
     }
 }

@@ -14,6 +14,7 @@ public class User {
 
     private String name;
     private String email;
+    private String password;
     private String role; // TEACHER ou STUDENT
 
     // Getters e Setters
@@ -48,4 +49,18 @@ public class User {
     public void setRole(String role) {
         this.role = role;
     }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @Override
+    public String toString() {
+        return "User [id=" + id + "Password=" + password + ", name=" + name + ", email=" + email + ", role=" + role + "]";
+    }
+
 }

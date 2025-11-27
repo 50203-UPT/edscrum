@@ -32,7 +32,6 @@ public class Project {
     private List<Sprint> sprints;
 
     // Getters e Setters
-
     public Long getId() {
         return id;
     }

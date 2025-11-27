@@ -1,7 +1,9 @@
 package pt.up.edscrum.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.UserRepository;
 
@@ -23,7 +25,7 @@ public class UserService {
     // Buscar usuário por ID
     public User getUserById(Long id) {
         return userRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("User não encontrado"));
+                .orElseThrow(() -> new RuntimeException("User não encontrado"));
     }
 
     // Criar novo usuário
@@ -36,6 +38,7 @@ public class UserService {
         User user = getUserById(id);
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
+        user.setPassword(userDetails.getPassword());
         user.setRole(userDetails.getRole());
         return userRepository.save(user);
     }

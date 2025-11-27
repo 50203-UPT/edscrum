@@ -9,14 +9,16 @@ public class StudentDashboardDTO {
     private Long courseId;
     private int totalPoints;
 
-    // Troquei para AwardStatsDTO (tipo correto)
     private List<AwardStatsDTO> awards;
-
     private List<PointHistoryDTO> pointHistory;
+
+    public StudentDashboardDTO() {
+    }
 
     public Long getUserId() {
         return userId;
     }
+
     public void setUserId(Long userId) {
         this.userId = userId;
     }
@@ -24,6 +26,7 @@ public class StudentDashboardDTO {
     public String getName() {
         return name;
     }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -31,6 +34,7 @@ public class StudentDashboardDTO {
     public Long getCourseId() {
         return courseId;
     }
+
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
@@ -38,6 +42,7 @@ public class StudentDashboardDTO {
     public int getTotalPoints() {
         return totalPoints;
     }
+
     public void setTotalPoints(int totalPoints) {
         this.totalPoints = totalPoints;
     }
@@ -45,6 +50,7 @@ public class StudentDashboardDTO {
     public List<AwardStatsDTO> getAwards() {
         return awards;
     }
+
     public void setAwards(List<AwardStatsDTO> awards) {
         this.awards = awards;
     }
@@ -52,6 +58,7 @@ public class StudentDashboardDTO {
     public List<PointHistoryDTO> getPointHistory() {
         return pointHistory;
     }
+
     public void setPointHistory(List<PointHistoryDTO> pointHistory) {
         this.pointHistory = pointHistory;
     }
