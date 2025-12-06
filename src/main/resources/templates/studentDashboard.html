@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Estudante</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1" th:text="'Olá, ' + ${student.name}">Aluno</span>
+            <div class="text-white">
+                Total Pontos: <span class="badge bg-warning text-dark" th:text="${student.totalPoints}">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5>Meus Prémios</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" th:each="award : ${student.awards}">
+                                <div class="card text-center border-warning">
+                                    <div class="card-body">
+                                        <h3 class="text-warning">🏆</h3>
+                                        <h6 class="card-title" th:text="${award.awardName}">Nome do Prémio</h6>
+                                        <p class="card-text text-muted">+<span th:text="${award.points}"></span> pts</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(student.awards)}" class="col-12">
+                                <p class="text-muted">Ainda não conquistaste prémios.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5>Histórico de Pontuação</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" 
+                                th:each="history : ${student.pointHistory}">
+                                <span>Pontuação Atualizada</span>
+                                <span class="badge bg-primary rounded-pill" th:text="${history.totalPoints}">14</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

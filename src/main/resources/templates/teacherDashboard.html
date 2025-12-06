@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Professor</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1" th:text="${dashboard.courseName}">Curso</span>
+            <a th:href="@{/}" class="btn btn-outline-light btn-sm">Sair</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-center text-white bg-success mb-3">
+                    <div class="card-body">
+                        <h3><span th:text="${dashboard.totalStudents}">0</span></h3>
+                        <p>Estudantes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center text-white bg-info mb-3">
+                    <div class="card-body">
+                        <h3><span th:text="${dashboard.totalTeams}">0</span></h3>
+                        <p>Equipas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center text-white bg-warning mb-3">
+                    <div class="card-body">
+                        <h3><span th:text="${dashboard.totalProjects}">0</span></h3>
+                        <p>Projetos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Progresso dos Projetos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Projeto</th>
+                                <th>Progresso</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="proj : ${dashboard.projects}">
+                                <td th:text="${proj.projectName}">Nome do Projeto</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             th:style="'width: ' + ${proj.completionPercentage} + '%'"
+                                             th:text="${#numbers.formatDecimal(proj.completionPercentage, 1, 0)} + '%'">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:if="${proj.completionPercentage == 100}" class="badge bg-success">Concluído</span>
+                                    <span th:if="${proj.completionPercentage < 100}" class="badge bg-secondary">Em Curso</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
