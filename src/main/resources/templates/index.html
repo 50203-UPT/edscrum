@@ -5,46 +5,54 @@
     <title>EduScrum - Login</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
-    <style>
-        .login-container {
-            max-width: 900px;
-            margin-top: 100px;
-        }
-    </style>
 </head>
-<body class="bg-light">
+<body>
 
-    <div class="container login-container">
+    <div class="background-slideshow">
+        <div class="bg-img-1"></div>
+        <div class="bg-img-2"></div>
+        <div class="bg-img-3"></div>
+        <div class="bg-img-4"></div>
+    </div>
+
+    <div class="login-container">
         <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white">
-                <h3 class="mb-0">🎓 EduScrum Awards</h3>
+            <div class="card-header text-white text-center py-3">
+                <h3 class="mb-0">🎓 EduScrum</h3>
             </div>
-            <div class="card-body p-5 text-center">
+            <div class="card-body p-4 p-md-5">
                 
-                <h4 class="mb-4">Bem-vindo de volta!</h4>
+                <h4 class="text-center mb-4 text-muted">Bem-vindo de volta!</h4>
 
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
                 <form th:action="@{/auth/web/login}" method="post">
-                    <div class="row g-3 justify-content-center align-items-center">
-                        <div class="col-md-4">
-                            <input type="email" name="email" class="form-control form-control-lg" placeholder="Email" required>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <input type="email" name="email" class="form-control form-control-lg" placeholder="Email" required>
+                            </div>
+                            <div class="mb-0">
+                                <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required>
-                        </div>
-                        <div class="col-md-auto">
-                            <button type="submit" class="btn btn-success btn-lg px-4">Entrar 🚀</button>
+
+                        <div class="col-md-4 d-grid">
+                            <button type="submit" class="btn btn-success btn-lg h-100 btn-login-tall">
+                                Entrar <br> 🚀
+                            </button>
                         </div>
                     </div>
                 </form>
 
-                <hr class="my-5">
+                <hr class="my-4">
 
-                <p class="lead">Ainda não tens conta?</p>
-                <a th:href="@{/register}" class="btn btn-outline-primary btn-lg">
-                    📝 Criar Nova Conta
-                </a>
+                <div class="text-center">
+                    <p class="mb-2 text-muted">Ainda não tens conta?</p>
+                    <a th:href="@{/register}" class="btn btn-outline-primary px-4">
+                        📝 Criar Nova Conta
+                    </a>
+                </div>
 
             </div>
         </div>

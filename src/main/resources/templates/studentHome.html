@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel Estudante - EduScrum</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <style>
+        .menu-container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .option-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            border: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+        .option-card:hover {
+            transform: translateY(-10px);
+            background: #fff;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            color: #0d6efd;
+        }
+        .icon-large {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-slideshow">
+        <div class="bg-img-1"></div>
+        <div class="bg-img-2"></div>
+        <div class="bg-img-3"></div>
+        <div class="bg-img-4"></div>
+    </div>
+
+    <nav class="navbar navbar-dark fixed-top">
+        <div class="container">
+            <span class="navbar-brand fw-bold fs-3">EduScrum <span class="badge bg-info text-dark">Student</span></span>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-white fw-bold d-none d-md-block" th:text="${student.name}">Nome Aluno</span>
+                <a th:href="@{/logout}" class="btn btn-outline-light rounded-pill px-4">Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container menu-container d-flex flex-column justify-content-center h-100" style="min-height: 100vh; padding-top: 80px;">
+        
+        <div class="text-center text-white mb-5">
+            <h1 class="display-4 fw-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">O meu Progresso</h1>
+            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">
+                Total Acumulado: <span class="badge bg-warning text-dark rounded-pill" th:text="${student.totalPoints} + ' XP'">0 XP</span>
+            </p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-md-6 col-lg-4">
+                <a th:href="@{'/view/student/dashboard/' + ${student.userId}}" class="card option-card p-4 text-center">
+                    <div class="card-body">
+                        <div class="icon-large">🏅</div>
+                        <h3 class="fw-bold">Prémios</h3>
+                        <p class="text-muted">Ver badges conquistados e histórico de pontos.</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <a th:if="${student.courseId != null}" 
+                   th:href="@{'/view/rankings/' + ${student.courseId}}" 
+                   class="card option-card p-4 text-center">
+                    <div class="card-body">
+                        <div class="icon-large">📊</div>
+                        <h3 class="fw-bold">Rankings</h3>
+                        <p class="text-muted">Comparar pontuação com a turma e outras equipas.</p>
+                    </div>
+                </a>
+                
+                <div th:if="${student.courseId == null}" class="card option-card p-4 text-center disabled" style="opacity: 0.7; cursor: not-allowed;">
+                    <div class="card-body">
+                        <div class="icon-large">🚫</div>
+                        <h3 class="fw-bold">Rankings</h3>
+                        <p class="text-muted">Ainda não estás inscrito num curso.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <a href="#" class="card option-card p-4 text-center"> <div class="card-body">
+                        <div class="icon-large">👥</div>
+                        <h3 class="fw-bold">Equipa</h3>
+                        <p class="text-muted">Ver membros, sprints e tarefas do projeto.</p>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

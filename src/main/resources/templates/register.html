@@ -2,51 +2,78 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Criar Conta</title>
+    <title>Criar Conta - EduScrum</title>
+    
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+    
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
 </head>
-<body class="bg-light">
+<body>
 
-    <div class="container mt-5" style="max-width: 600px;">
-        <div class="card shadow">
-            <div class="card-header bg-white">
-                <h2>📝 Registo de Novo Utilizador</h2>
+    <div class="background-slideshow">
+        <div class="bg-img-1"></div>
+        <div class="bg-img-2"></div>
+        <div class="bg-img-3"></div>
+        <div class="bg-img-4"></div>
+    </div>
+
+    <div class="login-container">
+        
+        <div class="card shadow-lg">
+            <div class="card-header text-white text-center py-3">
+                <h3 class="mb-0">📝 Nova Conta</h3>
             </div>
-            <div class="card-body">
+            
+            <div class="card-body p-4 p-md-5">
                 
                 <form th:action="@{/auth/web/register}" method="post">
+                    
                     <div class="mb-3">
-                        <label class="form-label">Nome Completo</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <label class="form-label fw-bold text-secondary">Nome Completo</label>
+                        <input type="text" name="name" class="form-control form-control-lg" placeholder="Ex: João Silva" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" required>
+                        <label class="form-label fw-bold text-secondary">Email</label>
+                        <input type="email" name="email" class="form-control form-control-lg" placeholder="aluno@upt.pt" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tipo de Conta</label>
-                        <select name="role" class="form-select">
-                            <option value="STUDENT">Estudante</option>
-                            <option value="TEACHER">Professor</option>
-                        </select>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Password</label>
+                            <input type="password" name="password" class="form-control form-control-lg" placeholder="******" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Perfil</label>
+                            
+                            <select name="role" class="form-select form-select-lg form-select-custom">
+                                <option value="STUDENT">🎓 Estudante</option>
+                                <option value="TEACHER">👨‍🏫 Professor</option>
+                            </select>
+                            
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">Registar</button>
-                        <a th:href="@{/}" class="btn btn-link">Já tenho conta (Voltar)</a>
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                            Criar Conta
+                        </button>
                     </div>
                 </form>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="mb-2 text-muted">Já tens conta?</p>
+                    <a th:href="@{/}" class="btn btn-outline-success px-4 rounded-pill">
+                        🔐 Voltar ao Login
+                    </a>
+                </div>
+
             </div>
         </div>
     </div>
 
+    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
