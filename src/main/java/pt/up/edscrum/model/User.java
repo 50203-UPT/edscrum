@@ -1,5 +1,6 @@
 package pt.up.edscrum.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +14,7 @@ public class User {
     private Long id;
 
     private String name;
+    @Column(unique = true) // Ensure email is unique
     private String email;
     private String password;
     private String role; // TEACHER ou STUDENT
