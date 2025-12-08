@@ -1,146 +1,158 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduScrum Awards - Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <style>
-    body {
-      background: linear-gradient(to bottom right, #2563eb, #4338ca, #7c3aed);
-    }
-  </style>
+  <link rel="stylesheet" th:href="@{/css/estilo.css}">
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-    <!-- Left side - Branding -->
-    <div class="text-white space-y-6 hidden lg:block">
+
+  <div class="background-slideshow">
+      <div class="bg-img-1"></div>
+      <div class="bg-img-2"></div>
+      <div class="bg-img-3"></div>
+      <div class="bg-img-4"></div>
+  </div>
+
+  <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center relative z-10">
+    
+    <div class="text-white space-y-6 hidden lg:block bg-black/30 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white/10">
       <div class="flex items-center gap-3 mb-8">
         <div class="p-3 bg-white/10 backdrop-blur rounded-xl">
           <i data-lucide="trophy" class="w-10 h-10"></i>
         </div>
         <div>
-          <h1 class="text-4xl">EduScrum Awards</h1>
-          <p class="text-blue-200">Plataforma Gamificada de Avaliação</p>
+          <h1 class="text-4xl font-bold">EduScrum Awards</h1>
+          <p class="text-blue-100">Plataforma Gamificada de Avaliação</p>
         </div>
       </div>
 
-      <div class="space-y-4">
-        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg">
-          <i data-lucide="award" class="w-6 h-6 mt-1 flex-shrink-0"></i>
+      <div id="teacherFeatures" class="space-y-4">
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="award" class="w-6 h-6 mt-1 flex-shrink-0 text-yellow-300"></i>
           <div>
             <h3 class="font-semibold mb-1">Sistema de Prémios</h3>
-            <p class="text-sm text-blue-100">Atribua prémios manuais ou automáticos baseados em desempenho</p>
+            <p class="text-sm text-blue-100">Atribua prémios manuais ou automáticos baseados em desempenho e mérito.</p>
           </div>
         </div>
 
-        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg">
-          <i data-lucide="graduation-cap" class="w-6 h-6 mt-1 flex-shrink-0"></i>
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="graduation-cap" class="w-6 h-6 mt-1 flex-shrink-0 text-green-300"></i>
           <div>
             <h3 class="font-semibold mb-1">Gestão de Projetos Scrum</h3>
-            <p class="text-sm text-blue-100">Acompanhe sprints, equipas e métricas de progresso</p>
+            <p class="text-sm text-blue-100">Acompanhe sprints, crie equipas e defina objetivos pedagógicos.</p>
           </div>
         </div>
 
-        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg">
-          <i data-lucide="trophy" class="w-6 h-6 mt-1 flex-shrink-0"></i>
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="bar-chart-2" class="w-6 h-6 mt-1 flex-shrink-0 text-purple-300"></i>
           <div>
             <h3 class="font-semibold mb-1">Rankings e Dashboards</h3>
-            <p class="text-sm text-blue-100">Visualize o desempenho individual e por equipa</p>
+            <p class="text-sm text-blue-100">Visualize o desempenho da turma com métricas detalhadas.</p>
           </div>
         </div>
       </div>
+
+      <div id="studentFeatures" class="space-y-4 hidden">
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="trending-up" class="w-6 h-6 mt-1 flex-shrink-0 text-cyan-300"></i>
+          <div>
+            <h3 class="font-semibold mb-1">Acompanhe o Seu Progresso</h3>
+            <p class="text-sm text-blue-100">Visualize a sua evolução pessoal e o impacto no projeto ao longo do tempo.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="users" class="w-6 h-6 mt-1 flex-shrink-0 text-orange-300"></i>
+          <div>
+            <h3 class="font-semibold mb-1">Trabalho de Equipa</h3>
+            <p class="text-sm text-blue-100">Colabore nas Sprints, veja as tarefas do grupo e atinja os objetivos Scrum.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-4 bg-white/10 backdrop-blur rounded-lg border border-white/5 hover:bg-white/20 transition">
+          <i data-lucide="medal" class="w-6 h-6 mt-1 flex-shrink-0 text-pink-300"></i>
+          <div>
+            <h3 class="font-semibold mb-1">Conquistas e Badges</h3>
+            <p class="text-sm text-blue-100">Ganhe pontos, desbloqueie prémios e suba no ranking da turma.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Right side - Login Form -->
-    <div class="bg-white shadow-2xl rounded-lg">
-      <div class="p-6">
-        <h2 class="text-2xl font-bold mb-2">Bem-vindo ao EduScrum Awards</h2>
-        <p class="text-gray-600 mb-6">Faça login para continuar</p>
+    <div class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl overflow-hidden">
+      <div class="p-8">
+        <h2 class="text-2xl font-bold mb-2 text-gray-800">Bem-vindo de volta!</h2>
+        <p class="text-gray-500 mb-6">Faça login para continuar</p>
 
-        <!-- Error Message -->
-        <div id="errorMessage" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded"></div>
+        <div id="errorMessage" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            <span class="error-text"></span>
+        </div>
 
-        <!-- Tabs -->
         <div class="mb-6">
-          <div class="flex border-b">
-            <button id="teacherTab" class="flex-1 py-2 px-4 text-center border-b-2 border-blue-500 text-blue-600 font-medium" onclick="switchTab('teacher')">
+          <div class="flex border-b border-gray-200">
+            <button id="teacherTab" class="flex-1 py-3 px-4 text-center border-b-2 border-blue-600 text-blue-600 font-medium transition-colors hover:bg-gray-50" onclick="switchTab('teacher')">
               Professor
             </button>
-            <button id="studentTab" class="flex-1 py-2 px-4 text-center text-gray-500" onclick="switchTab('student')">
+            <button id="studentTab" class="flex-1 py-3 px-4 text-center border-b-2 border-transparent text-gray-500 font-medium hover:text-gray-700 hover:bg-gray-50 transition-colors" onclick="switchTab('student')">
               Estudante
             </button>
           </div>
         </div>
 
-        <!-- Teacher Tab Content -->
         <div id="teacherContent" class="space-y-4">
           <div class="space-y-2">
-            <label for="teacher-email" class="block text-sm font-medium">Email</label>
-            <input
-              id="teacher-email"
-              type="email"
-              placeholder="maria.silva@upt.pt"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <label for="teacher-email" class="block text-sm font-medium text-gray-700">Email</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                </div>
+                <input id="teacher-email" type="email" placeholder="maria.silva@upt.pt" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
+            </div>
           </div>
           <div class="space-y-2">
-            <label for="teacher-password" class="block text-sm font-medium">Palavra-passe</label>
-            <input
-              id="teacher-password"
-              type="password"
-              placeholder="••••••••"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <label for="teacher-password" class="block text-sm font-medium text-gray-700">Palavra-passe</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                </div>
+                <input id="teacher-password" type="password" placeholder="••••••••" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
+            </div>
           </div>
-          <button class="text-blue-600 hover:underline text-sm" onclick="forgotPassword()">
-            Esqueceu a palavra-passe?
-          </button>
-          <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" onclick="login('teacher')">
-            Entrar como Professor
-          </button>
+          <button class="text-blue-600 hover:underline text-sm font-medium" onclick="forgotPassword()">Esqueceu a palavra-passe?</button>
+          <button class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all" onclick="login('teacher')">Entrar como Professor</button>
         </div>
 
-        <!-- Student Tab Content -->
         <div id="studentContent" class="space-y-4 hidden">
           <div class="space-y-2">
-            <label for="student-email" class="block text-sm font-medium">Email</label>
-            <input
-              id="student-email"
-              type="email"
-              placeholder="joao.costa@upt.pt"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <label for="student-email" class="block text-sm font-medium text-gray-700">Email</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                </div>
+                <input id="student-email" type="email" placeholder="joao.costa@upt.pt" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
+            </div>
           </div>
           <div class="space-y-2">
-            <label for="student-password" class="block text-sm font-medium">Palavra-passe</label>
-            <input
-              id="student-password"
-              type="password"
-              placeholder="••••••••"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <label for="student-password" class="block text-sm font-medium text-gray-700">Palavra-passe</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                </div>
+                <input id="student-password" type="password" placeholder="••••••••" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
+            </div>
           </div>
-          <button class="text-blue-600 hover:underline text-sm" onclick="forgotPassword()">
-            Esqueceu a palavra-passe?
-          </button>
-          <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" onclick="login('student')">
-            Entrar como Estudante
-          </button>
+          <button class="text-blue-600 hover:underline text-sm font-medium" onclick="forgotPassword()">Esqueceu a palavra-passe?</button>
+          <button class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all" onclick="login('student')">Entrar como Estudante</button>
         </div>
 
-        <div class="mt-6 text-center">
-          <p class="text-sm text-gray-600">
-            Não tem uma conta?
-            <a href="/register" class="text-blue-600 hover:underline ml-1">
-              Registar-se
-            </a>
-          </p>
+        <div class="mt-6 text-center pt-4 border-t border-gray-100">
+          <p class="text-sm text-gray-600">Não tem uma conta? <a th:href="@{/register}" class="text-blue-600 hover:text-blue-800 font-medium hover:underline ml-1">Registar-se</a></p>
         </div>
       </div>
     </div>
@@ -153,25 +165,52 @@
 
     function switchTab(tab) {
       currentTab = tab;
+      
+      // Elementos das Abas
       const teacherTab = document.getElementById('teacherTab');
       const studentTab = document.getElementById('studentTab');
+      
+      // Elementos dos Formulários
       const teacherContent = document.getElementById('teacherContent');
       const studentContent = document.getElementById('studentContent');
+      
+      // Elementos das Funcionalidades (Lado Esquerdo)
+      const teacherFeatures = document.getElementById('teacherFeatures');
+      const studentFeatures = document.getElementById('studentFeatures');
 
       if (tab === 'teacher') {
-        teacherTab.classList.add('border-blue-500', 'text-blue-600');
-        teacherTab.classList.remove('text-gray-500', 'border-transparent');
-        studentTab.classList.remove('border-blue-500', 'text-blue-600');
-        studentTab.classList.add('text-gray-500');
+        // Ativar Aba Professor
+        teacherTab.classList.remove('border-transparent', 'text-gray-500');
+        teacherTab.classList.add('border-blue-600', 'text-blue-600');
+        
+        // Desativar Aba Estudante
+        studentTab.classList.remove('border-blue-600', 'text-blue-600');
+        studentTab.classList.add('border-transparent', 'text-gray-500');
+        
+        // Mostrar form Professor / Esconder Estudante
         teacherContent.classList.remove('hidden');
         studentContent.classList.add('hidden');
+
+        // Mostrar features Professor / Esconder Estudante
+        teacherFeatures.classList.remove('hidden');
+        studentFeatures.classList.add('hidden');
+
       } else {
-        studentTab.classList.add('border-blue-500', 'text-blue-600');
-        studentTab.classList.remove('text-gray-500');
-        teacherTab.classList.remove('border-blue-500', 'text-blue-600');
-        teacherTab.classList.add('text-gray-500');
+        // Ativar Aba Estudante
+        studentTab.classList.remove('border-transparent', 'text-gray-500');
+        studentTab.classList.add('border-blue-600', 'text-blue-600');
+        
+        // Desativar Aba Professor
+        teacherTab.classList.remove('border-blue-600', 'text-blue-600');
+        teacherTab.classList.add('border-transparent', 'text-gray-500');
+        
+        // Mostrar form Estudante / Esconder Professor
         studentContent.classList.remove('hidden');
         teacherContent.classList.add('hidden');
+
+        // Mostrar features Estudante / Esconder Professor
+        studentFeatures.classList.remove('hidden');
+        teacherFeatures.classList.add('hidden');
       }
     }
 
@@ -179,9 +218,11 @@
       const email = document.getElementById(`${userType}-email`).value;
       const password = document.getElementById(`${userType}-password`).value;
       const errorMessage = document.getElementById('errorMessage');
+      const errorText = errorMessage.querySelector('.error-text') || errorMessage;
 
       if (!email || !password) {
-        errorMessage.textContent = 'Por favor, preencha todos os campos.';
+        if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = 'Por favor, preencha todos os campos.';
+        else errorMessage.textContent = 'Por favor, preencha todos os campos.';
         errorMessage.classList.remove('hidden');
         return;
       }
@@ -189,42 +230,45 @@
       try {
         const response = await fetch('/auth/login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
 
         if (response.ok) {
           const user = await response.json();
-          // Check if user role matches the selected tab
           if (user.role.toUpperCase() !== userType.toUpperCase()) {
-            errorMessage.textContent = 'Credenciais inválidas para este tipo de utilizador.';
+            const msg = 'Credenciais inválidas para este perfil.';
+            if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;
+            else errorMessage.textContent = msg;
             errorMessage.classList.remove('hidden');
             return;
           }
-          // Redirect based on user role
           if (user.role === 'TEACHER') {
             window.location.href = '/view/teacher/home';
           } else if (user.role === 'STUDENT') {
             window.location.href = '/view/student/home/' + user.id;
           } else {
-            errorMessage.textContent = 'Role de utilizador desconhecido.';
+            const msg = 'Role desconhecido.';
+            if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;
+            else errorMessage.textContent = msg;
             errorMessage.classList.remove('hidden');
           }
         } else {
           const error = await response.text();
-          errorMessage.textContent = error || 'Erro ao fazer login.';
+          const msg = error || 'Erro ao fazer login.';
+          if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;
+          else errorMessage.textContent = msg;
           errorMessage.classList.remove('hidden');
         }
       } catch (error) {
-        errorMessage.textContent = 'Erro de rede. Tente novamente.';
+        const msg = 'Erro de rede. Tente novamente.';
+        if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;
+        else errorMessage.textContent = msg;
         errorMessage.classList.remove('hidden');
       }
     }
 
     function forgotPassword() {
-      // Placeholder for forgot password functionality
       alert('Funcionalidade de recuperação de palavra-passe em desenvolvimento.');
     }
   </script>

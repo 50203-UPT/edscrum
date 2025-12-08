@@ -7,22 +7,31 @@
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <style>
+        body, html {
+            overflow: auto !important;
+            height: auto !important;
+            display: block !important;
+        }
+        body {
+            /* Gradiente Azul/Roxo */
+            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
         .bottom-left-button-container {
             position: fixed;
-            bottom: 20px; /* Adjust as needed for spacing from the bottom */
-            left: 20px;  /* Adjust as needed for spacing from the left */
-            z-index: 1000; /* Ensure it's above other content */
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 15px;
         }
     </style>
 </head>
 <body>
-
-    <div class="background-slideshow">
-        <div class="bg-img-1"></div>
-        <div class="bg-img-2"></div>
-        <div class="bg-img-3"></div>
-        <div class="bg-img-4"></div>
-    </div>
 
     <nav class="navbar navbar-dark bg-transparent fixed-top">
         <div class="container">
@@ -41,7 +50,7 @@
         </div>
     </nav>
 
-    <div class="container" style="padding-top: 80px;">
+    <div class="container" style="padding-top: 100px;">
         <div class="text-center text-white mb-5">
             <h1 class="fw-bold display-5" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);" th:text="'Olá, ' + ${student.name}">Aluno</h1>
             <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">
@@ -52,22 +61,22 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h5>Meus Prémios</h5>
+                    <div class="card-header bg-white rounded-top-4">
+                        <h5 class="mb-0 fw-bold text-primary">Meus Prémios</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3" th:each="award : ${student.awards}">
-                                <div class="card text-center border-warning">
+                                <div class="card text-center border border-warning h-100 shadow-sm">
                                     <div class="card-body">
                                         <h3 class="text-warning">🏆</h3>
-                                        <h6 class="card-title" th:text="${award.awardName}">Nome do Prémio</h6>
-                                        <p class="card-text text-muted">+<span th:text="${award.points}"></span> pts</p>
+                                        <h6 class="card-title fw-bold" th:text="${award.awardName}">Nome do Prémio</h6>
+                                        <p class="card-text text-muted small">+<span th:text="${award.points}"></span> pts</p>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${#lists.isEmpty(student.awards)}" class="col-12">
-                                <p class="text-muted">Ainda não conquistaste prémios.</p>
+                            <div th:if="${#lists.isEmpty(student.awards)}" class="col-12 text-center py-4">
+                                <p class="text-muted mb-0">Ainda não conquistaste prémios.</p>
                             </div>
                         </div>
                     </div>
@@ -76,8 +85,8 @@
 
             <div class="col-md-6">
                 <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h5>Histórico de Pontuação</h5>
+                    <div class="card-header bg-white rounded-top-4">
+                        <h5 class="mb-0 fw-bold text-primary">Histórico de Pontuação</h5>
                     </div>
                     <div class="card-body">
                         <ul class="list-group list-group-flush">
@@ -85,6 +94,9 @@
                                 th:each="history : ${student.pointHistory}">
                                 <span>Pontuação Atualizada</span>
                                 <span class="badge bg-primary rounded-pill" th:text="${history.totalPoints}">14</span>
+                            </li>
+                            <li th:if="${#lists.isEmpty(student.pointHistory)}" class="list-group-item text-center text-muted">
+                                Sem histórico disponível.
                             </li>
                         </ul>
                     </div>
@@ -94,17 +106,9 @@
     </div>
 
     <div class="bottom-left-button-container">
-        <a th:href="@{'/view/student/home/' + ${student.userId}}" class="btn btn-outline-light rounded-pill px-4">Voltar ao Menu Principal</a>
+        <a th:href="@{'/view/student/home/' + ${student.userId}}" class="btn btn-outline-light rounded-pill px-4 shadow">Voltar</a>
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    <script>
-        (function() {
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-            }
-        })();
-    </script>
 </body>
 </html>

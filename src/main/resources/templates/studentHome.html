@@ -7,26 +7,44 @@
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <style>
+        body, html {
+            overflow: auto !important;
+            height: auto !important;
+            display: block !important;
+        }
+        
+        body {
+            /* Gradiente Roxo para Azul (Invertido para variar ligeiramente) */
+            background: linear-gradient(to right, #4b6cb7 0%, #182848 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
         .menu-container {
             max-width: 900px;
             margin: 0 auto;
             position: relative;
             z-index: 1;
+            padding-bottom: 50px;
         }
+
+        /* Texto sempre branco fora dos cartões */
+        .page-title, .page-subtitle, h1, p.lead { color: white !important; }
+
         .option-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             border: none;
             transition: all 0.3s ease;
             cursor: pointer;
             height: 100%;
             text-decoration: none;
-            color: inherit;
+            color: #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .option-card:hover {
             transform: translateY(-10px);
-            background: #fff;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
             color: #0d6efd;
         }
         .icon-large {
@@ -37,14 +55,7 @@
 </head>
 <body>
 
-    <div class="background-slideshow">
-        <div class="bg-img-1"></div>
-        <div class="bg-img-2"></div>
-        <div class="bg-img-3"></div>
-        <div class="bg-img-4"></div>
-    </div>
-
-    <nav class="navbar navbar-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent fixed-top">
         <div class="container">
             <span class="navbar-brand fw-bold fs-3">EduScrum <span class="badge bg-info text-dark">Student</span></span>
             <div class="dropdown">
@@ -61,12 +72,12 @@
         </div>
     </nav>
 
-    <div class="container menu-container d-flex flex-column justify-content-center h-100" style="min-height: 100vh; padding-top: 80px;">
+    <div class="container menu-container d-flex flex-column justify-content-center" style="min-height: 100vh; padding-top: 100px;">
         
-        <div class="text-center text-white mb-5">
-            <h1 class="display-4 fw-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">O meu Progresso</h1>
-            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">
-                Total Acumulado: <span class="badge bg-warning text-dark rounded-pill" th:text="${student.totalPoints} + ' XP'">0 XP</span>
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold page-title">O meu Progresso</h1>
+            <p class="lead page-subtitle">
+                Total Acumulado: <span class="badge bg-warning text-dark rounded-pill shadow-sm" th:text="${student.totalPoints} + ' XP'">0 XP</span>
             </p>
         </div>
 
@@ -93,17 +104,18 @@
                     </div>
                 </a>
                 
-                <div th:if="${student.courseId == null}" class="card option-card p-4 text-center disabled" style="opacity: 0.7; cursor: not-allowed;">
+                <div th:if="${student.courseId == null}" class="card option-card p-4 text-center disabled" style="opacity: 0.7; cursor: not-allowed; background: #e9ecef;">
                     <div class="card-body">
-                        <div class="icon-large">🚫</div>
-                        <h3 class="fw-bold">Rankings</h3>
+                        <div class="icon-large text-secondary">🚫</div>
+                        <h3 class="fw-bold text-secondary">Rankings</h3>
                         <p class="text-muted">Ainda não estás inscrito num curso.</p>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="card option-card p-4 text-center"> <div class="card-body">
+                <a href="#" class="card option-card p-4 text-center"> 
+                    <div class="card-body">
                         <div class="icon-large">👥</div>
                         <h3 class="fw-bold">Equipa</h3>
                         <p class="text-muted">Ver membros, sprints e tarefas do projeto.</p>
@@ -115,13 +127,5 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    <script>
-        (function() {
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-            }
-        })();
-    </script>
 </body>
 </html>
