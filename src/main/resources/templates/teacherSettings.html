@@ -82,26 +82,12 @@
                 </div>
             </div>
 
-            <!-- Informações da Conta -->
-            <div class="card">
-                <div class="card-header">Informações da Conta</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="name" name="name" th:value="${teacher.name}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" th:value="${teacher.email}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="account-type" class="form-label">Tipo de Conta</label>
-                        <input type="text" class="form-control" id="account-type" th:value="${teacher.role}" readonly>
-                    </div>
-                </div>
+            <div class="mb-4">
+                <a th:href="@{/view/teacher/home}" class="btn btn-outline-light rounded-pill px-4">
+                    Voltar
+                </a>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Guardar Alterações</button>
         </form>
     </div>
 
