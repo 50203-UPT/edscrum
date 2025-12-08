@@ -1,87 +1,210 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <title th:text="#{register.title} + ' - ' + #{app.title}">Criar Conta - EduScrum</title>
-    
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
-    <link rel="stylesheet" th:href="@{/css/estilo.css}">
-    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduScrum Awards - Registar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #2563eb, #4338ca, #7c3aed);
+    }
+  </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-2xl">
+    <button
+      class="text-white mb-4 hover:bg-white/10 px-4 py-2 rounded flex items-center"
+      onclick="window.history.back()"
+    >
+      <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+      Voltar ao Login
+    </button>
 
-    <div class="background-slideshow">
-        <div class="bg-img-1"></div>
-        <div class="bg-img-2"></div>
-        <div class="bg-img-3"></div>
-        <div class="bg-img-4"></div>
-    </div>
-
-    <div class="login-container">
-        
-        <div class="card shadow-lg">
-            <div class="card-header text-white text-center py-3">
-                <h3 class="mb-0" th:text="#{register.new_account_heading}">📝 Nova Conta</h3>
-            </div>
-            
-            <div class="card-body p-4 p-md-5">
-                
-                <form th:action="@{/auth/web/register}" method="post">
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary" th:text="#{register.full_name_label}">Nome Completo</label>
-                        <input type="text" name="name" class="form-control form-control-lg" th:placeholder="#{register.full_name_placeholder}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary" th:text="#{register.email_label}">Email</label>
-                        <input type="email" name="email" class="form-control form-control-lg" th:placeholder="#{register.email_placeholder}" required>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary" th:text="#{register.password_label}">Password</label>
-                            <input type="password" name="password" class="form-control form-control-lg" th:placeholder="#{register.password_placeholder}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary" th:text="#{register.profile_label}">Perfil</label>
-                            
-                            <select name="role" class="form-select form-select-lg form-select-custom">
-                                <option value="STUDENT" th:text="#{register.student_option}">🎓 Estudante</option>
-                                <option value="TEACHER" th:text="#{register.teacher_option}">👨‍🏫 Professor</option>
-                            </select>
-                            
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm" th:text="#{register.create_account_button}">
-                            Criar Conta
-                        </button>
-                    </div>
-                </form>
-
-                <hr class="my-4">
-
-                <div class="text-center">
-                    <p class="mb-2 text-muted" th:text="#{register.already_have_account}">Já tens conta?</p>
-                    <a th:href="@{/}" class="btn btn-outline-success px-4 rounded-pill">
-                        <span th:text="#{register.back_to_login}">🔐 Voltar ao Login</span>
-                    </a>
-                </div>
-
-            </div>
+    <div class="bg-white shadow-2xl rounded-lg">
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg">
+            <i data-lucide="trophy" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold">Criar Conta</h1>
+            <p class="text-gray-600">Junte-se ao EduScrum Awards</p>
+          </div>
         </div>
-    </div>
 
-    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    <script>
-        (function() {
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-            }
-        })();
-    </script>
+        <form id="registerForm" th:action="@{/auth/web/register}" method="post" class="space-y-4">
+          <!-- Nome Completo -->
+          <div class="space-y-2">
+            <label for="name" class="block text-sm font-medium">Nome Completo *</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Ex: João Costa"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p id="nameError" class="text-sm text-red-500 hidden"></p>
+          </div>
+
+          <!-- Email -->
+          <div class="space-y-2">
+            <label for="email" class="block text-sm font-medium">Email Institucional *</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="seu.nome@upt.pt"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p id="emailError" class="text-sm text-red-500 hidden"></p>
+          </div>
+
+          <!-- Papel -->
+          <div class="space-y-2">
+            <label for="role" class="block text-sm font-medium">Papel *</label>
+            <select
+              id="role"
+              name="role"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="STUDENT">Estudante</option>
+              <option value="TEACHER">Professor</option>
+            </select>
+          </div>
+
+          <!-- Palavra-passe -->
+          <div class="space-y-2">
+            <label for="password" class="block text-sm font-medium">Palavra-passe *</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p id="passwordError" class="text-sm text-red-500 hidden"></p>
+            <p class="text-xs text-gray-500">
+              Deve conter letras maiúsculas, minúsculas e números
+            </p>
+          </div>
+
+          <!-- Confirmar Palavra-passe -->
+          <div class="space-y-2">
+            <label for="confirmPassword" class="block text-sm font-medium">Confirmar Palavra-passe *</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              placeholder="Repita a palavra-passe"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p id="confirmPasswordError" class="text-sm text-red-500 hidden"></p>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <p class="text-sm text-blue-800">
+              Ao criar uma conta, receberá um email de confirmação no endereço fornecido.
+              Certifique-se de que o email está correto.
+            </p>
+          </div>
+
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            Criar Conta
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg hidden flex items-center">
+    <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
+    <div>
+      <p class="font-medium">Conta criada com sucesso!</p>
+      <p class="text-sm">Bem-vindo ao EduScrum Awards. Um email de confirmação foi enviado.</p>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const form = document.getElementById('registerForm');
+    const toast = document.getElementById('toast');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const role = document.getElementById('role').value;
+
+      let errors = {};
+
+      // Validate name
+      if (!name.trim()) {
+        errors.name = 'Nome é obrigatório';
+      }
+
+      // Validate email
+      if (!email.trim()) {
+        errors.email = 'Email é obrigatório';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.email = 'Email inválido';
+      } else if (!email.endsWith('@upt.pt')) {
+        errors.email = 'Deve usar email institucional (@upt.pt)';
+      }
+
+      // Validate password
+      if (!password) {
+        errors.password = 'Palavra-passe é obrigatória';
+      } else if (password.length < 8) {
+        errors.password = 'Palavra-passe deve ter no mínimo 8 caracteres';
+      } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        errors.password = 'Deve conter maiúsculas, minúsculas e números';
+      }
+
+      // Validate confirm password
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'As palavras-passe não coincidem';
+      }
+
+      // Clear previous errors
+      document.querySelectorAll('[id$="Error"]').forEach(el => {
+        el.classList.add('hidden');
+        el.textContent = '';
+      });
+
+      // Show errors
+      Object.keys(errors).forEach(field => {
+        const errorEl = document.getElementById(field + 'Error');
+        errorEl.textContent = errors[field];
+        errorEl.classList.remove('hidden');
+        document.getElementById(field).classList.add('border-red-500');
+      });
+
+      // If no errors, submit the form
+      if (Object.keys(errors).length === 0) {
+        form.submit();
+      }
+    });
+
+    // Clear error styling on input
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', function() {
+        this.classList.remove('border-red-500');
+        const errorEl = document.getElementById(this.id + 'Error');
+        if (errorEl) {
+          errorEl.classList.add('hidden');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
