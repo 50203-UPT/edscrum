@@ -2,16 +2,27 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Professor</title>
+    <title th:text="#{teacher.dashboard.title} + ' - ' + #{app.title}">Dashboard Professor</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
 </head>
 <body class="bg-light">
 
     <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container">
             <span class="navbar-brand mb-0 h1" th:text="${dashboard.courseName}">Curso</span>
-            <a th:href="@{/}" class="btn btn-outline-light btn-sm">Sair</a>
+            <div class="dropdown">
+                <button class="btn btn-outline-light rounded-pill px-4 dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" th:text="#{profile.button}">
+                    Perfil
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/profile}" th:text="#{profile.edit}">Editar Perfil</a></li>
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/settings}" th:text="#{profile.settings}">Configurações</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" th:href="@{/logout}" th:text="#{profile.logout}">Sair</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -20,24 +31,24 @@
             <div class="col-md-4">
                 <div class="card text-center text-white bg-success mb-3">
                     <div class="card-body">
-                        <h3><span th:text="${dashboard.totalStudents}">0</span></h3>
-                        <p>Estudantes</p>
+                        <h3 th:text="${dashboard.totalStudents}">0</h3>
+                        <p th:text="#{teacher.dashboard.students}">Estudantes</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card text-center text-white bg-info mb-3">
                     <div class="card-body">
-                        <h3><span th:text="${dashboard.totalTeams}">0</span></h3>
-                        <p>Equipas</p>
+                        <h3 th:text="${dashboard.totalTeams}">0</h3>
+                        <p th:text="#{teacher.dashboard.teams}">Equipas</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card text-center text-white bg-warning mb-3">
                     <div class="card-body">
-                        <h3><span th:text="${dashboard.totalProjects}">0</span></h3>
-                        <p>Projetos</p>
+                        <h3 th:text="${dashboard.totalProjects}">0</h3>
+                        <p th:text="#{teacher.dashboard.projects}">Projetos</p>
                     </div>
                 </div>
             </div>
@@ -45,16 +56,16 @@
 
         <div class="card shadow-sm">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Progresso dos Projetos</h5>
+                <h5 class="mb-0" th:text="#{teacher.dashboard.project_progress}">Progresso dos Projetos</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Projeto</th>
-                                <th>Progresso</th>
-                                <th>Estado</th>
+                                <th th:text="#{teacher.dashboard.project_column}">Projeto</th>
+                                <th th:text="#{teacher.dashboard.progress_column}">Progresso</th>
+                                <th th:text="#{teacher.dashboard.status_column}">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -69,8 +80,8 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span th:if="${proj.completionPercentage == 100}" class="badge bg-success">Concluído</span>
-                                    <span th:if="${proj.completionPercentage < 100}" class="badge bg-secondary">Em Curso</span>
+                                    <span th:if="${proj.completionPercentage == 100}" class="badge bg-success" th:text="#{teacher.dashboard.status_completed}">Concluído</span>
+                                    <span th:if="${proj.completionPercentage < 100}" class="badge bg-secondary" th:text="#{teacher.dashboard.status_in_progress}">Em Curso</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -81,5 +92,13 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </body>
 </html>

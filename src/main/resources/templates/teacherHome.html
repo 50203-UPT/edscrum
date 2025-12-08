@@ -2,9 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Professor - EduScrum</title>
+    <title th:text="#{teacher.home.title} + ' - ' + #{app.title}">Painel Professor - EduScrum</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <style>
         .menu-container {
             max-width: 900px;
@@ -45,16 +46,26 @@
 
     <nav class="navbar navbar-dark fixed-top">
         <div class="container">
-            <span class="navbar-brand fw-bold fs-3">EduScrum <span class="badge bg-warning text-dark">Teacher</span></span>
-            <a th:href="@{/logout}" class="btn btn-outline-light rounded-pill px-4">Sair</a>
+            <span class="navbar-brand fw-bold fs-3" th:text="#{app.title}">EduScrum <span class="badge bg-warning text-dark">Teacher</span></span>
+            <div class="dropdown">
+                <button class="btn btn-outline-light rounded-pill px-4 dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" th:text="#{profile.button}">
+                    Perfil
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/profile}" th:text="#{profile.edit}">Editar Perfil</a></li>
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/settings}" th:text="#{profile.settings}">Configurações</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" th:href="@{/logout}" th:text="#{profile.logout}">Sair</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <div class="container menu-container d-flex flex-column justify-content-center h-100" style="min-height: 100vh; padding-top: 80px;">
         
         <div class="text-center text-white mb-5">
-            <h1 class="display-4 fw-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">Bem-vindo, Professor!</h1>
-            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">O que deseja fazer hoje?</p>
+            <h1 class="display-4 fw-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);" th:text="#{teacher.home.welcome}">Bem-vindo, Professor!</h1>
+            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);" th:text="#{teacher.home.what_to_do}">O que deseja fazer hoje?</p>
         </div>
 
         <div class="row g-4 justify-content-center">
@@ -63,8 +74,8 @@
                 <a th:href="@{/view/teacher/courses}" class="card option-card p-4 text-center">
                     <div class="card-body">
                         <div class="icon-large">📚</div>
-                        <h3 class="fw-bold">Meus Cursos</h3>
-                        <p class="text-muted">Gerir turmas, equipas e ver estatísticas.</p>
+                        <h3 class="fw-bold" th:text="#{teacher.home.my_courses}">Meus Cursos</h3>
+                        <p class="text-muted" th:text="#{teacher.home.my_courses_description}">Gerir turmas, equipas e ver estatísticas.</p>
                     </div>
                 </a>
             </div>
@@ -72,17 +83,17 @@
             <div class="col-md-6 col-lg-4">
                 <a href="#" class="card option-card p-4 text-center"> <div class="card-body">
                         <div class="icon-large">🏆</div>
-                        <h3 class="fw-bold">Prémios</h3>
-                        <p class="text-muted">Criar novos badges e critérios de avaliação.</p>
+                        <h3 class="fw-bold" th:text="#{teacher.home.awards}">Prémios</h3>
+                        <p class="text-muted" th:text="#{teacher.home.awards_description}">Criar novos badges e critérios de avaliação.</p>
                     </div>
                 </a>
             </div>
 
             <div class="col-md-6 col-lg-4">
-                <a href="#" class="card option-card p-4 text-center"> <div class="card-body">
+                <a th:href="@{/view/teacher/settings}" class="card option-card p-4 text-center"> <div class="card-body">
                         <div class="icon-large">⚙️</div>
-                        <h3 class="fw-bold">Configurações</h3>
-                        <p class="text-muted">Editar perfil e preferências da conta.</p>
+                        <h3 class="fw-bold" th:text="#{teacher.home.settings}">Configurações</h3>
+                        <p class="text-muted" th:text="#{teacher.home.settings_description}">Editar perfil e preferências da conta.</p>
                     </div>
                 </a>
             </div>
@@ -91,5 +102,13 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </body>
 </html>

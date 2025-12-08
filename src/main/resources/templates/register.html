@@ -2,11 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Criar Conta - EduScrum</title>
+    <title th:text="#{register.title} + ' - ' + #{app.title}">Criar Conta - EduScrum</title>
     
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
-    
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
 </head>
 <body>
 
@@ -21,7 +21,7 @@
         
         <div class="card shadow-lg">
             <div class="card-header text-white text-center py-3">
-                <h3 class="mb-0">📝 Nova Conta</h3>
+                <h3 class="mb-0" th:text="#{register.new_account_heading}">📝 Nova Conta</h3>
             </div>
             
             <div class="card-body p-4 p-md-5">
@@ -29,33 +29,33 @@
                 <form th:action="@{/auth/web/register}" method="post">
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary">Nome Completo</label>
-                        <input type="text" name="name" class="form-control form-control-lg" placeholder="Ex: João Silva" required>
+                        <label class="form-label fw-bold text-secondary" th:text="#{register.full_name_label}">Nome Completo</label>
+                        <input type="text" name="name" class="form-control form-control-lg" th:placeholder="#{register.full_name_placeholder}" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary">Email</label>
-                        <input type="email" name="email" class="form-control form-control-lg" placeholder="aluno@upt.pt" required>
+                        <label class="form-label fw-bold text-secondary" th:text="#{register.email_label}">Email</label>
+                        <input type="email" name="email" class="form-control form-control-lg" th:placeholder="#{register.email_placeholder}" required>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary">Password</label>
-                            <input type="password" name="password" class="form-control form-control-lg" placeholder="******" required>
+                            <label class="form-label fw-bold text-secondary" th:text="#{register.password_label}">Password</label>
+                            <input type="password" name="password" class="form-control form-control-lg" th:placeholder="#{register.password_placeholder}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary">Perfil</label>
+                            <label class="form-label fw-bold text-secondary" th:text="#{register.profile_label}">Perfil</label>
                             
                             <select name="role" class="form-select form-select-lg form-select-custom">
-                                <option value="STUDENT">🎓 Estudante</option>
-                                <option value="TEACHER">👨‍🏫 Professor</option>
+                                <option value="STUDENT" th:text="#{register.student_option}">🎓 Estudante</option>
+                                <option value="TEACHER" th:text="#{register.teacher_option}">👨‍🏫 Professor</option>
                             </select>
                             
                         </div>
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm" th:text="#{register.create_account_button}">
                             Criar Conta
                         </button>
                     </div>
@@ -64,9 +64,9 @@
                 <hr class="my-4">
 
                 <div class="text-center">
-                    <p class="mb-2 text-muted">Já tens conta?</p>
+                    <p class="mb-2 text-muted" th:text="#{register.already_have_account}">Já tens conta?</p>
                     <a th:href="@{/}" class="btn btn-outline-success px-4 rounded-pill">
-                        🔐 Voltar ao Login
+                        <span th:text="#{register.back_to_login}">🔐 Voltar ao Login</span>
                     </a>
                 </div>
 
@@ -75,5 +75,13 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </body>
 </html>

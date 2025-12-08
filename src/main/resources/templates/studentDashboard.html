@@ -5,14 +5,23 @@
     <title>Dashboard Estudante</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
 </head>
 <body class="bg-light">
 
     <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container">
             <span class="navbar-brand mb-0 h1" th:text="'Olá, ' + ${student.name}">Aluno</span>
-            <div class="text-white">
-                Total Pontos: <span class="badge bg-warning text-dark" th:text="${student.totalPoints}">0</span>
+            <div class="dropdown">
+                <button class="btn btn-outline-light rounded-pill px-4 dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Perfil
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" th:href="@{'/view/student/profile/' + ${student.userId}}">Editar Perfil</a></li>
+                    <li><a class="dropdown-item" th:href="@{'/view/student/settings/' + ${student.userId}}">Configurações</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" th:href="@{/logout}">Sair</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -63,5 +72,13 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </body>
 </html>

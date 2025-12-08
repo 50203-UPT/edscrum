@@ -2,9 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>EduScrum - Login</title>
+    <title th:text="#{app.title} + ' - ' + #{login.title}">EduScrum - Login</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
-    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/index.css}"> 
 </head>
 <body>
 
@@ -18,11 +18,11 @@
     <div class="login-container">
         <div class="card shadow-lg">
             <div class="card-header text-white text-center py-3">
-                <h3 class="mb-0">🎓 EduScrum</h3>
+                <h3 class="mb-0" th:text="#{app.title}">🎓 EduScrum</h3>
             </div>
             <div class="card-body p-4 p-md-5">
                 
-                <h4 class="text-center mb-4 text-muted">Bem-vindo de volta!</h4>
+                <h4 class="text-center mb-4 text-muted" th:text="#{login.welcome_back}">Bem-vindo de volta!</h4>
 
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
@@ -30,16 +30,16 @@
                     <div class="row g-3">
                         <div class="col-md-8">
                             <div class="mb-3">
-                                <input type="email" name="email" class="form-control form-control-lg" placeholder="Email" required>
+                                <input type="email" name="email" class="form-control form-control-lg" th:placeholder="#{login.email_placeholder}" required>
                             </div>
                             <div class="mb-0">
-                                <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required>
+                                <input type="password" name="password" class="form-control form-control-lg" th:placeholder="#{login.password_placeholder}" required>
                             </div>
                         </div>
 
                         <div class="col-md-4 d-grid">
-                            <button type="submit" class="btn btn-success btn-lg h-100 btn-login-tall">
-                                Entrar <br> 🚀
+                            <button type="submit" class="btn btn-success btn-lg h-100 btn-login-tall" th:text="#{login.enter_button}">
+                                Entrar 🚀
                             </button>
                         </div>
                     </div>
@@ -48,9 +48,9 @@
                 <hr class="my-4">
 
                 <div class="text-center">
-                    <p class="mb-2 text-muted">Ainda não tens conta?</p>
+                    <p class="mb-2 text-muted" th:text="#{login.no_account_yet}">Ainda não tens conta?</p>
                     <a th:href="@{/register}" class="btn btn-outline-primary px-4">
-                        📝 Criar Nova Conta
+                        <span th:text="#{login.create_account_button}">📝 Criar Nova Conta</span>
                     </a>
                 </div>
 

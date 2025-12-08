@@ -17,6 +17,10 @@ public class User {
     private String password;
     private String role; // TEACHER ou STUDENT
 
+    // Novas colunas para configurações
+    private boolean notificationAwards = true;
+    private boolean notificationRankings = true;
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -56,6 +60,22 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isNotificationAwards() {
+        return notificationAwards;
+    }
+
+    public void setNotificationAwards(boolean notificationAwards) {
+        this.notificationAwards = notificationAwards;
+    }
+
+    public boolean isNotificationRankings() {
+        return notificationRankings;
+    }
+
+    public void setNotificationRankings(boolean notificationRankings) {
+        this.notificationRankings = notificationRankings;
     }
 
     @Override

@@ -2,9 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Meus Cursos - EduScrum</title>
+    <title th:text="#{teacher.courses.title} + ' - ' + #{app.title}">Meus Cursos - EduScrum</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <style>
         /* Ajuste específico para esta página de listagem */
         .courses-container {
@@ -42,16 +43,26 @@
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-transparent fixed-top">
         <div class="container">
-            <span class="navbar-brand fw-bold fs-3">EduScrum <span class="badge bg-warning text-dark">Teacher</span></span>
-            <a th:href="@{/logout}" class="btn btn-outline-light rounded-pill px-4">Sair</a>
+            <span class="navbar-brand fw-bold fs-3" th:text="#{app.title}">EduScrum <span class="badge bg-warning text-dark">Teacher</span></span>
+            <div class="dropdown">
+                <button class="btn btn-outline-light rounded-pill px-4 dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" th:text="#{profile.button}">
+                    Perfil
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/profile}" th:text="#{profile.edit}">Editar Perfil</a></li>
+                    <li><a class="dropdown-item" th:href="@{/view/teacher/settings}" th:text="#{profile.settings}">Configurações</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" th:href="@{/logout}" th:text="#{profile.logout}">Sair</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <div class="container courses-container">
         
         <div class="text-center text-white mb-5">
-            <h1 class="fw-bold display-5" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">Gerir Cursos</h1>
-            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);">Selecione um curso para aceder ao Dashboard</p>
+            <h1 class="fw-bold display-5" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);" th:text="#{teacher.courses.manage_courses}">Gerir Cursos</h1>
+            <p class="lead" style="text-shadow: 0 1px 5px rgba(0,0,0,0.5);" th:text="#{teacher.courses.select_course}">Selecione um curso para aceder ao Dashboard</p>
         </div>
 
         <div class="row g-4 justify-content-center">
@@ -63,7 +74,7 @@
                         <h4 class="card-title fw-bold text-primary" th:text="${course.name}">Nome do Curso</h4>
                         <p class="card-text text-muted" th:text="${course.description}">Descrição...</p>
                         
-                        <a th:href="@{'/view/teacher/' + ${course.id}}" class="btn btn-primary rounded-pill w-100 mt-3 fw-bold">
+                        <a th:href="@{'/view/teacher/' + ${course.id}}" class="btn btn-primary rounded-pill w-100 mt-3 fw-bold" th:text="#{teacher.courses.enter_button}">
                             Entrar
                         </a>
                     </div>
@@ -72,8 +83,8 @@
 
             <div th:if="${#lists.isEmpty(courses)}" class="col-12">
                 <div class="alert alert-warning text-center rounded-4 shadow">
-                    <strong>Atenção!</strong> Não existem cursos criados no sistema. 
-                    <br>Cria cursos através da API ou base de dados.
+                    <strong th:text="#{teacher.courses.no_courses_strong}">Atenção!</strong> <span th:text="#{teacher.courses.no_courses_text}">Não existem cursos criados no sistema.</span>
+                    <br><span th:text="#{teacher.courses.create_courses_hint}">Cria cursos através da API ou base de dados.</span>
                 </div>
             </div>
 
@@ -81,5 +92,13 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </body>
 </html>

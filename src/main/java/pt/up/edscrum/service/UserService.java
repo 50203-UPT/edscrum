@@ -28,6 +28,11 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User não encontrado"));
     }
 
+    // Buscar usuário por Email
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
     // Criar novo usuário
     public User createUser(User user) {
         return userRepository.save(user);

@@ -17,6 +17,7 @@ public class DashboardService {
     private final StudentAwardRepository studentAwardRepo;
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
+    private final EnrollmentRepository enrollmentRepo;
 
     public DashboardService(
         CourseRepository courseRepo,
@@ -24,7 +25,8 @@ public class DashboardService {
         TeamRepository teamRepo,
         StudentAwardRepository studentAwardRepo,
         UserRepository userRepo,
-        ScoreRepository scoreRepo
+        ScoreRepository scoreRepo,
+        EnrollmentRepository enrollmentRepo
     ) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
@@ -32,6 +34,7 @@ public class DashboardService {
         this.studentAwardRepo = studentAwardRepo;
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
+        this.enrollmentRepo = enrollmentRepo;
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
@@ -87,6 +90,11 @@ public class DashboardService {
         dto.setAwards(studentAwardRepo.findAwardsForStudent(studentId));
         dto.setPointHistory(scoreRepo.getPointHistory(studentId));
 
+        Enrollment enrollment = enrollmentRepo.findByStudent(user);
+        if (enrollment != null) {
+            dto.setCourseId(enrollment.getCourse().getId());
+        }
+
         return dto;
     }
 
@@ -94,6 +102,8 @@ public class DashboardService {
     public List<RankingDTO> getStudentRanking(Long courseId) {
         return scoreRepo.getRankingForCourse(courseId);
     }
+
+
 
     public List<RankingDTO> getTeamRanking(Long courseId) {
         return scoreRepo.getTeamRanking(courseId);

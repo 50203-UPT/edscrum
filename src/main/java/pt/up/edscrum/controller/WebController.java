@@ -104,6 +104,62 @@ public class WebController {
         return "teacherDashboard";
     }
 
+    // 4. Página de Configurações do Professor
+    @GetMapping("/view/teacher/settings")
+    public String teacherSettings(Model model) {
+        // NOTA: Numa aplicação real, o utilizador logado seria obtido através do contexto de segurança.
+        // Para este exemplo, vamos usar um utilizador estático (ex: o primeiro professor).
+        User teacher = userService.getAllUsers().stream()
+                                    .filter(u -> "TEACHER".equals(u.getRole()))
+                                    .findFirst()
+                                    .orElse(null);
+        model.addAttribute("teacher", teacher);
+        return "teacherSettings";
+    }
+
+    @PostMapping("/api/teacher/settings")
+    public String updateTeacherSettings(@RequestParam String name,
+                                      @RequestParam String email,
+                                      @RequestParam(required = false) boolean notificationAwards,
+                                      @RequestParam(required = false) boolean notificationRankings) {
+        User teacher = userService.getUserByEmail(email);
+        if (teacher != null) {
+            teacher.setName(name);
+            teacher.setNotificationAwards(notificationAwards);
+            teacher.setNotificationRankings(notificationRankings);
+            userService.updateUser(teacher.getId(), teacher);
+        }
+        return "redirect:/view/teacher/home";
+    }
+
+    // 5. Página de Edição de Perfil
+    @GetMapping("/view/teacher/profile")
+    public String editProfile(Model model) {
+        User teacher = userService.getAllUsers().stream()
+                                    .filter(u -> "TEACHER".equals(u.getRole()))
+                                    .findFirst()
+                                    .orElse(null);
+        model.addAttribute("teacher", teacher);
+        return "editProfile";
+    }
+
+    @PostMapping("/api/teacher/profile/update")
+    public String updateProfile(@RequestParam String name,
+                                @RequestParam String email,
+                                @RequestParam String newPassword,
+                                @RequestParam String currentPassword) {
+        User teacher = userService.getUserByEmail(email);
+        if (teacher != null && teacher.getPassword().equals(currentPassword)) {
+            teacher.setName(name);
+            teacher.setEmail(email);
+            if (newPassword != null && !newPassword.isEmpty()) {
+                teacher.setPassword(newPassword);
+            }
+            userService.updateUser(teacher.getId(), teacher);
+        }
+        return "redirect:/view/teacher/home";
+    }
+
     @PostMapping("/action/assign-award")
     public String assignAwardAction(@RequestParam Long courseId,
             @RequestParam Long awardId,
@@ -120,19 +176,65 @@ public class WebController {
     // 1. Menu Principal do Estudante
     @GetMapping("/view/student/home/{studentId}")
     public String studentHome(@PathVariable Long studentId, Model model) {
-        // Precisamos dos dados básicos (nome, courseId) para construir os links
         StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
         model.addAttribute("student", data);
         return "studentHome";
     }
 
     // 2. Dashboard Detalhado (Prémios e Pontos)
-    @GetMapping("/view/student/dashboard/{studentId}") // Mudei ligeiramente a URL para organizar
+    @GetMapping("/view/student/dashboard/{studentId}")
     public String studentDashboard(@PathVariable Long studentId, Model model) {
         StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
         model.addAttribute("student", data);
         model.addAttribute("courseId", data.getCourseId());
         return "studentDashboard";
+    }
+
+    @GetMapping("/view/student/settings/{studentId}")
+    public String studentSettings(@PathVariable Long studentId, Model model) {
+        User student = userService.getUserById(studentId);
+        model.addAttribute("student", student);
+        return "studentSettings";
+    }
+
+    @PostMapping("/api/student/settings")
+    public String updateStudentSettings(@RequestParam Long id,
+                                        @RequestParam String name,
+                                        @RequestParam(required = false) boolean notificationAwards,
+                                        @RequestParam(required = false) boolean notificationRankings) {
+        User student = userService.getUserById(id);
+        if (student != null) {
+            student.setName(name);
+            student.setNotificationAwards(notificationAwards);
+            student.setNotificationRankings(notificationRankings);
+            userService.updateUser(id, student);
+        }
+        return "redirect:/view/student/home/" + id;
+    }
+
+    @GetMapping("/view/student/profile/{studentId}")
+    public String editStudentProfile(@PathVariable Long studentId, Model model) {
+        User student = userService.getUserById(studentId);
+        model.addAttribute("student", student);
+        return "editStudentProfile";
+    }
+
+    @PostMapping("/api/student/profile/update")
+    public String updateStudentProfile(@RequestParam Long id,
+                                     @RequestParam String name,
+                                     @RequestParam String email,
+                                     @RequestParam String newPassword,
+                                     @RequestParam String currentPassword) {
+        User student = userService.getUserById(id);
+        if (student != null && student.getPassword().equals(currentPassword)) {
+            student.setName(name);
+            student.setEmail(email);
+            if (newPassword != null && !newPassword.isEmpty()) {
+                student.setPassword(newPassword);
+            }
+            userService.updateUser(id, student);
+        }
+        return "redirect:/view/student/home/" + id;
     }
 
     // --- RANKINGS ---
