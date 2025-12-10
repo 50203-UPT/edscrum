@@ -11,6 +11,8 @@ public class StudentDashboardDTO {
     private String name;
     private String email;
     private String profileImage;
+    private boolean notificationAwards;
+    private boolean notificationRankings;
 
     // Dados do Curso Principal (onde o aluno está inscrito)
     private Long courseId;
@@ -143,6 +145,12 @@ public class StudentDashboardDTO {
     public void setTotalPoints(int totalPoints) {
         this.totalPoints = totalPoints;
     }
+
+    public boolean isNotificationAwards() { return notificationAwards; }
+    public void setNotificationAwards(boolean notificationAwards) { this.notificationAwards = notificationAwards; }
+
+    public boolean isNotificationRankings() { return notificationRankings; }
+    public void setNotificationRankings(boolean notificationRankings) { this.notificationRankings = notificationRankings; }
 
     // Getters/Setters Estatísticas
     public int getCurrentRank() {

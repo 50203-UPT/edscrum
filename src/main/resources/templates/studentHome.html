@@ -13,9 +13,9 @@
     /* Cartões de Resumo (Topo) */
     .stat-card {
         background: white;
-        border-radius: 16px; /* Mais arredondado */
+        border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.02); /* Sombra muito suave */
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         border: 1px solid #f0f0f0;
         height: 100%;
         display: flex;
@@ -28,7 +28,7 @@
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        border-radius: 50%; /* Icone redondo opcional, ou solto como na imagem */
+        border-radius: 50%;
     }
 
     /* Tabela de Comparação (Esquerda) */
@@ -41,9 +41,9 @@
         margin-bottom: 12px;
         font-weight: 500;
     }
-    .comp-user { background-color: #e3f2fd; color: #0d47a1; } /* Azul claro */
-    .comp-avg { background-color: #f8f9fa; color: #495057; }  /* Cinza claro */
-    .comp-diff { background-color: #e8f5e9; color: #1b5e20; } /* Verde claro */
+    .comp-user { background-color: #e3f2fd; color: #0d47a1; }
+    .comp-avg { background-color: #f8f9fa; color: #495057; }
+    .comp-diff { background-color: #e8f5e9; color: #1b5e20; }
 
     /* Top 5 Estudantes (Direita) */
     .ranking-item {
@@ -55,12 +55,12 @@
         margin-bottom: 8px;
         font-weight: 500;
     }
-    .rank-gold { background-color: #fff9c4; color: #fbc02d; }   /* Amarelo Ouro */
-    .rank-silver { background-color: #f5f5f5; color: #616161; } /* Cinza Prata */
-    .rank-bronze { background-color: #fff3e0; color: #ef6c00; } /* Laranja Bronze */
+    .rank-gold { background-color: #fff9c4; color: #fbc02d; }
+    .rank-silver { background-color: #f5f5f5; color: #616161; }
+    .rank-bronze { background-color: #fff3e0; color: #ef6c00; }
     .rank-normal { background-color: transparent; color: #495057; }
     
-    .rank-me { /* Destaque para o utilizador */
+    .rank-me {
         border: 2px solid #90caf9;
         background-color: #e3f2fd;
     }
@@ -74,7 +74,7 @@
         justify-content: center;
         font-size: 0.8rem;
         margin-right: 12px;
-        background: white; /* Fundo branco para o número */
+        background: white;
         font-weight: bold;
     }
     </style>
@@ -153,8 +153,8 @@
                             <span class="text-muted small fw-bold">Prémios Ganhos</span>
                             <i data-lucide="medal" class="text-purple-500" style="color: #a855f7; width: 20px;"></i>
                         </div>
-                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${#lists.size(student.earnedAwards)}">1</h2>
-                        <small class="text-muted">150 pontos acumulados</small>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${student.earnedAwards != null ? #lists.size(student.earnedAwards) : 0}">1</h2>
+                        <small class="text-muted">pontos acumulados</small>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -163,8 +163,8 @@
                             <span class="text-muted small fw-bold">Equipas Ativas</span>
                             <i data-lucide="users" class="text-success" style="width: 20px;"></i>
                         </div>
-                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${#lists.size(student.projects)}">2</h2>
-                        <small class="text-muted">2 projetos</small>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${student.projects != null ? #lists.size(student.projects) : 0}">2</h2>
+                        <small class="text-muted">projetos</small>
                     </div>
                 </div>
             </div>
@@ -399,16 +399,16 @@
 
                 <div>
                     <h6 class="fw-bold mb-3 d-flex align-items-center">
-                        <i data-lucide="layers" class="w-4 h-4 me-2 text-dark"></i> Sprints (<span th:text="${#lists.size(project.sprints)}">0</span>)
+                        <i data-lucide="layers" class="w-4 h-4 me-2 text-dark"></i> Sprints (<span th:text="${project.sprints != null ? #lists.size(project.sprints) : 0}">0</span>)
                     </h6>
                     
                     <div class="d-flex flex-column gap-3">
                         <div th:each="sprint : ${project.sprints}" class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border-start border-4"
-                             th:classappend="${sprint.status.name() == 'DONE'} ? 'border-success' : 'border-primary'">
+                             th:classappend="${sprint.status?.name() == 'DONE'} ? 'border-success' : 'border-primary'">
                             
                             <div class="d-flex align-items-center gap-3">
-                                <i th:if="${sprint.status.name() == 'DONE'}" data-lucide="check-circle-2" class="text-success w-5 h-5"></i>
-                                <i th:if="${sprint.status.name() != 'DONE'}" data-lucide="circle-dashed" class="text-primary w-5 h-5"></i>
+                                <i th:if="${sprint.status?.name() == 'DONE'}" data-lucide="check-circle-2" class="text-success w-5 h-5"></i>
+                                <i th:if="${sprint.status?.name() != 'DONE'}" data-lucide="circle-dashed" class="text-primary w-5 h-5"></i>
                                 
                                 <div>
                                     <h6 class="mb-0 fw-bold text-dark" th:text="${sprint.name}">Sprint 1</h6>
@@ -419,13 +419,13 @@
                             <div class="d-flex align-items-center gap-3" style="width: 30%;">
                                 <div class="progress flex-grow-1" style="height: 6px;">
                                     <div class="progress-bar rounded-pill" 
-                                         th:classappend="${sprint.status.name() == 'DONE'} ? 'bg-success' : 'bg-primary'"
+                                         th:classappend="${sprint.status?.name() == 'DONE'} ? 'bg-success' : 'bg-primary'"
                                          role="progressbar" 
-                                         th:style="'width: ' + (${sprint.status.name() == 'DONE'} ? '100%' : '60%')"></div>
+                                         th:style="'width: ' + (${sprint.status?.name() == 'DONE'} ? '100%' : '60%')"></div>
                                 </div>
                                 <span class="small fw-bold" 
-                                      th:classappend="${sprint.status.name() == 'DONE'} ? 'text-success' : 'text-primary'"
-                                      th:text="${sprint.status.name() == 'DONE'} ? '100%' : 'Active'">100%</span>
+                                      th:classappend="${sprint.status?.name() == 'DONE'} ? 'text-success' : 'text-primary'"
+                                      th:text="${sprint.status?.name() == 'DONE'} ? '100%' : 'Active'">100%</span>
                             </div>
                         </div>
                         
@@ -528,8 +528,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/api/teacher/settings}" method="POST">
-                        <input type="hidden" name="email" th:value="${teacher.email}">
+                    <form th:action="@{/api/student/settings}" method="POST">
+                        <input type="hidden" name="id" th:value="${student.id}">
                         
                         <div class="p-3 bg-light rounded-3 mb-3 border">
                             <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
@@ -543,19 +543,19 @@
                             <h6 class="fw-bold small mb-3 text-dark">Notificações</h6>
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input cursor-pointer" type="checkbox" id="notifAwards" name="notificationAwards" 
-                                       th:checked="${teacher.notificationAwards}">
+                                       th:checked="${student.notificationAwards}">
                                 <label class="form-check-label cursor-pointer" for="notifAwards">Prémios atribuídos</label>
                             </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input cursor-pointer" type="checkbox" id="notifRankings" name="notificationRankings" 
-                                       th:checked="${teacher.notificationRankings}">
+                                       th:checked="${student.notificationRankings}">
                                 <label class="form-check-label cursor-pointer" for="notifRankings">Alterações no Ranking</label>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Nome de Exibição</label>
-                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${student.name}" required>
                         </div>
 
                         <div class="modal-footer border-0 pt-0 px-0">
@@ -660,11 +660,6 @@
             const dataPoints = [];
 
             pointHistory.forEach(point => {
-                accumulatedPoints += point.totalPoints; // Se point.totalPoints for incremental. Se for absoluto, usa direto.
-                // Vou assumir que pointHistory.totalPoints é o valor ABSOLUTO naquele momento (snapshot).
-                // Se for incremental, descomenta a soma.
-                // dataPoints.push(accumulatedPoints); 
-                
                 labels.push(new Date(point.date).toLocaleDateString());
                 dataPoints.push(point.totalPoints);
             });

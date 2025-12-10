@@ -79,6 +79,8 @@ public class DashboardService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setProfileImage(user.getProfileImage());
+        dto.setNotificationAwards(user.isNotificationAwards());
+        dto.setNotificationRankings(user.isNotificationRankings());
 
         // 1. Calcular Pontos Totais
         int myScore = calculateTotalPointsForStudent(studentId);

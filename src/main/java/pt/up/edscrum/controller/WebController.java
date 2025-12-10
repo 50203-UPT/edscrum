@@ -8,19 +8,19 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping; // IMPORTANTE
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import pt.up.edscrum.dto.dashboard.RankingDTO; // Importante
-import pt.up.edscrum.dto.dashboard.StudentDashboardDTO; // Importante
-import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO; // Importante
-import pt.up.edscrum.model.Course; // Importante
+import pt.up.edscrum.dto.dashboard.RankingDTO;
+import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
+import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
+import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
-import pt.up.edscrum.service.AuthService; // IMPORTANTE
+import pt.up.edscrum.service.AuthService;
 import pt.up.edscrum.service.AwardService;
 import pt.up.edscrum.service.CourseService;
 import pt.up.edscrum.service.DashboardService;
@@ -156,7 +156,9 @@ public class WebController {
         }
 
         model.addAttribute("studentRankings", rankings);
-        model.addAttribute("students", userService.getAllStudents()); // Para o modal de equipas
+        
+        // CORREÇÃO: Usar getAllUsers() em vez de getAllStudents() para garantir que todos aparecem no modal
+        model.addAttribute("students", userService.getAllUsers()); 
 
         return "teacherHome";
     }
@@ -172,7 +174,6 @@ public class WebController {
     }
 
     // --- LÓGICA DE CRIAÇÃO (FORMULÁRIOS) ---
-    // NOVO: Método para processar a criação de curso e voltar à mesma página
     @PostMapping("/courses/create")
     public String createCourseWeb(
             @ModelAttribute Course course,
@@ -180,7 +181,6 @@ public class WebController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // NOVO: Buscar o professor e associá-lo ao curso
             User teacher = userService.getUserById(teacherId);
             course.setTeacher(teacher);
 
@@ -199,24 +199,20 @@ public class WebController {
             @ModelAttribute Project project,
             @RequestParam Long courseId,
             @RequestParam Long teacherId,
-            @RequestParam(required = false) Long teamId, // NOVO: ID da Equipa opcional ou obrigatório
+            @RequestParam(required = false) Long teamId,
             RedirectAttributes redirectAttributes) {
 
         try {
             Course course = courseService.getCourseById(courseId);
             project.setCourse(course);
-
-            // Define estado inicial
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.PLANEAMENTO);
 
-            // Grava o Projeto Primeiro
             Project savedProject = projectService.createProject(project);
 
-            // Se uma equipa foi selecionada, associa-a ao projeto
             if (teamId != null) {
                 Team team = teamService.getTeamById(teamId);
                 team.setProject(savedProject);
-                teamService.updateTeam(team.getId(), team); // Grava a alteração na equipa
+                teamService.updateTeam(team.getId(), team);
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Projeto iniciado em Planeamento!");
@@ -228,7 +224,6 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // --- NOVO MÉTODO PARA CRIAR EQUIPA (Para garantir que tem Curso) ---
     @PostMapping("/teams/create")
     public String createTeamWeb(
             @RequestParam String name,
@@ -236,7 +231,7 @@ public class WebController {
             @RequestParam Long teacherId,
             @RequestParam(required = false) Long scrumMasterId,
             @RequestParam(required = false) Long productOwnerId,
-            @RequestParam(required = false) List<Long> developerIds, // (Lista)
+            @RequestParam(required = false) List<Long> developerIds,
             RedirectAttributes redirectAttributes) {
         try {
             Course course = courseService.getCourseById(courseId);
@@ -244,7 +239,6 @@ public class WebController {
             team.setName(name);
             team.setCourse(course);
 
-            // Associar Membros se foram selecionados
             if (scrumMasterId != null) {
                 team.setScrumMaster(userService.getUserById(scrumMasterId));
             }
@@ -267,7 +261,6 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // --- Método para criar prémios ---
     @PostMapping("/awards/create")
     public String createAwardWeb(
             @ModelAttribute pt.up.edscrum.model.Award award,
@@ -284,7 +277,6 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // --- CONFIGURAÇÕES E PERFIL ---
     @PostMapping("/api/teacher/settings")
     public String updateTeacherSettings(@RequestParam String name,
             @RequestParam String email,
@@ -296,7 +288,7 @@ public class WebController {
             teacher.setNotificationAwards(notificationAwards);
             teacher.setNotificationRankings(notificationRankings);
             userService.updateUser(teacher.getId(), teacher);
-            return "redirect:/view/teacher/home/" + teacher.getId(); // Redireciona corretamente
+            return "redirect:/view/teacher/home/" + teacher.getId();
         }
         return "redirect:/";
     }
@@ -308,13 +300,12 @@ public class WebController {
             @RequestParam String email,
             @RequestParam(required = false) String newPassword,
             @RequestParam String currentPassword,
-            @RequestParam(required = false) MultipartFile imageFile, // O ficheiro da imagem
+            @RequestParam(required = false) MultipartFile imageFile,
             RedirectAttributes redirectAttributes) {
 
         try {
             User teacher = userService.getUserById(teacherId);
 
-            // Verifica a password atual por segurança
             if (teacher == null || !teacher.getPassword().equals(currentPassword)) {
                 throw new Exception("A password atual está incorreta.");
             }
@@ -322,15 +313,13 @@ public class WebController {
             teacher.setName(name);
             teacher.setEmail(email);
 
-            // Se houve nova password, atualiza
             if (newPassword != null && !newPassword.isEmpty()) {
                 teacher.setPassword(newPassword);
             }
 
-            // LOGICA DE IMAGEM: Se um ficheiro foi enviado, guarda-o
             if (imageFile != null && !imageFile.isEmpty()) {
                 String fileName = fileStorageService.saveFile(imageFile);
-                teacher.setProfileImage(fileName); // Guarda só o nome do ficheiro na BD
+                teacher.setProfileImage(fileName);
             }
 
             userService.updateUser(teacherId, teacher);
@@ -343,7 +332,6 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // --- AÇÕES DIVERSAS ---
     @PostMapping("/action/assign-award")
     public String assignAwardAction(@RequestParam Long courseId,
             @RequestParam Long awardId,
@@ -356,12 +344,35 @@ public class WebController {
         return "redirect:/view/teacher/course/" + courseId;
     }
 
-    // --- ÁREA DO ESTUDANTE ---
+    // --- ÁREA DO ESTUDANTE (CORRIGIDA) ---
     @GetMapping("/view/student/home/{studentId}")
     public String studentHome(@PathVariable Long studentId, Model model) {
-        StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
-        model.addAttribute("student", data);
-        return "studentHome";
+        try {
+            // 1. Tenta obter os dados do serviço
+            StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
+            
+            // 2. Verifica se o resultado é nulo (segurança extra)
+            if (data == null) {
+                throw new RuntimeException("Dados do estudante não encontrados ou vazios.");
+            }
+
+            // 3. Adiciona ao modelo para o Thymeleaf
+            model.addAttribute("student", data);
+            
+            // Sucesso: Retorna a view
+            return "studentHome";
+
+        } catch (Exception e) {
+            // ERRO CRÍTICO ENCONTRADO
+            // Imprime o erro na consola para diagnóstico (verifique os logs do seu IDE!)
+            System.err.println("==========================================");
+            System.err.println("ERRO AO ABRIR DASHBOARD DO ALUNO (ID: " + studentId + ")");
+            e.printStackTrace(); // Mostra a linha exata onde falhou
+            System.err.println("==========================================");
+
+            // Redireciona para o login com mensagem de erro, em vez de tela branca
+            return "redirect:/?error=erro_interno_consulte_logs";
+        }
     }
 
     @GetMapping("/view/student/dashboard/{studentId}")
@@ -407,25 +418,20 @@ public class WebController {
             @RequestParam String email,
             @RequestParam String currentPassword,
             @RequestParam(required = false) String newPassword,
-            @RequestParam(required = false) MultipartFile imageFile, // ADICIONAR ISTO
+            @RequestParam(required = false) MultipartFile imageFile,
             RedirectAttributes redirectAttributes) {
 
         try {
             User student = userService.getUserById(id);
 
-            // 1. Verificar Password Atual
             if (student != null && student.getPassword().equals(currentPassword)) {
-
-                // 2. Atualizar Dados Básicos
                 student.setName(name);
                 student.setEmail(email);
 
-                // 3. Atualizar Nova Password (se fornecida)
                 if (newPassword != null && !newPassword.isEmpty()) {
                     student.setPassword(newPassword);
                 }
 
-                // 4. Lógica de Upload de Imagem (NOVO)
                 if (imageFile != null && !imageFile.isEmpty()) {
                     String fileName = fileStorageService.saveFile(imageFile);
                     student.setProfileImage(fileName);
@@ -443,7 +449,6 @@ public class WebController {
         return "redirect:/view/student/home/" + id;
     }
 
-    // Método para inscrever o aluno
     @PostMapping("/api/student/enroll")
     public String enrollStudent(@RequestParam Long studentId,
             @RequestParam Long courseId,
@@ -457,7 +462,6 @@ public class WebController {
         return "redirect:/view/student/home/" + studentId;
     }
 
-    // --- RANKINGS ---
     @GetMapping("/view/rankings/{courseId}")
     public String viewRankings(@PathVariable Long courseId, Model model) {
         model.addAttribute("studentRanking", dashboardService.getStudentRanking(courseId));
