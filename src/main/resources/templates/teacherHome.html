@@ -724,7 +724,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
+                    <form id="editProfileForm" th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="teacherId" th:value="${teacher.id}" />
 
                         <div class="mb-4 text-center">
@@ -759,7 +759,7 @@
                             <div class="mt-4 p-3 bg-blue-50 rounded-3 border border-blue-200" style="background-color: #f0f7ff; border-color: #dbeafe;">
                                 <p class="text-muted small mb-1"><strong>Clique na câmara para alterar a foto</strong></p>
                             </div>
-                            <input type="hidden" id="removeImageTeacher" name="removeImage" value="false">
+                            <input type="hidden" id="removeImage" name="removeImage" value="false">
                         </div>
 
                         <div class="mb-3">
@@ -795,12 +795,126 @@
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
     <script>
+        let previewImg = null;
+        let hasExistingImage = false;
+
         document.addEventListener('DOMContentLoaded', function() {
+            const imageInput = document.getElementById('imageUploadTeacher');
+            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
+            const existingPreview = document.getElementById('teacherProfileImagePreview');
+
+            if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
+                previewImg = existingPreview;
+                hasExistingImage = true;
+                existingPreview.style.display = 'block';
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+            } else {
+                if (existingPreview) {
+                    existingPreview.style.display = 'none';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'flex';
+                }
+            }
+
+            if (imageInput) {
+                imageInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+
+                    if (file) {
+                        const reader = new FileReader();
+
+                        reader.onload = function(e) {
+                            if (!previewImg) {
+                                const newImg = document.createElement('img');
+                                newImg.id = 'teacherProfileImagePreview';
+                                newImg.className = 'rounded-circle border shadow-sm position-absolute';
+                                newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;';
+                                newImg.src = e.target.result;
+
+                                const container = document.querySelector('.position-relative[style*="width: 100px"]');
+                                if (container) {
+                                    container.appendChild(newImg);
+                                }
+                                previewImg = newImg;
+                            } else {
+                                previewImg.src = e.target.result;
+                            }
+
+                            previewImg.style.display = 'block';
+                            if (placeholder) {
+                                placeholder.style.display = 'none';
+                            }
+
+                            const removeBtn = document.getElementById('removeImageBtnTeacher');
+                            if (removeBtn) {
+                                removeBtn.style.display = 'flex';
+                            }
+
+                            document.getElementById('removeImage').value = 'false';
+                        };
+
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+
+        function removeTeacherProfileImage(event) {
+            event.preventDefault();
+
+            document.getElementById('removeImage').value = 'true';
+
+            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
+            const removeBtn = document.getElementById('removeImageBtnTeacher');
+
+            if (previewImg) {
+                previewImg.style.display = 'none';
+            }
+
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+            }
+
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+
+            const imageInput = document.getElementById('imageUploadTeacher');
+            if (imageInput) {
+                imageInput.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const editModal = document.getElementById('editProfileModal');
+            if (editModal) {
+                editModal.addEventListener('hide.bs.modal', function() {
+                    const form = document.getElementById('editProfileForm');
+                    if (form) {
+                        form.reset();
+                    }
+
+                    const imageInput = document.getElementById('imageUploadTeacher');
+                    if (imageInput) {
+                        imageInput.value = '';
+                    }
+
+                    const removeImageFlag = document.getElementById('removeImage');
+                    if (removeImageFlag) {
+                        removeImageFlag.value = 'false';
+                    }
+
+                    location.reload();
+                });
+            }
+
             const themeSwitcher = document.getElementById('theme-switcher');
             const htmlElement = document.documentElement;
             const body = document.body;
 
-            // 1. Verificar preferência guardada ao carregar
             const currentTheme = localStorage.getItem('theme');
             if (currentTheme === 'dark') {
                 htmlElement.classList.add('dark-theme');
@@ -808,7 +922,6 @@
                 if(themeSwitcher) themeSwitcher.checked = true;
             }
 
-            // 2. Evento de clique no toggle
             if(themeSwitcher) {
                 themeSwitcher.addEventListener('change', () => {
                     if (themeSwitcher.checked) {
@@ -823,7 +936,6 @@
                 });
             }
 
-            // Initial fetch of notifications on page load
             fetchNotifications();
         });
     </script>
@@ -1082,6 +1194,17 @@
             if (interval > 1) return Math.floor(interval) + " horas atrás";
             return Math.floor(seconds / 60) + " minutos atrás";
         }
+
+        // Auto-dismiss success alerts after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(successAlert);
+                    bsAlert.close();
+                }, 3000);
+            }
+        });
     </script>
 </body>
 </html>

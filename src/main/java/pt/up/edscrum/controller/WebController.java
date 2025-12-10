@@ -324,6 +324,7 @@ public class WebController {
             @RequestParam(required = false) String newPassword,
             @RequestParam String currentPassword,
             @RequestParam(required = false) MultipartFile imageFile,
+            @RequestParam(required = false) String removeImage,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -340,7 +341,11 @@ public class WebController {
                 teacher.setPassword(newPassword);
             }
 
-            if (imageFile != null && !imageFile.isEmpty()) {
+            // Se o utilizador marcar para remover a imagem
+            if ("true".equals(removeImage)) {
+                teacher.setProfileImage(null);
+            } else if (imageFile != null && !imageFile.isEmpty()) {
+                // Se houver nova imagem, guardar
                 String fileName = fileStorageService.saveFile(imageFile);
                 teacher.setProfileImage(fileName);
             }
