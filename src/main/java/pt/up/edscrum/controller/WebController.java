@@ -123,6 +123,82 @@ public class WebController {
         return "redirect:/?registered=true";
     }
 
+   // --- FLUXO DE RECUPERAÇÃO DE PALAVRA-PASSE ---
+
+    // 1. PÁGINA "ESQUECEU A PALAVRA-PASSE"
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordPage() {
+        return "forgotPassword";
+    }
+
+    // PROCESSAR ENVIO DE CÓDIGO (E REENVIO)
+    @PostMapping("/auth/web/send-code")
+    public String processSendCode(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
+        // Gera o código na BD
+        boolean success = authService.generateResetCode(email);
+
+        if (success) {
+            // Passa o email para a próxima página (flash attribute esconde-o da URL mas mantém os dados)
+            redirectAttributes.addFlashAttribute("email", email);
+            redirectAttributes.addFlashAttribute("successMessage", "Código enviado! Verifique a base de dados.");
+            return "redirect:/verify-code";
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email não encontrado.");
+            return "redirect:/forgot-password";
+        }
+    }
+
+    // 2. PÁGINA "VERIFICAR CÓDIGO"
+    @GetMapping("/verify-code")
+    public String showVerifyCodePage(Model model) {
+        // Se o email não vier do passo anterior, manda voltar ao início
+        if (!model.containsAttribute("email")) {
+            return "redirect:/forgot-password";
+        }
+        return "verifyCode";
+    }
+
+    // PROCESSAR VALIDAÇÃO DO CÓDIGO
+    @PostMapping("/auth/web/verify-code")
+    public String processVerifyCode(@RequestParam("email") String email, 
+                                    @RequestParam("code") String code, 
+                                    RedirectAttributes redirectAttributes) {
+        
+        boolean isValid = authService.validateResetCode(email, code);
+
+        if (isValid) {
+            redirectAttributes.addFlashAttribute("email", email);
+            redirectAttributes.addFlashAttribute("successMessage", "Código aceite. Defina a nova palavra-passe.");
+            return "redirect:/reset-password";
+        } else {
+            // Se falhar, mantém o email na página para o user não ter de escrever tudo de novo
+            redirectAttributes.addFlashAttribute("email", email);
+            redirectAttributes.addFlashAttribute("errorMessage", "Código incorreto. Tente novamente.");
+            return "redirect:/verify-code";
+        }
+    }
+
+    // 3. PÁGINA "REDEFINIR PALAVRA-PASSE"
+    @GetMapping("/reset-password")
+    public String showResetPasswordPage(Model model) {
+        if (!model.containsAttribute("email")) {
+            return "redirect:/forgot-password";
+        }
+        return "resetPassword";
+    }
+
+    // PROCESSAR MUDANÇA DE PASSWORD
+    @PostMapping("/auth/web/change-password")
+    public String processChangePassword(@RequestParam("email") String email, 
+                                        @RequestParam("newPassword") String newPassword, 
+                                        RedirectAttributes redirectAttributes) {
+        
+        authService.updatePassword(email, newPassword);
+        // Mensagem de sucesso que aparecerá no ecrã de Login
+        redirectAttributes.addFlashAttribute("successMessage", "Palavra-passe alterada com sucesso! Faça login.");
+        return "redirect:/";
+    }
+
     // --- ÁREA DO PROFESSOR ---
     // 1. Dashboard Geral (Home)
     @GetMapping("/view/teacher/home/{teacherId}")

@@ -1,5 +1,7 @@
 package pt.up.edscrum.service;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.User;
@@ -15,12 +17,26 @@ public class AuthService {
     }
 
     public User login(String email, String password) {
-        User user = userRepository.findByEmail(email);
+        // 1. Procurar o utilizador (retorna Optional porque pode não existir)
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
-        if (user == null || !user.getPassword().equals(password)) {
-            return null; // credenciais inválidas
+        // 2. Verificar se existe dentro do Optional
+        if (userOpt.isPresent()) {
+            User user = userOpt.get(); // "Desembrulha" o utilizador
+
+            // 3. Verificar a palavra-passe
+            // Nota: Se estiveres a usar encriptação no futuro, usa passwordEncoder.matches()
+            if (user.getPassword().equals(password)) {
+                return user; // Sucesso
+            }
         }
 
-        return user; // login OK
+        // Se o email não existir OU a password estiver errada, retorna null
+        return null;
+    }
+
+    // Método auxiliar usado no AuthController antigo (opcional, mantido para compatibilidade)
+    public boolean generateResetCode(String email) {
+        return userRepository.findByEmail(email).isPresent();
     }
 }
