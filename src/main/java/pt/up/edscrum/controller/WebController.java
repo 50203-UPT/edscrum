@@ -76,6 +76,28 @@ public class WebController {
         return "redirect:/";
     }
 
+    @GetMapping("/forgotPassword")
+    public String forgotPasswordPage(@RequestParam(required = false) String success,
+                                     @RequestParam(required = false) String email,
+                                     Model model) {
+        if ("true".equals(success) && email != null) {
+            model.addAttribute("success", true);
+            model.addAttribute("submittedEmail", email);
+        }
+        return "forgotPassword";
+    }
+
+    @PostMapping("/forgotPassword")
+    public String handleForgotPassword(@RequestParam String email, Model model) {
+        User user = userService.getUserByEmail(email);
+        if (user == null) {
+            model.addAttribute("error", "Email não existe na base de dados.");
+            return "forgotPassword";
+        }
+        // Email exists, redirect to success
+        return "redirect:/forgotPassword?success=true&email=" + email;
+    }
+
     @PostMapping("/auth/web/login")
     public String webLogin(@RequestParam String email,
             @RequestParam String password,
