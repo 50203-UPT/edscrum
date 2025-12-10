@@ -890,97 +890,6 @@
             lucide.createIcons();
             updateOptions();
         }
-<<<<<<< HEAD
-        
-        // Teacher profile image preview / remove handling
-        let teacherPreviewImg = null;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const imageInput = document.getElementById('imageUploadTeacher');
-            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
-            const existingPreview = document.getElementById('teacherProfileImagePreview');
-
-            // Inicializar estado a partir do HTML renderizado
-            const removeTip = document.getElementById('removeTipTeacher');
-            if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
-                teacherPreviewImg = existingPreview;
-                existingPreview.style.display = 'block';
-                if (placeholder) placeholder.style.display = 'none';
-                if (removeTip) removeTip.style.display = 'block';
-            } else {
-                if (existingPreview) existingPreview.style.display = 'none';
-                if (placeholder) placeholder.style.display = 'flex';
-                if (removeTip) removeTip.style.display = 'none';
-            }
-
-            if (imageInput) {
-                imageInput.addEventListener('change', function(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        if (!teacherPreviewImg) {
-                            const newImg = document.createElement('img');
-                            newImg.id = 'teacherProfileImagePreview';
-                            newImg.className = 'rounded-circle border shadow-sm position-absolute';
-                            newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;';
-                            newImg.src = e.target.result;
-                            const container = document.querySelector('#editProfileModal .position-relative');
-                            const inner = container ? container.querySelector('.position-relative') : null;
-                            if (inner) inner.appendChild(newImg);
-                            teacherPreviewImg = newImg;
-                        } else {
-                            teacherPreviewImg.src = e.target.result;
-                            teacherPreviewImg.style.display = 'block';
-                        }
-
-                        if (placeholder) placeholder.style.display = 'none';
-
-                        const removeBtn = document.getElementById('removeImageBtnTeacher');
-                        if (removeBtn) removeBtn.style.display = 'flex';
-
-                        // Mostrar dica de remover
-                        const removeTip = document.getElementById('removeTipTeacher');
-                        if (removeTip) removeTip.style.display = 'block';
-
-                        const removeFlag = document.getElementById('removeImageTeacher');
-                        if (removeFlag) removeFlag.value = 'false';
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        });
-
-        function removeTeacherProfileImage(event) {
-            event && event.preventDefault();
-            const removeFlag = document.getElementById('removeImageTeacher');
-            if (removeFlag) removeFlag.value = 'true';
-
-            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
-            const removeBtn = document.getElementById('removeImageBtnTeacher');
-
-            if (teacherPreviewImg) teacherPreviewImg.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'flex';
-            if (removeBtn) removeBtn.style.display = 'none';
-
-            const removeTip = document.getElementById('removeTipTeacher');
-            if (removeTip) removeTip.style.display = 'none';
-
-            const imageInput = document.getElementById('imageUploadTeacher');
-            if (imageInput) imageInput.value = '';
-        }
-
-        // Reset modal state when closed
-        const editModalEl = document.getElementById('editProfileModal');
-        if (editModalEl) {
-            editModalEl.addEventListener('hide.bs.modal', function() {
-                const form = editModalEl.querySelector('form');
-                if (form) form.reset();
-                // reload to restore server state (profile image etc)
-                location.reload();
-            });
-=======
 
         // Notification Sidebar JavaScript
         function toggleNotificationSidebar() {
@@ -1172,7 +1081,6 @@
             interval = seconds / 3600;
             if (interval > 1) return Math.floor(interval) + " horas atrás";
             return Math.floor(seconds / 60) + " minutos atrás";
->>>>>>> bbb4533 (adicionei a parte das Notificacoes mas ainda nao tem o backend)
         }
     </script>
 </body>
