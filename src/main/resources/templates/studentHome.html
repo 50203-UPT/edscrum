@@ -77,6 +77,25 @@
         background: white;
         font-weight: bold;
     }
+
+    /* Estilos para a foto de perfil */
+    #removeImageBtn:hover,
+    label[for="imageUploadStudent"]:hover {
+        transform: scale(1.1);
+    }
+
+    #removeImageBtn {
+        transition: all 0.3s ease;
+    }
+
+    label[for="imageUploadStudent"] {
+        transition: all 0.3s ease;
+    }
+
+    #profileImagePreview,
+    #profileImagePlaceholder {
+        transition: all 0.3s ease;
+    }
     </style>
 </head>
 <body class="student-bg">
@@ -460,30 +479,52 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/api/student/profile/update}" method="POST" enctype="multipart/form-data">
+                    <form id="editProfileForm" th:action="@{/api/student/profile/update}" method="POST" enctype="multipart/form-data">
                         
                         <input type="hidden" name="id" th:value="${student.id}" /> 
                         
                         <div class="mb-4 text-center">
-                            <div class="position-relative d-inline-block">
-                                <img th:if="${student.profileImage != null}" 
-                                     th:src="@{'/uploads/profile-images/' + ${student.profileImage}}" 
-                                     class="rounded-circle border shadow-sm" 
-                                     style="width: 100px; height: 100px; object-fit: cover;">
-                                
-                                <div th:unless="${student.profileImage != null}" 
-                                     class="bg-light rounded-circle border d-flex justify-content-center align-items-center mx-auto" 
-                                     style="width: 100px; height: 100px;">
-                                    <i data-lucide="user" class="w-12 h-12 text-muted opacity-50"></i>
+                            <div class="position-relative d-inline-block" style="width: fit-content;">
+                                <!-- Preview da Imagem -->
+                                <div class="position-relative" style="width: 120px; height: 120px; margin: 0 auto;">
+                                    <img id="profileImagePreview" 
+                                         th:src="@{${student.profileImage != null} ? '/uploads/profile-images/' + ${student.profileImage} : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E'}"
+                                         class="rounded-circle border-4 border-primary shadow-lg position-absolute" 
+                                         th:style="${student.profileImage != null} ? 'width: 100%; height: 100%; object-fit: cover; display: block; transition: display 0.3s ease; top: 0; left: 0; z-index: 10;' : 'width: 100%; height: 100%; object-fit: cover; display: none; transition: display 0.3s ease; top: 0; left: 0; z-index: 10;'"
+                                         style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; transition: display 0.3s ease; z-index: 10;">
+                                    
+                                    <div id="profileImagePlaceholder"
+                                         th:style="${student.profileImage != null} ? 'width: 100%; height: 100%; background: linear-gradient(135deg, #f0f7ff 0%, #e0e7ff 100%); display: none; position: absolute; top: 0; left: 0; z-index: 1;' : 'width: 100%; height: 100%; background: linear-gradient(135deg, #f0f7ff 0%, #e0e7ff 100%); display: flex; position: absolute; top: 0; left: 0; z-index: 1;'"
+                                         class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-circle border-4 border-primary d-flex justify-content-center align-items-center" 
+                                         style="transition: display 0.3s ease;">
+                                        <i data-lucide="user" class="w-12 h-12 text-primary opacity-30"></i>
+                                    </div>
+
+                                    <!-- Botão Câmara (Editar) -->
+                                    <label for="imageUploadStudent" class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle shadow-lg cursor-pointer transition" 
+                                           style="width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; transform: translate(6px, 6px); border: 3px solid white; z-index: 20;"
+                                           title="Clique para alterar foto">
+                                        <i data-lucide="camera" class="w-5 h-5"></i>
+                                        <input type="file" id="imageUploadStudent" name="imageFile" accept="image/*" class="d-none">
+                                    </label>
+
+                                    <!-- Botão Remover (X) -->
+                                    <button type="button" id="removeImageBtn"
+                                            class="position-absolute top-0 end-0 bg-danger text-white rounded-circle shadow-lg cursor-pointer transition" 
+                                            th:style="${student.profileImage != null} ? 'width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 3px solid white; padding: 0; transition: display 0.3s ease; z-index: 20;' : 'width: 42px; height: 42px; display: none; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 3px solid white; padding: 0; transition: display 0.3s ease; z-index: 20;'"
+                                            title="Clique para remover foto"
+                                            onclick="removeProfileImage(event)">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
                                 </div>
-                                
-                                <label for="imageUploadStudent" class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle p-2 shadow-sm cursor-pointer hover-scale" 
-                                       style="width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; transition: transform 0.2s;">
-                                    <i data-lucide="camera" class="w-4 h-4"></i>
-                                    <input type="file" id="imageUploadStudent" name="imageFile" accept="image/*" class="d-none">
-                                </label>
                             </div>
-                            <p class="text-muted small mt-2 mb-0">Clica na câmara para alterar</p>
+                            
+                            <div class="mt-4 p-3 bg-blue-50 rounded-3 border border-blue-200" style="background-color: #f0f7ff; border-color: #dbeafe;">
+                                <p class="text-muted small mb-1"><strong>Dica:</strong> Clique na câmara para alterar a foto</p>
+                                <p id="removeTip" class="text-muted small mb-0" th:style="${student.profileImage != null} ? 'display: block;' : 'display: none;'">Ou no caixote do lixo para remover</p>
+                            </div>
+                            
+                            <input type="hidden" id="removeImage" name="removeImage" value="false">
                         </div>
 
                         <div class="mb-3">
@@ -605,7 +646,159 @@
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
     <script>
+        let previewImg = null;
+        let hasExistingImage = false;
+
         document.addEventListener('DOMContentLoaded', function() {
+            const imageInput = document.getElementById('imageUploadStudent');
+            const placeholder = document.getElementById('profileImagePlaceholder');
+            const existingPreview = document.getElementById('profileImagePreview');
+            
+            // Determinar estado inicial - verificar se a imagem tem um src válido (não vazio/svg vazio)
+            if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
+                previewImg = existingPreview;
+                hasExistingImage = true;
+                // Garantir que a imagem renderizada fica visível
+                existingPreview.style.display = 'block';
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+            } else {
+                // Se não há imagem válida, garantir que o placeholder fica visível
+                if (existingPreview) {
+                    existingPreview.style.display = 'none';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'flex';
+                }
+            }
+
+            // Event listener para upload
+            if (imageInput) {
+                imageInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    
+                    if (file) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            // Usar ou criar elemento preview
+                            if (!previewImg) {
+                                const newImg = document.createElement('img');
+                                newImg.id = 'profileImagePreview';
+                                newImg.className = 'rounded-circle border-4 border-primary shadow-lg position-absolute';
+                                newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10; transition: display 0.3s ease;';
+                                newImg.src = e.target.result;
+                                
+                                const container = document.querySelector('[style*="width: 120px"]');
+                                if (container) {
+                                    container.appendChild(newImg);
+                                }
+                                previewImg = newImg;
+                            } else {
+                                // Atualizar imagem existente
+                                previewImg.src = e.target.result;
+                            }
+                            
+                            // Mostrar preview, ocultar placeholder
+                            previewImg.style.display = 'block';
+                            if (placeholder) {
+                                placeholder.style.display = 'none';
+                            }
+                            
+                            // Mostrar botão remover
+                            const removeBtn = document.getElementById('removeImageBtn');
+                            if (removeBtn) {
+                                removeBtn.style.display = 'flex';
+                            }
+                            
+                            // Mostrar dica de remover
+                            const removeTip = document.getElementById('removeTip');
+                            if (removeTip) {
+                                removeTip.style.display = 'block';
+                            }
+                            
+                            // Marcar como não removido
+                            document.getElementById('removeImage').value = 'false';
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+
+        // Função para remover a foto
+        function removeProfileImage(event) {
+            event.preventDefault();
+            
+            // Marcar para remoção
+            document.getElementById('removeImage').value = 'true';
+            
+            const placeholder = document.getElementById('profileImagePlaceholder');
+            const removeBtn = document.getElementById('removeImageBtn');
+            
+            // Ocultar preview
+            if (previewImg) {
+                previewImg.style.display = 'none';
+            }
+            
+            // Mostrar placeholder
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+            }
+            
+            // Ocultar botão remover
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+            
+            // Ocultar dica de remover
+            const removeTip = document.getElementById('removeTip');
+            if (removeTip) {
+                removeTip.style.display = 'none';
+            }
+            
+            // Limpar input
+            const imageInput = document.getElementById('imageUploadStudent');
+            if (imageInput) {
+                imageInput.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Resetar formulário e estado da imagem quando modal fecha
+            const editModal = document.getElementById('editStudentProfileModal');
+            if (editModal) {
+                editModal.addEventListener('hide.bs.modal', function() {
+                    // Resetar formulário
+                    const form = document.getElementById('editProfileForm');
+                    if (form) {
+                        form.reset();
+                    }
+                    
+                    // Resetar estado da foto
+                    const imageInput = document.getElementById('imageUploadStudent');
+                    if (imageInput) {
+                        imageInput.value = '';
+                    }
+                    
+                    // Resetar removeImage flag
+                    const removeImageFlag = document.getElementById('removeImage');
+                    if (removeImageFlag) {
+                        removeImageFlag.value = 'false';
+                    }
+                    
+                    // Resetar imagens visíveis
+                    const previewImage = document.getElementById('profileImagePreview');
+                    const placeholder = document.getElementById('profileImagePlaceholder');
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    
+                    // Recarregar para restaurar estado original
+                    location.reload();
+                });
+            }
+
             const themeSwitcher = document.getElementById('theme-switcher');
             const body = document.body;
             
