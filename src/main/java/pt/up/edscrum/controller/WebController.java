@@ -28,6 +28,7 @@ import pt.up.edscrum.service.ProjectService;
 import pt.up.edscrum.service.TeamService;
 import pt.up.edscrum.service.UserService;
 import pt.up.edscrum.utils.FileStorageService;
+import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 
 @Controller
 public class WebController {
@@ -342,6 +343,17 @@ public class WebController {
             System.err.println("Erro: " + e.getMessage());
         }
         return "redirect:/view/teacher/course/" + courseId;
+    }
+
+    @GetMapping("/view/project/{id}")
+    public String projectDetails(@PathVariable Long id, Model model) {
+        try {
+            ProjectDetailsDTO project = dashboardService.getProjectDetails(id);
+            model.addAttribute("project", project);
+            return "projectDetails";
+        } catch (Exception e) {
+            return "redirect:/?error=project_not_found";
+        }
     }
 
     // --- ÁREA DO ESTUDANTE (CORRIGIDA) ---

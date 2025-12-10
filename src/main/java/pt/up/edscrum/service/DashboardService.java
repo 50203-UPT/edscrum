@@ -6,14 +6,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // IMPORTANTE
 
 import pt.up.edscrum.dto.dashboard.ProjectProgressDTO;
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
 import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
+import pt.up.edscrum.enums.SprintStatus; // Importar Enum
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Project;
+import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
@@ -23,6 +26,9 @@ import pt.up.edscrum.repository.ScoreRepository;
 import pt.up.edscrum.repository.StudentAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
+import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
+import pt.up.edscrum.model.TeamAward;
+import pt.up.edscrum.repository.TeamAwardRepository;
 
 @Service
 public class DashboardService {
@@ -30,15 +36,17 @@ public class DashboardService {
     private final CourseRepository courseRepo;
     private final ProjectRepository projectRepo;
     private final TeamRepository teamRepo;
+    private final TeamAwardRepository teamAwardRepo;
     private final StudentAwardRepository studentAwardRepo;
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
     private final EnrollmentRepository enrollmentRepo;
 
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo) {
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo,TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
+        this.teamAwardRepo = teamAwardRepo;
         this.studentAwardRepo = studentAwardRepo;
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
@@ -46,29 +54,50 @@ public class DashboardService {
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
+   
+    @Transactional(readOnly = true)
     public TeacherDashboardDTO getTeacherDashboard(Long courseId) {
         Course course = courseRepo.findById(courseId).orElseThrow(() -> new RuntimeException("Curso não encontrado"));
         TeacherDashboardDTO dto = new TeacherDashboardDTO();
         dto.setCourseId(course.getId());
         dto.setCourseName(course.getName());
-        dto.setTotalStudents((int) course.getEnrollments().size());
+        
+        // Contagens
+        dto.setTotalStudents(course.getEnrollments() != null ? course.getEnrollments().size() : 0);
         dto.setTotalTeams((int) teamRepo.countByCourseId(courseId));
         dto.setTotalProjects((int) projectRepo.countByCourseId(courseId));
+        
+        // Projetos e Progresso
         dto.setProjects(projectRepo.findByCourseId(courseId).stream().map(p -> {
             ProjectProgressDTO pp = new ProjectProgressDTO();
             pp.setProjectId(p.getId());
             pp.setProjectName(p.getName());
-            // Lógica simples de progresso (podes melhorar depois)
-            long total = p.getSprints().size();
-            long done = p.getSprints().stream().filter(s -> s.getStatus().name().equals("DONE")).count();
-            pp.setCompletionPercentage(total == 0 ? 0 : (done * 100.0 / total));
+            
+            // Lógica de progresso corrigida e segura contra Nulos
+            if (p.getSprints() == null || p.getSprints().isEmpty()) {
+                pp.setCompletionPercentage(0);
+            } else {
+                long total = p.getSprints().size();
+                long done = p.getSprints().stream()
+                        .filter(s -> s.getStatus() != null && s.getStatus() == SprintStatus.DONE) // Comparação segura
+                        .count();
+                pp.setCompletionPercentage(total == 0 ? 0 : (done * 100.0 / total));
+            }
             return pp;
         }).collect(Collectors.toList()));
-        dto.setAwardStats(studentAwardRepo.countAwardsByCourse(courseId));
+        
+        // Stats de prémios (Pode retornar lista vazia se a query no repo estiver incorreta, mas não crasha)
+        try {
+            dto.setAwardStats(studentAwardRepo.countAwardsByCourse(courseId));
+        } catch (Exception e) {
+            dto.setAwardStats(new ArrayList<>()); // Fallback seguro
+        }
+        
         return dto;
     }
 
     // ===================== DASHBOARD ESTUDANTE =====================
+    @Transactional(readOnly = true)
     public StudentDashboardDTO getStudentDashboard(Long studentId) {
 
         User user = userRepo.findById(studentId)
@@ -79,6 +108,8 @@ public class DashboardService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setProfileImage(user.getProfileImage());
+        
+        // CORREÇÃO: Preencher campos do modal para evitar erro no Thymeleaf
         dto.setNotificationAwards(user.isNotificationAwards());
         dto.setNotificationRankings(user.isNotificationRankings());
 
@@ -112,7 +143,6 @@ public class DashboardService {
             dto.setCourseId(mainCourse.getId());
             dto.setCourseName(mainCourse.getName());
 
-            // Buscar ranking real da turma
             List<RankingDTO> allRankings = getStudentRanking(mainCourse.getId());
 
             dto.setTotalClassStudents(allRankings.size());
@@ -129,7 +159,6 @@ public class DashboardService {
                 double avg = allRankings.stream().mapToLong(RankingDTO::getTotalPoints).average().orElse(0.0);
                 dto.setClassAverage(avg);
 
-                // Minha Posição
                 int myRank = 0;
                 for (int i = 0; i < allRankings.size(); i++) {
                     if (allRankings.get(i).getId().equals(studentId)) {
@@ -171,33 +200,78 @@ public class DashboardService {
         return dto;
     }
 
-    // ===================== RANKINGS (LÓGICA CORRIGIDA) =====================
-    // Este método agora calcula o ranking corretamente baseando-se nos inscritos
-    public List<RankingDTO> getStudentRanking(Long courseId) {
-        List<RankingDTO> classRanking = new ArrayList<>();
+    @Transactional(readOnly = true)
+    public ProjectDetailsDTO getProjectDetails(Long projectId) {
+        Project project = projectRepo.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
 
-        // 1. Buscar todos os alunos inscritos no curso
-        List<Enrollment> courseEnrollments = enrollmentRepo.findByCourseId(courseId);
-
-        // 2. Para cada aluno, buscar o Score já calculado
-        for (Enrollment e : courseEnrollments) {
-            User u = e.getStudent();
-
-            // Busca o score direto na tabela
-            pt.up.edscrum.model.Score s = scoreRepo.findByUser(u);
-            int totalP = (s != null) ? s.getTotalPoints() : 0;
-
-            classRanking.add(new RankingDTO(u.getId(), u.getName(), (long) totalP));
+        ProjectDetailsDTO dto = new ProjectDetailsDTO();
+        dto.setId(project.getId());
+        dto.setName(project.getName());
+        dto.setDescription(project.getSprintGoals());
+        
+        // --- A. DADOS DA EQUIPA E PRÉMIOS ---
+        // Assume-se que o projeto tem uma equipa ativa (lógica simplificada para 1 equipa)
+        if (project.getTeams() != null && !project.getTeams().isEmpty()) {
+            Team team = project.getTeams().get(0);
+            dto.setTeam(team);
+            
+            // Buscar prémios reais da BD
+            List<TeamAward> awards = teamAwardRepo.findByTeamId(team.getId());
+            dto.setAwards(awards);
+            dto.setTotalAwards(awards.size());
+            
+            // Score Global: Soma dos pontos reais ganhos pela equipa
+            int score = awards.stream().mapToInt(TeamAward::getPointsEarned).sum();
+            dto.setGlobalScore(score); 
+        } else {
+            dto.setAwards(new ArrayList<>());
+            dto.setGlobalScore(0);
         }
 
-        // 3. Ordenar
-        classRanking.sort((r1, r2) -> Long.compare(r2.getTotalPoints(), r1.getTotalPoints()));
+        // --- B. CÁLCULO DE PROGRESSO REAL (BASEADO EM SPRINTS) ---
+        List<Sprint> sprints = project.getSprints();
+        dto.setSprints(sprints);
+        
+        int totalSprints = (sprints != null) ? sprints.size() : 0;
+        dto.setTotalSprints(totalSprints);
 
+        // Como não há tabela de Tarefas, a unidade de progresso é a Sprint.
+        // Progresso = Sprints Concluídas (DONE) vs Total de Sprints.
+        int sprintsCompleted = 0;
+        
+        if (sprints != null) {
+            sprintsCompleted = (int) sprints.stream()
+                .filter(s -> s.getStatus() == SprintStatus.DONE)
+                .count();
+        }
+
+        // Preenche o DTO usando Sprints como contagem de "tarefas"
+        dto.setTotalTasks(totalSprints);
+        dto.setCompletedTasks(sprintsCompleted);
+        
+        // Percentagem Real
+        int percent = (totalSprints > 0) ? (sprintsCompleted * 100 / totalSprints) : 0;
+        dto.setProgressPercentage(percent);
+
+        return dto;
+    }
+
+
+    public List<RankingDTO> getStudentRanking(Long courseId) {
+        List<RankingDTO> classRanking = new ArrayList<>();
+        List<Enrollment> courseEnrollments = enrollmentRepo.findByCourseId(courseId);
+
+        for (Enrollment e : courseEnrollments) {
+            User u = e.getStudent();
+            pt.up.edscrum.model.Score s = scoreRepo.findByUser(u);
+            int totalP = (s != null) ? s.getTotalPoints() : 0;
+            classRanking.add(new RankingDTO(u.getId(), u.getName(), (long) totalP));
+        }
+        classRanking.sort((r1, r2) -> Long.compare(r2.getTotalPoints(), r1.getTotalPoints()));
         return classRanking;
     }
 
-    // Método auxiliar (não é mais necessário somar tudo aqui, pois o Score já tem o total)
-    // Mas mantemos caso precises do valor isolado
     private int calculateTotalPointsForStudent(Long studentId) {
         User u = userRepo.findById(studentId).orElse(null);
         if (u == null) {

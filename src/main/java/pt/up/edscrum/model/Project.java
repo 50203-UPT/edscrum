@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import pt.up.edscrum.enums.ProjectStatus;
+import pt.up.edscrum.enums.SprintStatus;
 
 @Entity
 public class Project {
@@ -36,6 +37,7 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status = ProjectStatus.PLANEAMENTO;
+
 
     // Getters e Setters
     public Long getId() {
@@ -92,5 +94,16 @@ public class Project {
 
     public void setStatus(ProjectStatus status) {
         this.status = status;
+    }
+
+    public int getProgress() {
+        if (sprints == null || sprints.isEmpty()) {
+            return 0;
+        }
+        long doneSprints = sprints.stream()
+                .filter(s -> s.getStatus() == SprintStatus.DONE)
+                .count();
+        
+        return (int) ((doneSprints * 100.0) / sprints.size());
     }
 }
