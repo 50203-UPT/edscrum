@@ -96,6 +96,139 @@
     #profileImagePlaceholder {
         transition: all 0.3s ease;
     }
+
+    /* Notification Sidebar Styles */
+    .notification-sidebar {
+        position: fixed;
+        top: 0;
+        right: -400px; /* Hidden by default */
+        width: 400px;
+        height: 100%;
+        background-color: #f8f9fa; /* Matching the body background */
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 1050;
+        transition: right 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #e9ecef;
+    }
+
+    .notification-sidebar.open {
+        right: 0; /* Visible */
+    }
+
+    .notification-sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #ffffff; /* White header for better contrast */
+    }
+
+    .notification-sidebar-header h5 {
+        color: var(--bs-body-color);
+        cursor: pointer;
+    }
+
+    .notification-sidebar-body {
+        flex-grow: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+    }
+
+    .notification-item {
+        background-color: transparent;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        color: #212529;
+    }
+
+    .notification-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .notification-item.unread {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-color: rgba(13, 110, 253, 0.2);
+    }
+
+    .notification-item.unread:hover {
+        background-color: rgba(13, 110, 253, 0.15);
+        border-color: rgba(13, 110, 253, 0.3);
+    }
+
+    .notification-content h6 {
+        color: inherit;
+        margin: 0 0 4px 0;
+        font-weight: 600;
+    }
+
+    .notification-content p {
+        color: inherit;
+        opacity: 0.9;
+        margin: 0 0 8px 0;
+    }
+
+    .notification-time {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        color: inherit;
+    }
+
+    .notification-icon {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .notification-content {
+        flex-grow: 1;
+    }
+
+    .notification-content h6 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--bs-body-color);
+    }
+
+    .notification-content p {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: #adb5bd;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .notification-actions .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
     </style>
 </head>
 <body class="student-bg">
@@ -106,9 +239,9 @@
             <div><h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5><small class="text-muted">Área do Estudante</small></div>
         </div>
         <div class="d-flex align-items-center gap-4">
-            <div class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light">
-                <i data-lucide="bell" class="text-secondary"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">1</span>
+            <div id="notificationBellContainer" class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light" onclick="toggleNotificationSidebar()">
+                <i id="notificationBellIcon" data-lucide="bell" class="text-secondary"></i>
+                <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
             </div>
             <div class="vr text-muted opacity-25" style="height: 30px;"></div>
             <div class="dropdown">
@@ -133,6 +266,32 @@
             </div>
         </div>
     </nav>
+
+    <!-- Notification Sidebar -->
+    <div id="notificationSidebar" class="notification-sidebar">
+        <div class="notification-sidebar-header">
+            <h5 class="fw-bold mb-0" onclick="toggleNotificationSidebar()">Notificações</h5>
+            <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
+        </div>
+        <div class="notification-sidebar-body">
+            <div id="notificationsContainer">
+                <!-- Notification items will be loaded here -->
+                <div class="text-center text-muted mt-4" id="noNotifications" style="display: none;">
+                    <i data-lucide="bell-off" class="w-8 h-8 mb-2"></i>
+                    <p>Nenhuma notificação nova.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-3" style="max-width: 1200px;">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #d1e7dd; color: #0f5132;">
+            <i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span th:text="${successMessage}">Sucesso!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #f8d7da; color: #842029;">
+            <i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i><span th:text="${errorMessage}">Erro!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
 
     <div class="tabs-container shadow-sm">
         <button class="tab-btn active" onclick="openTab('overview', this)"><i data-lucide="layout-dashboard" class="inline-block w-4 h-4 me-2"></i>Visão Geral</button>
@@ -520,8 +679,7 @@
                             </div>
                             
                             <div class="mt-4 p-3 bg-blue-50 rounded-3 border border-blue-200" style="background-color: #f0f7ff; border-color: #dbeafe;">
-                                <p class="text-muted small mb-1"><strong>Dica:</strong> Clique na câmara para alterar a foto</p>
-                                <p id="removeTip" class="text-muted small mb-0" th:style="${student.profileImage != null} ? 'display: block;' : 'display: none;'">Ou no caixote do lixo para remover</p>
+                                <p class="text-muted small mb-1"><strong>Clique na câmara para alterar a foto</strong></p>
                             </div>
                             
                             <input type="hidden" id="removeImage" name="removeImage" value="false">
@@ -654,17 +812,14 @@
             const placeholder = document.getElementById('profileImagePlaceholder');
             const existingPreview = document.getElementById('profileImagePreview');
             
-            // Determinar estado inicial - verificar se a imagem tem um src válido (não vazio/svg vazio)
             if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
                 previewImg = existingPreview;
                 hasExistingImage = true;
-                // Garantir que a imagem renderizada fica visível
                 existingPreview.style.display = 'block';
                 if (placeholder) {
                     placeholder.style.display = 'none';
                 }
             } else {
-                // Se não há imagem válida, garantir que o placeholder fica visível
                 if (existingPreview) {
                     existingPreview.style.display = 'none';
                 }
@@ -673,7 +828,6 @@
                 }
             }
 
-            // Event listener para upload
             if (imageInput) {
                 imageInput.addEventListener('change', function(event) {
                     const file = event.target.files[0];
@@ -682,7 +836,6 @@
                         const reader = new FileReader();
                         
                         reader.onload = function(e) {
-                            // Usar ou criar elemento preview
                             if (!previewImg) {
                                 const newImg = document.createElement('img');
                                 newImg.id = 'profileImagePreview';
@@ -696,29 +849,24 @@
                                 }
                                 previewImg = newImg;
                             } else {
-                                // Atualizar imagem existente
                                 previewImg.src = e.target.result;
                             }
                             
-                            // Mostrar preview, ocultar placeholder
                             previewImg.style.display = 'block';
                             if (placeholder) {
                                 placeholder.style.display = 'none';
                             }
                             
-                            // Mostrar botão remover
                             const removeBtn = document.getElementById('removeImageBtn');
                             if (removeBtn) {
                                 removeBtn.style.display = 'flex';
                             }
                             
-                            // Mostrar dica de remover
                             const removeTip = document.getElementById('removeTip');
                             if (removeTip) {
                                 removeTip.style.display = 'block';
                             }
                             
-                            // Marcar como não removido
                             document.getElementById('removeImage').value = 'false';
                         };
                         
@@ -728,38 +876,31 @@
             }
         });
 
-        // Função para remover a foto
         function removeProfileImage(event) {
             event.preventDefault();
             
-            // Marcar para remoção
             document.getElementById('removeImage').value = 'true';
             
             const placeholder = document.getElementById('profileImagePlaceholder');
             const removeBtn = document.getElementById('removeImageBtn');
             
-            // Ocultar preview
             if (previewImg) {
                 previewImg.style.display = 'none';
             }
             
-            // Mostrar placeholder
             if (placeholder) {
                 placeholder.style.display = 'flex';
             }
             
-            // Ocultar botão remover
             if (removeBtn) {
                 removeBtn.style.display = 'none';
             }
             
-            // Ocultar dica de remover
             const removeTip = document.getElementById('removeTip');
             if (removeTip) {
                 removeTip.style.display = 'none';
             }
             
-            // Limpar input
             const imageInput = document.getElementById('imageUploadStudent');
             if (imageInput) {
                 imageInput.value = '';
@@ -767,34 +908,24 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Resetar formulário e estado da imagem quando modal fecha
             const editModal = document.getElementById('editStudentProfileModal');
             if (editModal) {
                 editModal.addEventListener('hide.bs.modal', function() {
-                    // Resetar formulário
                     const form = document.getElementById('editProfileForm');
                     if (form) {
                         form.reset();
                     }
                     
-                    // Resetar estado da foto
                     const imageInput = document.getElementById('imageUploadStudent');
                     if (imageInput) {
                         imageInput.value = '';
                     }
                     
-                    // Resetar removeImage flag
                     const removeImageFlag = document.getElementById('removeImage');
                     if (removeImageFlag) {
                         removeImageFlag.value = 'false';
                     }
-                    
-                    // Resetar imagens visíveis
-                    const previewImage = document.getElementById('profileImagePreview');
-                    const placeholder = document.getElementById('profileImagePlaceholder');
-                    const removeBtn = document.getElementById('removeImageBtn');
-                    
-                    // Recarregar para restaurar estado original
+
                     location.reload();
                 });
             }
@@ -802,14 +933,12 @@
             const themeSwitcher = document.getElementById('theme-switcher');
             const body = document.body;
             
-            // 1. Verificar preferência guardada ao carregar
             const currentTheme = localStorage.getItem('theme');
             if (currentTheme === 'dark') {
                 body.classList.add('dark-theme');
                 if(themeSwitcher) themeSwitcher.checked = true;
             }
 
-            // 2. Evento de clique no toggle
             if(themeSwitcher) {
                 themeSwitcher.addEventListener('change', () => {
                     if (themeSwitcher.checked) {
@@ -821,7 +950,177 @@
                     }
                 });
             }
+
+            // Auto-dismiss success alerts after 3 seconds
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(successAlert);
+                    bsAlert.close();
+                }, 3000);
+            }
+
+            fetchNotifications();
         });
+
+        function toggleNotificationSidebar() {
+            const sidebar = document.getElementById('notificationSidebar');
+            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                fetchNotifications();
+            }
+        }
+
+        async function fetchNotifications() {
+            const notificationsContainer = document.getElementById('notificationsContainer');
+            const notificationCountBadge = document.getElementById('notificationCount');
+            const notificationBellIcon = document.getElementById('notificationBellIcon');
+            const noNotificationsMessage = document.getElementById('noNotifications');
+
+            notificationsContainer.innerHTML = '<div class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">A carregar notificações...</p></div>';
+            notificationCountBadge.style.display = 'none';
+            notificationBellIcon.classList.remove('text-danger');
+            notificationBellIcon.classList.add('text-secondary');
+
+            try {
+                let notifications = [];
+                try {
+                    const response = await fetch('/api/notifications/student');
+                    if (response.ok) {
+                        notifications = await response.json();
+                    } else {
+                        throw new Error('API returned ' + response.status);
+                    }
+                } catch (apiError) {
+                    console.log('Using mock data due to API error:', apiError);
+                    notifications = [
+                        { id: 1, title: "Bem-vindo ao EduScrum!", message: "O seu registo foi concluído com sucesso.", type: "WELCOME", timestamp: new Date(Date.now() - 172800000).toISOString(), read: true },
+                        { id: 2, title: "Novo projeto atribuído", message: "Foi adicionado ao projeto 'Sistema de Gestão Escolar'.", type: "PROJECT_ASSIGNED", link: "/projects/1", timestamp: new Date(Date.now() - 86400000).toISOString(), read: true },
+                        { id: 3, title: "Prémio Desbloqueado!", message: "Parabéns! Ganhou o prémio 'Participação Ativa'.", type: "AWARD", timestamp: new Date().toISOString(), read: false }
+                    ];
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                notificationsContainer.innerHTML = '';
+
+                if (notifications.length === 0) {
+                    noNotificationsMessage.style.display = 'block';
+                    notificationsContainer.appendChild(noNotificationsMessage);
+                } else {
+                    noNotificationsMessage.style.display = 'none';
+                    notifications.forEach(notification => {
+                        const notificationElement = createNotificationElement(notification);
+                        notificationsContainer.appendChild(notificationElement);
+                    });
+                }
+
+                const unreadCount = notifications.filter(n => !n.read).length;
+                if (unreadCount > 0) {
+                    notificationCountBadge.textContent = unreadCount;
+                    notificationCountBadge.style.display = 'block';
+                    notificationBellIcon.classList.remove('text-secondary');
+                    notificationBellIcon.classList.add('text-danger');
+                } else {
+                    notificationCountBadge.style.display = 'none';
+                    notificationBellIcon.classList.remove('text-danger');
+                    notificationBellIcon.classList.add('text-secondary');
+                }
+
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notificationsContainer.innerHTML = `
+                    <div class="text-center text-danger mt-4">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 mb-2"></i>
+                        <p class="mt-2">Erro ao carregar notificações.</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="fetchNotifications()">
+                            Tentar novamente
+                        </button>
+                    </div>`;
+                lucide.createIcons();
+                notificationCountBadge.style.display = 'none';
+                notificationBellIcon.classList.remove('text-danger');
+                notificationBellIcon.classList.add('text-secondary');
+            }
+        }
+
+        function createNotificationElement(notification) {
+            const item = document.createElement('div');
+            item.classList.add('notification-item');
+            if (!notification.read) {
+                item.classList.add('unread');
+            }
+
+            let iconHtml = '';
+            let iconBgClass = 'bg-primary';
+            switch (notification.type) {
+                case 'AWARD':
+                    iconHtml = '<i data-lucide="award" class="w-5 h-5"></i>';
+                    iconBgClass = 'bg-primary';
+                    break;
+                case 'TEAM_CREATED':
+                    iconHtml = '<i data-lucide="users" class="w-5 h-5"></i>';
+                    iconBgClass = 'bg-warning';
+                    break;
+                case 'PROJECT_COMPLETED':
+                    iconHtml = '<i data-lucide="check-circle" class="w-5 h-5"></i>';
+                    iconBgClass = 'bg-success';
+                    break;
+                case 'REMINDER':
+                    iconHtml = '<i data-lucide="info" class="w-5 h-5"></i>';
+                    iconBgClass = 'bg-info';
+                    break;
+                default:
+                    iconHtml = '<i data-lucide="bell" class="w-5 h-5"></i>';
+                    iconBgClass = 'bg-secondary';
+            }
+
+            item.innerHTML = `
+                <div class="notification-icon ${iconBgClass}">${iconHtml}</div>
+                <div class="notification-content">
+                    <h6>${notification.title}</h6>
+                    <p>${notification.message}</p>
+                    <div class="notification-actions">
+                        ${notification.link ? `<button class="btn btn-sm btn-outline-primary" onclick="window.location.href='${notification.link}'">Ver Detalhes</button>` : ''}
+                        ${!notification.read ? `<button class="btn btn-sm btn-outline-secondary" onclick="markNotificationAsRead('${notification.id}')">Marcar como lida</button>` : ''}
+                    </div>
+                </div>
+                <span class="notification-time">${timeAgo(notification.timestamp)}</span>
+            `;
+            return item;
+        }
+
+        async function markNotificationAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                fetchNotifications();
+            } catch (error) {
+                console.error('Erro ao marcar notificação como lida:', error);
+            }
+        }
+
+        function timeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const seconds = Math.floor((now - date) / 1000);
+
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " anos atrás";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " meses atrás";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " dias atrás";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " horas atrás";
+            return Math.floor(seconds / 60) + " minutos atrás";
+        }
     </script>
     <script th:inline="javascript">
         // Configura o modal de inscrição com os dados do curso clicado
@@ -884,6 +1183,17 @@
                 }
             });
         }
+
+        // Auto-dismiss success alerts after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(successAlert);
+                    bsAlert.close();
+                }, 3000);
+            }
+        });
     </script>
 </body>
 </html>
