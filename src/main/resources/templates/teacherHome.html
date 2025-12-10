@@ -182,15 +182,26 @@
                                         </small>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center gap-4">
-                                    <div class="text-end"><div class="fw-bold text-dark" style="font-size: 0.9rem;">Score: 88%</div><span class="badge bg-light text-dark border rounded-pill px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span></div>
-                                    <a th:href="@{'/view/teacher/course/' + ${course.id}}" class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i></a>
-                                </div>
+                               <div class="d-flex align-items-center gap-4">
+                            <div class="text-end">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem;" 
+                                    th:text="'Score: ' + ${project.progress} + '%'">Score: 0%</div>
+                                    
+                                <span class="badge bg-light text-dark border rounded-pill px-2 py-0" 
+                                    style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
+                            </div>
+                            
+                            <a th:href="@{'/view/project/' + ${project.id}}" 
+                            class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
+                            style="width: 32px; height: 32px;">
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                            </a>
+                        </div>
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(course.projects)}" class="text-center py-3 border border-dashed rounded bg-light"><small class="text-muted">Nenhum projeto criado.</small></div>
                     </div>
-                </div>
+                </div>7
             </div>
             <div th:if="${#lists.isEmpty(courses)}" class="alert alert-info">Ainda não criou nenhum curso.</div>
         </div>
