@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import pt.up.edscrum.model.Award;
-import pt.up.edscrum.model.StudentAward;
 import pt.up.edscrum.service.AwardService;
 
 @RestController
@@ -53,12 +52,21 @@ public class AwardController {
         awardService.deleteAward(id);
     }
 
-    // ATRIBUI PONTOS A UM STUDENT -------------------------
+    // ATRIBUI PONTOS A UM ESTUDANTE -------------------------
+    // Corrigido: agora retorna void porque o serviço também é void
     @PostMapping("/assign/{awardId}/to/{studentId}")
-    public StudentAward assignAward(
+    public void assignAwardToStudent(
             @PathVariable Long awardId,
             @PathVariable Long studentId) {
-        return awardService.assignAwardToStudent(awardId, studentId);
+        awardService.assignAwardToStudent(awardId, studentId);
+    }
+
+    // ATRIBUI PONTOS A UMA EQUIPA (NOVO) --------------------
+    @PostMapping("/assign/{awardId}/to-team/{teamId}")
+    public void assignAwardToTeam(
+            @PathVariable Long awardId,
+            @PathVariable Long teamId) {
+        awardService.assignAwardToTeam(awardId, teamId);
     }
 
     // CALCULA TOTAL DE PONTOS -----------------------------
