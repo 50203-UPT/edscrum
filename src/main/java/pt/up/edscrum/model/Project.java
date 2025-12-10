@@ -4,12 +4,15 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import pt.up.edscrum.enums.ProjectStatus;
 
 @Entity
 public class Project {
@@ -30,6 +33,9 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Sprint> sprints;
+
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus status = ProjectStatus.PLANEAMENTO;
 
     // Getters e Setters
     public Long getId() {
@@ -78,5 +84,13 @@ public class Project {
 
     public void setSprints(List<Sprint> sprints) {
         this.sprints = sprints;
+    }
+
+    public ProjectStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ProjectStatus status) {
+        this.status = status;
     }
 }

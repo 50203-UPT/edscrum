@@ -1,46 +1,73 @@
 package pt.up.edscrum.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import pt.up.edscrum.model.Course;
+import pt.up.edscrum.model.Enrollment;
+import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
+import pt.up.edscrum.repository.EnrollmentRepository;
+import pt.up.edscrum.repository.UserRepository;
 
 @Service
 public class CourseService {
 
     private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository; // Novo
+    private final UserRepository userRepository;             // Novo
 
-    // Construtor manual
-    public CourseService(CourseRepository courseRepository) {
+    // Construtor atualizado com as novas dependências
+    public CourseService(CourseRepository courseRepository,
+            EnrollmentRepository enrollmentRepository,
+            UserRepository userRepository) {
         this.courseRepository = courseRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.userRepository = userRepository;
     }
 
-    // Listar todos os cursos
+    // --- Métodos Existentes ---
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
 
-    // Buscar curso por ID
     public Course getCourseById(Long id) {
         return courseRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
     }
 
-    // Criar novo curso
+    public List<Course> getCoursesByTeacher(Long teacherId) {
+        return courseRepository.findByTeacherId(teacherId);
+    }
+
     public Course createCourse(Course course) {
         return courseRepository.save(course);
     }
 
-    // Atualizar curso
     public Course updateCourse(Long id, Course courseDetails) {
         Course course = getCourseById(id);
         course.setName(courseDetails.getName());
         course.setDescription(courseDetails.getDescription());
+        course.setCode(courseDetails.getCode());
+        course.setSemester(courseDetails.getSemester());
+        course.setYear(courseDetails.getYear());
         return courseRepository.save(course);
     }
 
-    // Apagar curso
     public void deleteCourse(Long id) {
         courseRepository.deleteById(id);
+    }
+
+    // --- NOVO: Método de Inscrição ---
+    public void enrollStudent(Long courseId, Long studentId) {
+        Course course = getCourseById(courseId);
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Estudante não encontrado"));
+        Enrollment enrollment = new Enrollment();
+        enrollment.setCourse(course);
+        enrollment.setStudent(student);
+
+        enrollmentRepository.save(enrollment);
     }
 }

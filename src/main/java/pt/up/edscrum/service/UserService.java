@@ -22,6 +22,11 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    // Listar apenas estudantes
+    public List<User> getAllStudents() {
+        return userRepository.findByRole("STUDENT");
+    }
+
     // Buscar usuário por ID
     public User getUserById(Long id) {
         return userRepository.findById(id)

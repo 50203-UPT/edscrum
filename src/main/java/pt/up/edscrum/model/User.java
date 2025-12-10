@@ -23,6 +23,8 @@ public class User {
     private boolean notificationAwards = true;
     private boolean notificationRankings = true;
 
+    private String profileImage;
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -78,6 +80,14 @@ public class User {
 
     public void setNotificationRankings(boolean notificationRankings) {
         this.notificationRankings = notificationRankings;
+    }
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 
     @Override

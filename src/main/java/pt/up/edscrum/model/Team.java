@@ -24,6 +24,10 @@ public class Team {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @ManyToOne
+    @JoinColumn(name = "course_id")
+    private Course course;
+
     // Papéis Scrum
     @ManyToOne
     @JoinColumn(name = "scrum_master_id")
@@ -89,5 +93,13 @@ public class Team {
 
     public void setDevelopers(List<User> developers) {
         this.developers = developers;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
     }
 }

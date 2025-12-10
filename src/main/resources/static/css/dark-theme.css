@@ -1,83 +1,238 @@
-body.dark-theme {
-    background-color: #121212;
-    color: #e0e0e0;
+/* =========================================
+   DARK THEME - EduScrum (Updated)
+   ========================================= */
+
+/* Body & Backgrounds */
+body.dark-theme,
+body.dark-theme.teacher-bg,
+body.dark-theme.student-bg {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
 }
 
-.dark-theme .card {
-    background-color: rgba(30, 30, 30, 0.85) !important;
-    color: #e0e0e0;
-    border: 1px solid #444;
+/* =========================================
+   CARDS & CONTAINERS
+   ========================================= */
+.dark-theme .card,
+.dark-theme .content-card,
+.dark-theme .course-card-detailed,
+.dark-theme .stat-card,
+.dark-theme .modal-content {
+    background-color: #1e1e1e !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
 }
 
-.dark-theme .card-header {
-    background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d) !important;
-    border-bottom: 1px solid #555;
-    color: #ffffff;
+.dark-theme .card-header,
+.dark-theme .modal-header,
+.dark-theme .modal-footer {
+    border-color: #333 !important;
+    background-color: #1e1e1e !important;
 }
 
+/* =========================================
+   NAVBAR & TABS
+   ========================================= */
+.dark-theme .navbar,
+.dark-theme .navbar-teacher,
+.dark-theme .navbar-student {
+    background-color: rgba(30, 30, 30, 0.95) !important;
+    border-bottom-color: #333 !important;
+    backdrop-filter: blur(10px);
+}
+
+.dark-theme .tabs-container {
+    background-color: #1e1e1e !important;
+    border-bottom-color: #333 !important;
+}
+
+.dark-theme .tab-btn {
+    color: #aaa !important;
+}
+
+.dark-theme .tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+}
+
+.dark-theme .tab-btn.active {
+    color: #60a5fa !important; /* Azul claro */
+    border-bottom-color: #60a5fa !important;
+    background-color: transparent !important;
+}
+
+/* =========================================
+   TEXT & UTILITIES OVERRIDES
+   ========================================= */
+.dark-theme .text-dark {
+    color: #e0e0e0 !important;
+}
+
+.dark-theme .text-muted {
+    color: #a0a0a0 !important;
+}
+
+.dark-theme .text-primary {
+    color: #60a5fa !important;
+}
+
+.dark-theme .bg-white {
+    background-color: #1e1e1e !important;
+}
+
+.dark-theme .bg-light {
+    background-color: #2c2c2c !important;
+}
+
+.dark-theme .border-light {
+    border-color: #333 !important;
+}
+
+/* =========================================
+   FORMS & INPUTS
+   ========================================= */
 .dark-theme .form-control,
-.dark-theme .form-select {
-    background-color: #2c2c2c;
-    color: #e0e0e0;
-    border-color: #444;
+.dark-theme .form-select,
+.dark-theme input.bg-light,
+.dark-theme textarea.bg-light,
+.dark-theme select.bg-light {
+    background-color: #2c2c2c !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
 }
 
 .dark-theme .form-control:focus,
 .dark-theme .form-select:focus {
-    background-color: #333;
-    color: #ffffff;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    background-color: #333 !important;
+    border-color: #60a5fa !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.25rem rgba(96, 165, 250, 0.25);
 }
 
 .dark-theme .form-label {
-    color: #bbb;
+    color: #ccc !important;
 }
 
-.dark-theme .navbar {
-    background-color: rgba(30, 30, 30, 0.8) !important;
-    backdrop-filter: blur(10px);
+/* =========================================
+   BUTTONS & LISTS
+   ========================================= */
+.dark-theme .btn-new-project,
+.dark-theme .btn-white,
+.dark-theme .btn-light {
+    background-color: #2c2c2c !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
 }
 
+.dark-theme .btn-new-project:hover,
+.dark-theme .btn-white:hover,
+.dark-theme .btn-light:hover {
+    background-color: #333 !important;
+    border-color: #60a5fa !important;
+    color: #fff !important;
+}
+
+.dark-theme .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.dark-theme .project-list-item,
+.dark-theme .list-group-item {
+    background-color: #252525 !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+}
+
+/* =========================================
+   DROPDOWNS
+   ========================================= */
 .dark-theme .dropdown-menu {
-    background-color: #1e1e1e;
-    border: 1px solid #444;
+    background-color: #1e1e1e !important;
+    border-color: #333 !important;
 }
 
 .dark-theme .dropdown-item {
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
 }
 
 .dark-theme .dropdown-item:hover {
-    background-color: #2c2c2c;
+    background-color: #333 !important;
+    color: #fff !important;
 }
 
 .dark-theme .dropdown-divider {
-    border-top: 1px solid #444;
+    border-top-color: #333 !important;
 }
 
+/* =========================================
+   TABLES & RANKINGS
+   ========================================= */
 .dark-theme .table {
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
+}
+
+.dark-theme .table thead th {
+    background-color: #252525 !important;
+    color: #ccc !important;
+    border-bottom-color: #333;
 }
 
 .dark-theme .table-hover tbody tr:hover {
-    color: #ffffff;
-    background-color: #333;
+    color: #fff !important;
+    background-color: #2c2c2c !important;
 }
 
-.dark-theme .progress {
-    background-color: #444;
+.dark-theme .ranking-table td {
+    border-bottom-color: #333 !important;
 }
 
-.dark-theme .badge.bg-secondary {
-    background-color: #555 !important;
-    color: #e0e0e0;
+/* Cores específicas do Ranking */
+.dark-theme .rank-gold { background-color: #423602 !important; color: #ffd54f !important; }
+.dark-theme .rank-silver { background-color: #424242 !important; color: #e0e0e0 !important; }
+.dark-theme .rank-bronze { background-color: #3e2723 !important; color: #ffcc80 !important; }
+.dark-theme .rank-normal { background-color: transparent !important; color: #ccc !important; }
+
+.dark-theme .rank-me {
+    background-color: rgba(13, 71, 161, 0.4) !important;
+    border-color: #1565c0 !important;
 }
 
-.dark-theme .text-muted {
-    color: #999 !important;
+.dark-theme .rank-badge {
+    background-color: #444 !important;
+    color: #fff !important;
 }
 
-.dark-theme .text-primary {
-    color: #80bdff !important;
+/* =========================================
+   COMPARISON ROWS (STUDENT OVERVIEW)
+   ========================================= */
+.dark-theme .comp-avg {
+    background-color: #2c2c2c !important;
+    color: #aaa !important;
+}
+
+.dark-theme .comp-user {
+    background-color: rgba(13, 71, 161, 0.3) !important;
+    color: #90caf9 !important;
+}
+
+.dark-theme .comp-diff {
+    background-color: rgba(27, 94, 32, 0.3) !important;
+    color: #a5d6a7 !important;
+}
+
+/* =========================================
+   SCROLLBAR
+   ========================================= */
+.dark-theme ::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

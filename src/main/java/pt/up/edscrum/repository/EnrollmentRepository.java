@@ -1,6 +1,7 @@
 package pt.up.edscrum.repository;
 
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import pt.up.edscrum.model.Enrollment;
@@ -12,5 +13,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     int countByCourseId(Long courseId);
 
+    // Método antigo (podes manter para compatibilidade se usado noutro lado)
     Enrollment findByStudent(User student);
+
+    // NOVO: Retorna LISTA de inscrições do aluno
+    List<Enrollment> findAllByStudent(User student);
 }

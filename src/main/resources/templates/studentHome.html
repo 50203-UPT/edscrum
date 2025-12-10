@@ -2,130 +2,700 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Estudante - EduScrum</title>
+    <title>EduScrum - Área do Estudante</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        body, html {
-            overflow: auto !important;
-            height: auto !important;
-            display: block !important;
-        }
-        
-        body {
-            /* Gradiente Roxo para Azul (Invertido para variar ligeiramente) */
-            background: linear-gradient(to right, #4b6cb7 0%, #182848 100%);
-            min-height: 100vh;
-            color: white;
-        }
+    /* Cartões de Resumo (Topo) */
+    .stat-card {
+        background: white;
+        border-radius: 16px; /* Mais arredondado */
+        padding: 24px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02); /* Sombra muito suave */
+        border: 1px solid #f0f0f0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .stat-icon-wrapper {
+        width: 40px; 
+        height: 40px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        border-radius: 50%; /* Icone redondo opcional, ou solto como na imagem */
+    }
 
-        .menu-container {
-            max-width: 900px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-            padding-bottom: 50px;
-        }
+    /* Tabela de Comparação (Esquerda) */
+    .comparison-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        font-weight: 500;
+    }
+    .comp-user { background-color: #e3f2fd; color: #0d47a1; } /* Azul claro */
+    .comp-avg { background-color: #f8f9fa; color: #495057; }  /* Cinza claro */
+    .comp-diff { background-color: #e8f5e9; color: #1b5e20; } /* Verde claro */
 
-        /* Texto sempre branco fora dos cartões */
-        .page-title, .page-subtitle, h1, p.lead { color: white !important; }
+    /* Top 5 Estudantes (Direita) */
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    .rank-gold { background-color: #fff9c4; color: #fbc02d; }   /* Amarelo Ouro */
+    .rank-silver { background-color: #f5f5f5; color: #616161; } /* Cinza Prata */
+    .rank-bronze { background-color: #fff3e0; color: #ef6c00; } /* Laranja Bronze */
+    .rank-normal { background-color: transparent; color: #495057; }
+    
+    .rank-me { /* Destaque para o utilizador */
+        border: 2px solid #90caf9;
+        background-color: #e3f2fd;
+    }
 
-        .option-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            border: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            height: 100%;
-            text-decoration: none;
-            color: #333;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .option-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-            color: #0d6efd;
-        }
-        .icon-large {
-            font-size: 4rem;
-            margin-bottom: 15px;
-        }
+    .rank-badge {
+        width: 28px; 
+        height: 28px; 
+        border-radius: 50%; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-size: 0.8rem;
+        margin-right: 12px;
+        background: white; /* Fundo branco para o número */
+        font-weight: bold;
+    }
     </style>
 </head>
-<body>
+<body class="student-bg">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent fixed-top">
-        <div class="container">
-            <span class="navbar-brand fw-bold fs-3">EduScrum <span class="badge bg-info text-dark">Student</span></span>
+    <nav class="navbar-student d-flex justify-content-between align-items-center p-3 sticky-top">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-success text-white p-2 rounded-3 shadow-sm"><i data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i></div>
+            <div><h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5><small class="text-muted">Área do Estudante</small></div>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+            <div class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light">
+                <i data-lucide="bell" class="text-secondary"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">1</span>
+            </div>
+            <div class="vr text-muted opacity-25" style="height: 30px;"></div>
             <div class="dropdown">
-                <button class="btn btn-outline-light rounded-pill px-4 dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Perfil
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" th:href="@{'/view/student/profile/' + ${student.userId}}">Editar Perfil</a></li>
-                    <li><a class="dropdown-item" th:href="@{'/view/student/settings/' + ${student.userId}}">Configurações</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" th:href="@{/logout}">Sair</a></li>
+                <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown">
+                    <div class="text-end d-none d-md-block">
+                        <div class="profile-name fw-bold text-dark" th:text="${student.name}">Aluno</div>
+                        <div class="profile-email small text-muted" th:text="${student.email}">email@upt.pt</div>
+                    </div>
+                    <img th:if="${student.profileImage != null}" th:src="@{'/uploads/profile-images/' + ${student.profileImage}}" class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
+                    <div th:unless="${student.profileImage != null}" class="profile-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; font-size: 1.2rem;" th:text="${#strings.substring(student.name,0,1)}">A</div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
+                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editStudentProfileModal"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
+                    <li>
+                        <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                            <i data-lucide="settings" class="w-4 h-4 inline me-2 opacity-50"></i> Configurações
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-2"></li>
+                    <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i data-lucide="log-out" class="w-4 h-4 inline me-2 opacity-50"></i> Sair</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container menu-container d-flex flex-column justify-content-center" style="min-height: 100vh; padding-top: 100px;">
-        
-        <div class="text-center mb-5">
-            <h1 class="display-4 fw-bold page-title">O meu Progresso</h1>
-            <p class="lead page-subtitle">
-                Total Acumulado: <span class="badge bg-warning text-dark rounded-pill shadow-sm" th:text="${student.totalPoints} + ' XP'">0 XP</span>
-            </p>
-        </div>
+    <div class="tabs-container shadow-sm">
+        <button class="tab-btn active" onclick="openTab('overview', this)"><i data-lucide="layout-dashboard" class="inline-block w-4 h-4 me-2"></i>Visão Geral</button>
+        <button class="tab-btn" onclick="openTab('all-courses', this)"><i data-lucide="book-open" class="inline-block w-4 h-4 me-2"></i>Cursos</button>
+        <button class="tab-btn" onclick="openTab('my-awards', this)"><i data-lucide="award" class="inline-block w-4 h-4 me-2"></i>Meus Prémios</button>
+        <button class="tab-btn" onclick="openTab('projects', this)"><i data-lucide="folder-kanban" class="inline-block w-4 h-4 me-2"></i>Projetos</button>
+    </div>
 
-        <div class="row g-4 justify-content-center">
+    <div class="container pb-5" style="max-width: 1200px;">
+
+        <div id="overview" class="tab-content active">
             
-            <div class="col-md-6 col-lg-4">
-                <a th:href="@{'/view/student/dashboard/' + ${student.userId}}" class="card option-card p-4 text-center">
-                    <div class="card-body">
-                        <div class="icon-large">🏅</div>
-                        <h3 class="fw-bold">Prémios</h3>
-                        <p class="text-muted">Ver badges conquistados e histórico de pontos.</p>
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">Pontuação Total</span>
+                            <i data-lucide="trophy" class="text-warning" style="width: 20px;"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${student.totalPoints}">850</h2>
+                        <small class="text-muted">+5% vs média</small>
                     </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <a th:if="${student.courseId != null}" 
-                   th:href="@{'/view/rankings/' + ${student.courseId}}" 
-                   class="card option-card p-4 text-center">
-                    <div class="card-body">
-                        <div class="icon-large">📊</div>
-                        <h3 class="fw-bold">Rankings</h3>
-                        <p class="text-muted">Comparar pontuação com a turma e outras equipas.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">Ranking</span>
+                            <i data-lucide="trending-up" class="text-primary" style="width: 20px;"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="'#' + ${student.currentRank}">#5</h2>
+                        <small class="text-muted">de 30 estudantes</small>
                     </div>
-                </a>
-                
-                <div th:if="${student.courseId == null}" class="card option-card p-4 text-center disabled" style="opacity: 0.7; cursor: not-allowed; background: #e9ecef;">
-                    <div class="card-body">
-                        <div class="icon-large text-secondary">🚫</div>
-                        <h3 class="fw-bold text-secondary">Rankings</h3>
-                        <p class="text-muted">Ainda não estás inscrito num curso.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">Prémios Ganhos</span>
+                            <i data-lucide="medal" class="text-purple-500" style="color: #a855f7; width: 20px;"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${#lists.size(student.earnedAwards)}">1</h2>
+                        <small class="text-muted">150 pontos acumulados</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="text-muted small fw-bold">Equipas Ativas</span>
+                            <i data-lucide="users" class="text-success" style="width: 20px;"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="${#lists.size(student.projects)}">2</h2>
+                        <small class="text-muted">2 projetos</small>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6 col-lg-4">
-                <a href="#" class="card option-card p-4 text-center"> 
-                    <div class="card-body">
-                        <div class="icon-large">👥</div>
-                        <h3 class="fw-bold">Equipa</h3>
-                        <p class="text-muted">Ver membros, sprints e tarefas do projeto.</p>
-                    </div>
-                </a>
+            <div class="stat-card mb-4" style="height: auto;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i data-lucide="line-chart" class="text-dark" style="width: 18px;"></i>
+                    <h6 class="fw-bold mb-0">Evolução de Pontuação</h6>
+                </div>
+                <p class="text-muted small mb-4">Progressão acumulada dos seus pontos ao longo do tempo</p>
+                
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="scoreEvolutionChart"></canvas>
+                </div>
             </div>
 
+            <div class="row g-4 mb-5">
+                
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i data-lucide="bar-chart-2" class="text-dark" style="width: 18px;"></i>
+                            <h6 class="fw-bold mb-0">Comparação com a Turma</h6>
+                        </div>
+                        <p class="text-muted small mt-n3 mb-4">Seu desempenho vs média</p>
+
+                        <div class="comparison-row comp-user">
+                            <span>Sua Pontuação</span>
+                            <span class="fw-bold" th:text="${student.totalPoints} + ' pts'">850 pts</span>
+                        </div>
+
+                        <div class="comparison-row comp-avg">
+                            <span>Média da Turma</span>
+                            <span class="fw-bold" th:text="${#numbers.formatDecimal(student.classAverage, 1, 0)} + ' pts'">810 pts</span>
+                        </div>
+
+                        <div class="comparison-row comp-diff">
+                            <span>Diferença</span>
+                            <span class="fw-bold" th:text="'+' + ${#numbers.formatDecimal(student.totalPoints - student.classAverage, 1, 0)} + ' pts'">+40 pts</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3">
+                            <span class="text-muted small">Percentil</span>
+                            <span class="badge bg-primary px-3 py-2 rounded-pill">Top 20%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i data-lucide="trophy" class="text-warning" style="width: 18px;"></i>
+                            <h6 class="fw-bold mb-0">Top 5 Estudantes</h6>
+                        </div>
+                        <p class="text-muted small mt-n3 mb-4">Melhores classificações da turma</p>
+
+                        <div class="d-flex flex-column gap-2">
+                            <div th:each="topStudent, iter : ${student.topStudents}" 
+                                 class="ranking-item"
+                                 th:classappend="${iter.index == 0 ? 'rank-gold' : (iter.index == 1 ? 'rank-silver' : (iter.index == 2 ? 'rank-bronze' : 'rank-normal'))}">
+                                
+                                <div class="d-flex align-items-center">
+                                    <div class="rank-badge" th:text="${iter.index + 1}">1</div>
+                                    <span th:text="${topStudent.name}">Ana</span>
+                                    <i th:if="${iter.index == 0}" data-lucide="crown" class="w-4 h-4 ms-2 text-warning-dark" style="fill: #fbc02d; stroke: none;"></i>
+                                </div>
+                                <span class="fw-bold" th:text="${topStudent.totalPoints} + ' pts'">920 pts</span>
+                            </div>
+
+                            <div class="ranking-item rank-me mt-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="rank-badge text-primary" th:text="${student.currentRank}">5</div>
+                                    <span>Você</span>
+                                </div>
+                                <span class="fw-bold text-primary" th:text="${student.totalPoints} + ' pts'">850 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <h5 class="fw-bold mb-3">Prémios Recentes</h5>
+                <div class="row g-3">
+                    <div class="col-md-4" th:each="award, iter : ${student.earnedAwards}" th:if="${iter.index < 3}"> <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-light bg-opacity-25">
+                            <div class="bg-white p-2 rounded shadow-sm">
+                                <i data-lucide="award" class="w-6 h-6 text-warning"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark" th:text="${award.name}">Nome</h6>
+                                <small class="text-muted" th:text="${award.description}">Desc</small>
+                            </div>
+                            <div class="ms-auto fw-bold text-primary" th:text="'+' + ${award.points}">+0</div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(student.earnedAwards)}" class="col-12 text-center text-muted py-2">Sem prémios recentes.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="all-courses" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-4"><div><h3 class="fw-bold mb-1 text-primary">Meus Cursos</h3><p class="text-muted">Cursos em que estás atualmente inscrito.</p></div></div>
+            <div class="row g-3">
+                <div class="col-md-6" th:each="course : ${student.enrolledCourses}">
+                    <div class="content-card h-100 border-start border-4 border-primary">
+                        <div class="d-flex justify-content-between align-items-start"><div><h5 class="fw-bold text-dark mb-1" th:text="${course.name}">Nome</h5><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill mb-2" th:text="${course.code}">CODE</span><p class="text-muted small mb-0" th:text="${course.description}">Desc</p></div><i data-lucide="check-circle" class="text-primary" style="width: 24px; height: 24px;"></i></div>
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-bold">Inscrito</small><button class="btn btn-sm btn-outline-primary rounded-pill px-3">Ver Detalhes</button></div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(student.enrolledCourses)}" class="col-12 text-center py-4 bg-white rounded-3 border border-dashed"><p class="text-muted mb-0">Não estás inscrito em nenhum curso.</p></div>
+            </div>
+            <hr class="my-5 opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-4"><div><h4 class="fw-bold mb-1 text-secondary">Outros Cursos Disponíveis</h4></div></div>
+            <div class="row g-3">
+                <div class="col-md-4" th:each="course : ${student.availableCourses}">
+                    <div class="content-card h-100 bg-light bg-opacity-50">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold text-dark mb-0" th:text="${course.name}">Nome</h6>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary" th:text="${course.code}">CODE</span>
+                        </div>
+                        <p class="text-muted small mb-3" th:text="${#strings.abbreviate(course.description, 50)}">Desc</p>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill w-100 shadow-sm fw-bold transition hover-scale"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#enrollModal"
+                            th:data-id="${course.id}"
+                            th:data-name="${course.name}"
+                            onclick="setupEnrollModal(this)">
+                        Inscrever-se
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div id="my-awards" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1">Todos os Prémios</h3>
+                    <p class="text-muted">Histórico completo dos seus prémios</p>
+                </div>
+                <div class="bg-white px-4 py-2 rounded-pill shadow-sm border d-flex align-items-center gap-2">
+                    <span class="text-muted small fw-bold text-uppercase">Total</span>
+                    <span class="fw-bold text-primary" style="font-size: 1.2rem;" th:text="${student.totalPoints} + ' pts'">0 pts</span>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6" th:each="award : ${student.earnedAwards}">
+                    <div class="content-card h-100 p-4 border hover-shadow transition" 
+                         style="border-left: 5px solid #ffc107 !important;"> <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="d-flex gap-3">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px; background-color: #fff9c4;">
+                                    <i data-lucide="trophy" class="text-warning" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1" th:text="${award.name}">Innovation Hero</h5>
+                                    <p class="text-muted small mb-0" th:text="${award.description}">Implementação de features inovadoras</p>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border fw-bold" th:text="${award.type}">Manual</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top border-light">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-warning bg-opacity-25 text-warning-dark fw-bold px-3 py-1 rounded-pill" 
+                                      style="color: #b45309;" 
+                                      th:text="'+' + ${award.points} + ' pontos'">+150 pontos</span>
+                            </div>
+                            <small class="text-muted fst-italic">Atribuído recentemente</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(student.earnedAwards)}" class="col-12">
+                    <div class="text-center py-5 content-card bg-light border-dashed">
+                        <div class="mb-3 p-3 bg-white rounded-circle d-inline-block shadow-sm">
+                            <i data-lucide="award" class="w-8 h-8 text-muted opacity-50"></i>
+                        </div>
+                        <h6 class="fw-bold text-muted">Ainda não tens prémios.</h6>
+                        <p class="text-muted small mb-0">Continua o bom trabalho para desbloquear conquistas!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="projects" class="tab-content">
+            
+            <div th:if="${student.projects != null}" th:each="project : ${student.projects}" class="content-card mb-4 border-0 shadow-sm">
+                
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="d-flex gap-3">
+                        <div class="mt-1">
+                            <div class="bg-primary rounded-circle" style="width: 12px; height: 12px;"></div>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1" th:text="${project.name}">Sistema de Gestão Académica</h4>
+                            <p class="text-muted mb-2 small" th:text="${project.sprintGoals}">Plataforma para gestão de estudantes e cursos</p>
+                            
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:text="${student.courseName}">Qualidade de Software</span>
+                                <span class="badge bg-purple-100 text-purple-700 border border-purple-200" style="background-color: #f3e8ff; color: #7e22ce;" th:text="${student.roleInTeam}">Scrum Master</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge bg-primary text-white px-3 py-2 rounded-pill">Ativo</span>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-muted small fw-bold text-uppercase mb-2"><i data-lucide="users" class="w-3 h-3 inline me-1"></i> Equipa <span th:text="${student.teamName}">Alpha</span></h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex -space-x-2">
+                            <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center text-xs fw-bold text-muted" 
+                                 style="width: 32px; height: 32px; font-size: 0.75rem;" title="Você">EU</div>
+                            <div class="bg-primary text-white border border-white rounded-circle d-flex align-items-center justify-content-center text-xs fw-bold" 
+                                 style="width: 32px; height: 32px; font-size: 0.75rem; margin-left: -8px;">JD</div>
+                            <div class="bg-info text-white border border-white rounded-circle d-flex align-items-center justify-content-center text-xs fw-bold" 
+                                 style="width: 32px; height: 32px; font-size: 0.75rem; margin-left: -8px;">AS</div>
+                        </div>
+                        <span class="text-muted small ms-2">Membros ativos</span>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small fw-bold">Progresso Geral</span>
+                        <span class="text-primary small fw-bold">88%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 88%"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="fw-bold mb-3 d-flex align-items-center">
+                        <i data-lucide="layers" class="w-4 h-4 me-2 text-dark"></i> Sprints (<span th:text="${#lists.size(project.sprints)}">0</span>)
+                    </h6>
+                    
+                    <div class="d-flex flex-column gap-3">
+                        <div th:each="sprint : ${project.sprints}" class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border-start border-4"
+                             th:classappend="${sprint.status.name() == 'DONE'} ? 'border-success' : 'border-primary'">
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <i th:if="${sprint.status.name() == 'DONE'}" data-lucide="check-circle-2" class="text-success w-5 h-5"></i>
+                                <i th:if="${sprint.status.name() != 'DONE'}" data-lucide="circle-dashed" class="text-primary w-5 h-5"></i>
+                                
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" th:text="${sprint.name}">Sprint 1</h6>
+                                    <small class="text-muted" th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3" style="width: 30%;">
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar rounded-pill" 
+                                         th:classappend="${sprint.status.name() == 'DONE'} ? 'bg-success' : 'bg-primary'"
+                                         role="progressbar" 
+                                         th:style="'width: ' + (${sprint.status.name() == 'DONE'} ? '100%' : '60%')"></div>
+                                </div>
+                                <span class="small fw-bold" 
+                                      th:classappend="${sprint.status.name() == 'DONE'} ? 'text-success' : 'text-primary'"
+                                      th:text="${sprint.status.name() == 'DONE'} ? '100%' : 'Active'">100%</span>
+                            </div>
+                        </div>
+                        
+                        <div th:if="${#lists.isEmpty(project.sprints)}" class="text-muted small text-center">
+                            Nenhuma sprint criada neste projeto.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${student.projectId == null || #lists.isEmpty(student.projects)}" class="alert alert-info content-card border-info border-opacity-25 bg-info bg-opacity-10 text-info fw-bold d-flex align-items-center gap-3 p-4">
+                <div class="bg-white p-2 rounded-circle shadow-sm">
+                    <i data-lucide="info" class="w-6 h-6 text-info"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1 text-dark">Sem Projetos Ativos</h6>
+                    <p class="mb-0 fw-normal small text-muted">Atualmente não estás associado a nenhum projeto. Fala com o teu professor para te juntares a uma equipa.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="editStudentProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Editar Perfil</h4>
+                        <p class="text-muted small mb-0">Atualiza os teus dados e foto.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/api/student/profile/update}" method="POST" enctype="multipart/form-data">
+                        
+                        <input type="hidden" name="id" th:value="${student.id}" /> 
+                        
+                        <div class="mb-4 text-center">
+                            <div class="position-relative d-inline-block">
+                                <img th:if="${student.profileImage != null}" 
+                                     th:src="@{'/uploads/profile-images/' + ${student.profileImage}}" 
+                                     class="rounded-circle border shadow-sm" 
+                                     style="width: 100px; height: 100px; object-fit: cover;">
+                                
+                                <div th:unless="${student.profileImage != null}" 
+                                     class="bg-light rounded-circle border d-flex justify-content-center align-items-center mx-auto" 
+                                     style="width: 100px; height: 100px;">
+                                    <i data-lucide="user" class="w-12 h-12 text-muted opacity-50"></i>
+                                </div>
+                                
+                                <label for="imageUploadStudent" class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle p-2 shadow-sm cursor-pointer hover-scale" 
+                                       style="width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; transition: transform 0.2s;">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <input type="file" id="imageUploadStudent" name="imageFile" accept="image/*" class="d-none">
+                                </label>
+                            </div>
+                            <p class="text-muted small mt-2 mb-0">Clica na câmara para alterar</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome Completo</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${student.name}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Email</label>
+                            <input type="email" name="email" class="form-control bg-light border-0 py-2" th:value="${student.email}" required>
+                        </div>
+                        
+                        <hr class="my-4 text-muted opacity-25">
+                        <h6 class="fw-bold small mb-3">Segurança</h6>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-danger">Password Atual (Obrigatório)</label>
+                            <input type="password" name="currentPassword" class="form-control bg-light border-0 py-2" placeholder="Confirma a tua password para guardar" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nova Password (Opcional)</label>
+                            <input type="password" name="newPassword" class="form-control bg-light border-0 py-2" placeholder="Deixa em branco para manter a atual">
+                        </div>
+                        
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Guardar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Configurações</h4>
+                        <p class="text-muted small mb-0">Personalize a sua experiência.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/api/teacher/settings}" method="POST">
+                        <input type="hidden" name="email" th:value="${teacher.email}">
+                        
+                        <div class="p-3 bg-light rounded-3 mb-3 border">
+                            <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input cursor-pointer" type="checkbox" id="theme-switcher">
+                                <label class="form-check-label cursor-pointer" for="theme-switcher">Modo Noturno</label>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 mb-4 border">
+                            <h6 class="fw-bold small mb-3 text-dark">Notificações</h6>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input cursor-pointer" type="checkbox" id="notifAwards" name="notificationAwards" 
+                                       th:checked="${teacher.notificationAwards}">
+                                <label class="form-check-label cursor-pointer" for="notifAwards">Prémios atribuídos</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input cursor-pointer" type="checkbox" id="notifRankings" name="notificationRankings" 
+                                       th:checked="${teacher.notificationRankings}">
+                                <label class="form-check-label cursor-pointer" for="notifRankings">Alterações no Ranking</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome de Exibição</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-0 px-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Preferências</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="enrollModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-primary">Confirmar Inscrição</h4>
+                        <p class="text-muted small mb-0">Tens a certeza que queres entrar neste curso?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/api/student/enroll}" method="POST">
+                        <input type="hidden" name="studentId" th:value="${student.id}" />
+                        <input type="hidden" id="enrollCourseId" name="courseId" />
+                        
+                        <div class="alert alert-primary bg-primary bg-opacity-10 border-0 d-flex align-items-center">
+                            <i data-lucide="book-open" class="text-primary me-3"></i>
+                            <div>
+                                <span class="d-block small text-muted text-uppercase fw-bold">Curso</span>
+                                <span id="enrollCourseName" class="fw-bold h5 text-dark mb-0">Nome do Curso</span>
+                            </div>
+                        </div>
+
+                        <p class="small text-muted mb-0">Ao inscreveres-te, terás acesso aos projetos e poderás ser adicionado a equipas.</p>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Sim, Inscrever-me</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeSwitcher = document.getElementById('theme-switcher');
+            const body = document.body;
+            
+            // 1. Verificar preferência guardada ao carregar
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                body.classList.add('dark-theme');
+                if(themeSwitcher) themeSwitcher.checked = true;
+            }
+
+            // 2. Evento de clique no toggle
+            if(themeSwitcher) {
+                themeSwitcher.addEventListener('change', () => {
+                    if (themeSwitcher.checked) {
+                        body.classList.add('dark-theme');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        body.classList.remove('dark-theme');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
+        });
+    </script>
+    <script th:inline="javascript">
+        // Configura o modal de inscrição com os dados do curso clicado
+        function setupEnrollModal(button) {
+            const courseId = button.getAttribute('data-id');
+            const courseName = button.getAttribute('data-name');
+            
+            document.getElementById('enrollCourseId').value = courseId;
+            document.getElementById('enrollCourseName').textContent = courseName;
+        }
+
+        lucide.createIcons();
+        function openTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // GRÁFICO (Chart.js)
+        /*<![CDATA[*/
+        const pointHistory = /*[[${student.pointHistory}]]*/ []; 
+        /*]]>*/
+
+        if(pointHistory && pointHistory.length > 0) {
+            // Preparar dados para o gráfico (Acumulado)
+            let accumulatedPoints = 0;
+            const labels = [];
+            const dataPoints = [];
+
+            pointHistory.forEach(point => {
+                accumulatedPoints += point.totalPoints; // Se point.totalPoints for incremental. Se for absoluto, usa direto.
+                // Vou assumir que pointHistory.totalPoints é o valor ABSOLUTO naquele momento (snapshot).
+                // Se for incremental, descomenta a soma.
+                // dataPoints.push(accumulatedPoints); 
+                
+                labels.push(new Date(point.date).toLocaleDateString());
+                dataPoints.push(point.totalPoints);
+            });
+
+            const ctx = document.getElementById('scoreEvolutionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pontuação Acumulada',
+                        data: dataPoints,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
