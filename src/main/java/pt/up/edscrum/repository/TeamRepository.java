@@ -15,7 +15,14 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query("SELECT t FROM Team t LEFT JOIN t.developers d WHERE d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId")
     Team findTeamByUserId(Long userId);
 
-    // NOVO: Equipas disponíveis (sem projeto) num curso
-    @Query("SELECT t FROM Team t WHERE t.course.id = :courseId AND t.project IS NULL")
+    @Query("SELECT t FROM Team t LEFT JOIN t.developers d WHERE (d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId) AND t.course.id = :courseId")
+    Team findTeamByUserIdAndCourseId(Long userId, Long courseId);
+
+    // Equipas disponíveis (sem projeto) num curso - teams sem projects
+    @Query("SELECT t FROM Team t WHERE t.course.id = :courseId AND t.projects IS EMPTY")
     List<Team> findAvailableTeamsByCourse(Long courseId);
+
+    // Equipas disponíveis para um projeto: teams do curso que ainda não estão no projeto
+    @Query("SELECT t FROM Team t WHERE t.course.id = :courseId AND :projectId NOT IN (SELECT p.id FROM t.projects p)")
+    List<Team> findAvailableTeamsForProject(Long courseId, Long projectId);
 }

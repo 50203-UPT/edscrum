@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToMany;
 import pt.up.edscrum.enums.ProjectStatus;
 import pt.up.edscrum.enums.SprintStatus;
 
@@ -34,7 +35,7 @@ public class Project {
     @JoinColumn(name = "course_id")
     private Course course;
 
-    @OneToMany(mappedBy = "project")
+    @ManyToMany(mappedBy = "projects")
     private List<Team> teams;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)

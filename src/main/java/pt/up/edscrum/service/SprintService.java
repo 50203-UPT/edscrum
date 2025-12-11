@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.enums.ProjectStatus;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Sprint;
@@ -40,6 +42,30 @@ public class SprintService {
             projectRepository.save(project);
         }
 
+        // Valida datas do sprint: start < end
+        if (sprint.getStartDate() == null || sprint.getEndDate() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datas do sprint não podem ser nulas");
+        }
+        if (!sprint.getStartDate().isBefore(sprint.getEndDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início do sprint deve ser anterior à data de fim");
+        }
+
+        // Valida que o sprint está dentro do intervalo do projeto (se o projeto tem datas)
+        if (project.getStartDate() != null && project.getEndDate() != null) {
+            if (sprint.getStartDate().isBefore(project.getStartDate()) || sprint.getEndDate().isAfter(project.getEndDate())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint deve estar dentro do intervalo do projeto");
+            }
+        }
+
+        // Verifica sobreposição com outros sprints do mesmo projeto
+        List<Sprint> existing = sprintRepository.findByProjectId(projectId);
+        for (Sprint s : existing) {
+            // Se houver qualquer interseção (inclui igualdade de datas) => inválido
+            if (!(sprint.getEndDate().isBefore(s.getStartDate()) || sprint.getStartDate().isAfter(s.getEndDate()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint overlap com sprint existente");
+            }
+        }
+
         sprint.setProject(project);
         return sprintRepository.save(sprint);
     }
@@ -52,6 +78,32 @@ public class SprintService {
         sprint.setStartDate(sprintData.getStartDate());
         sprint.setEndDate(sprintData.getEndDate());
         sprint.setStatus(sprintData.getStatus());
+
+        // Valida datas semelhantes às do create
+        if (sprint.getStartDate() == null || sprint.getEndDate() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datas do sprint não podem ser nulas");
+        }
+        if (!sprint.getStartDate().isBefore(sprint.getEndDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início do sprint deve ser anterior à data de fim");
+        }
+
+        Project project = sprint.getProject();
+        if (project != null && project.getStartDate() != null && project.getEndDate() != null) {
+            if (sprint.getStartDate().isBefore(project.getStartDate()) || sprint.getEndDate().isAfter(project.getEndDate())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint deve estar dentro do intervalo do projeto");
+            }
+        }
+
+        // Verifica sobreposição com outros sprints, excluindo o próprio
+        List<Sprint> existing = sprintRepository.findByProjectId(sprint.getProject().getId());
+        for (Sprint s : existing) {
+            if (s.getId().equals(sprint.getId())) {
+                continue;
+            }
+            if (!(sprint.getEndDate().isBefore(s.getStartDate()) || sprint.getStartDate().isAfter(s.getEndDate()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint overlap com sprint existente");
+            }
+        }
 
         return sprintRepository.save(sprint);
     }

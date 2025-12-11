@@ -334,8 +334,17 @@ public class WebController {
             // Associar Equipa (Se selecionada)
             if (teamId != null) {
                 Team team = teamService.getTeamById(teamId);
-                team.setProject(savedProject);
-                teamService.updateTeam(team.getId(), team);
+                // Ensure team.course equals project.course
+                if (team.getCourse() != null && !team.getCourse().getId().equals(savedProject.getCourse().getId())) {
+                    throw new Exception("A equipa pertence a outro curso e não pode ser associada a este projeto");
+                }
+                List<Project> projects = team.getProjects();
+                if (projects == null) projects = new ArrayList<>();
+                if (!projects.contains(savedProject)) {
+                    projects.add(savedProject);
+                    team.setProjects(projects);
+                    teamService.updateTeam(team.getId(), team);
+                }
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Projeto '" + project.getName() + "' criado com sucesso!");
@@ -410,7 +419,15 @@ public class WebController {
 
             if (projectId != null) {
                 Project project = projectService.getProjectById(projectId);
-                team.setProject(project);
+                // Ensure team course matches the project's course
+                // If the form didn't supply a course, set it from the project
+                if (team.getCourse() == null) {
+                    team.setCourse(project.getCourse());
+                }
+                if (team.getCourse() != null && !team.getCourse().getId().equals(project.getCourse().getId())) {
+                    throw new Exception("A equipa e o projeto devem pertencer ao mesmo curso");
+                }
+                team.setProjects(List.of(project));
             }
 
             if (scrumMasterId != null) {
@@ -551,9 +568,17 @@ public class WebController {
         try {
             Project project = projectService.getProjectById(projectId);
             Team team = teamService.getTeamById(teamId);
-
-            team.setProject(project);
-            teamService.updateTeam(team.getId(), team);
+            // Ensure the team and project are in the same course
+            if (team.getCourse() != null && !team.getCourse().getId().equals(project.getCourse().getId())) {
+                throw new Exception("A equipa e o projeto devem pertencer ao mesmo curso");
+            }
+            List<Project> projects = team.getProjects();
+            if (projects == null) projects = new ArrayList<>();
+            if (!projects.contains(project)) {
+                projects.add(project);
+                team.setProjects(projects);
+                teamService.updateTeam(team.getId(), team);
+            }
 
             redirectAttributes.addFlashAttribute("successMessage", "Equipa associada com sucesso!");
         } catch (Exception e) {

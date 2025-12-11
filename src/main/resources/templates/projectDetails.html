@@ -16,7 +16,17 @@
             background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #edf2f7;
         }
-
+<body>
+    <div class="container mt-3">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert"> 
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
         /* === BOTÃO DE VOLTAR === */
         .btn-back-custom {
             display: flex; align-items: center; justify-content: center;
@@ -265,7 +275,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/sprints/create}" method="POST">
+                    <form th:action="@{/sprints/create}" method="POST" onsubmit="return validateSprintDates()">
                         <input type="hidden" name="projectId" th:value="${project.id}">
                         <input type="hidden" name="userId" th:value="${teacher.id}">
 
@@ -282,11 +292,13 @@
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold small">Data Início</label>
-                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                                <input type="date" name="startDate" id="sprintStartDate" class="form-control bg-light border-0 py-2" required>
+                                <div class="text-danger small mt-1" id="startDateError" style="display: none;">A data de início deve ser após a data atual.</div>
                             </div>
                             <div class="col-6">
                                 <label class="form-label fw-bold small">Data Fim</label>
-                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                                <input type="date" name="endDate" id="sprintEndDate" class="form-control bg-light border-0 py-2" required>
+                                <div class="text-danger small mt-1" id="endDateError" style="display: none;">A data de fim deve ser após a data de início.</div>
                             </div>
                         </div>
 
@@ -438,6 +450,37 @@
             container.appendChild(newRow);
             lucide.createIcons();
             updateOptions();
+        }
+
+        function validateSprintDates() {
+            const startDateInput = document.getElementById('sprintStartDate');
+            const endDateInput = document.getElementById('sprintEndDate');
+            const startDateError = document.getElementById('startDateError');
+            const endDateError = document.getElementById('endDateError');
+
+            startDateError.style.display = 'none';
+            endDateError.style.display = 'none';
+
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time for accurate date comparison
+
+            let isValid = true;
+
+            if (startDate < today) {
+                startDateError.textContent = 'A data de início deve ser após a data atual.';
+                startDateError.style.display = 'block';
+                isValid = false;
+            }
+
+            if (endDate <= startDate) {
+                endDateError.textContent = 'A data de fim deve ser após a data de início.';
+                endDateError.style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
         }
 
         document.addEventListener('DOMContentLoaded', function() {

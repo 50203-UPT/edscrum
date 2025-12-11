@@ -188,9 +188,11 @@ public class DashboardService {
             } else {
                 dto.setRoleInTeam("Developer");
             }
-            if (team.getProject() != null) {
-                dto.setProjectId(team.getProject().getId());
-                studentProjects.add(team.getProject());
+            if (team.getProjects() != null) {
+                if (!team.getProjects().isEmpty()) {
+                    dto.setProjectId(team.getProjects().get(0).getId());
+                }
+                studentProjects.addAll(team.getProjects());
             }
         }
         dto.setProjects(studentProjects);
