@@ -230,7 +230,7 @@
         if (response.ok) {
           const user = await response.json();
           if (user.role.toUpperCase() !== userType.toUpperCase()) {
-            const msg = 'Credenciais inválidas para este perfil.';
+            const msg = 'Credenciais inválidas.';
             if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;
             else errorMessage.textContent = msg;
             errorMessage.classList.remove('hidden');
