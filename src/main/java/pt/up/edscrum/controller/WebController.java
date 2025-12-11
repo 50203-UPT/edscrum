@@ -3,6 +3,7 @@ package pt.up.edscrum.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,14 +11,17 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
 import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Project;
+import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.service.AuthService;
@@ -25,10 +29,10 @@ import pt.up.edscrum.service.AwardService;
 import pt.up.edscrum.service.CourseService;
 import pt.up.edscrum.service.DashboardService;
 import pt.up.edscrum.service.ProjectService;
+import pt.up.edscrum.service.SprintService;
 import pt.up.edscrum.service.TeamService;
 import pt.up.edscrum.service.UserService;
 import pt.up.edscrum.utils.FileStorageService;
-import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 
 @Controller
 public class WebController {
@@ -41,6 +45,7 @@ public class WebController {
     private final TeamService teamService;
     private final FileStorageService fileStorageService;
     private final ProjectService projectService;
+    private final SprintService sprintService;
 
     public WebController(DashboardService dashboardService,
             AuthService authService,
@@ -49,7 +54,8 @@ public class WebController {
             CourseService courseService,
             TeamService teamService,
             FileStorageService fileStorageService,
-            ProjectService projectService) {
+            ProjectService projectService,
+            SprintService sprintService) {
         this.dashboardService = dashboardService;
         this.authService = authService;
         this.userService = userService;
@@ -58,6 +64,7 @@ public class WebController {
         this.teamService = teamService;
         this.fileStorageService = fileStorageService;
         this.projectService = projectService;
+        this.sprintService = sprintService;
     }
 
     // --- LOGIN & REGISTO ---
@@ -78,27 +85,28 @@ public class WebController {
 
     @GetMapping("/forgotPassword")
     public String forgotPasswordPage(@RequestParam(required = false) String success,
-                                     @RequestParam(required = false) String email,
-                                     Model model) {
+            @RequestParam(required = false) String email,
+            Model model) {
         if ("true".equals(success) && email != null) {
             model.addAttribute("success", true);
             model.addAttribute("submittedEmail", email);
         }
         return "forgotPassword";
     }
-@PostMapping("/forgotPassword")
-public String handleForgotPassword(@RequestParam String email, Model model) {
-    
-    // CORREÇÃO: Adicionar .orElse(null)
-    User user = userService.getUserByEmail(email).orElse(null);
-    
-    if (user == null) {
-        model.addAttribute("error", "Email não existe na base de dados.");
-        return "forgotPassword";
+
+    @PostMapping("/forgotPassword")
+    public String handleForgotPassword(@RequestParam String email, Model model) {
+
+        // CORREÇÃO: Adicionar .orElse(null)
+        User user = userService.getUserByEmail(email).orElse(null);
+
+        if (user == null) {
+            model.addAttribute("error", "Email não existe na base de dados.");
+            return "forgotPassword";
+        }
+        // Email exists, redirect to success
+        return "redirect:/forgotPassword?success=true&email=" + email;
     }
-    // Email exists, redirect to success
-    return "redirect:/forgotPassword?success=true&email=" + email;
-}
 
     @PostMapping("/auth/web/login")
     public String webLogin(@RequestParam String email,
@@ -125,8 +133,7 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         return "redirect:/?registered=true";
     }
 
-   // --- FLUXO DE RECUPERAÇÃO DE PALAVRA-PASSE ---
-
+    // --- FLUXO DE RECUPERAÇÃO DE PALAVRA-PASSE ---
     // 1. PÁGINA "ESQUECEU A PALAVRA-PASSE"
     @GetMapping("/forgot-password")
     public String showForgotPasswordPage() {
@@ -162,10 +169,10 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
 
     // PROCESSAR VALIDAÇÃO DO CÓDIGO
     @PostMapping("/auth/web/verify-code")
-    public String processVerifyCode(@RequestParam("email") String email, 
-                                    @RequestParam("code") String code, 
-                                    RedirectAttributes redirectAttributes) {
-        
+    public String processVerifyCode(@RequestParam("email") String email,
+            @RequestParam("code") String code,
+            RedirectAttributes redirectAttributes) {
+
         boolean isValid = authService.validateResetCode(email, code);
 
         if (isValid) {
@@ -191,10 +198,10 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
 
     // PROCESSAR MUDANÇA DE PASSWORD
     @PostMapping("/auth/web/change-password")
-    public String processChangePassword(@RequestParam("email") String email, 
-                                        @RequestParam("newPassword") String newPassword, 
-                                        RedirectAttributes redirectAttributes) {
-        
+    public String processChangePassword(@RequestParam("email") String email,
+            @RequestParam("newPassword") String newPassword,
+            RedirectAttributes redirectAttributes) {
+
         authService.updatePassword(email, newPassword);
         // Mensagem de sucesso que aparecerá no ecrã de Login
         redirectAttributes.addFlashAttribute("successMessage", "Palavra-passe alterada com sucesso! Faça login.");
@@ -208,13 +215,23 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         User teacher = userService.getUserById(teacherId);
         model.addAttribute("teacher", teacher);
 
-        // Dados Base
+        // 1. Buscar Cursos e Equipas
         List<Course> teacherCourses = courseService.getCoursesByTeacher(teacherId);
         List<Team> allTeams = teamService.getAllTeams();
 
         model.addAttribute("courses", teacherCourses);
         model.addAttribute("teams", allTeams);
         model.addAttribute("awards", awardService.getAllAwards());
+
+        // --- Lista de Equipas Disponíveis (Agregada) ---
+        List<Team> availableTeams = new ArrayList<>();
+        if (teacherCourses != null) {
+            for (Course c : teacherCourses) {
+                // Para cada curso, busca as equipas livres e adiciona à lista geral
+                availableTeams.addAll(teamService.getAvailableTeamsByCourse(c.getId()));
+            }
+        }
+        model.addAttribute("availableTeams", availableTeams); // Envia para o modal
 
         // --- ESTATÍSTICAS E RANKINGS ---
         List<RankingDTO> rankings = new ArrayList<>();
@@ -257,9 +274,9 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         }
 
         model.addAttribute("studentRankings", rankings);
-        
+
         // CORREÇÃO: Usar getAllUsers() em vez de getAllStudents() para garantir que todos aparecem no modal
-        model.addAttribute("students", userService.getAllUsers()); 
+        model.addAttribute("students", userService.getAllUsers());
 
         return "teacherHome";
     }
@@ -297,7 +314,7 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
 
     @PostMapping("/projects/create")
     public String createProjectWeb(
-            @ModelAttribute Project project,
+            @ModelAttribute Project project, // Recebe name, sprintGoals, startDate, endDate
             @RequestParam Long courseId,
             @RequestParam Long teacherId,
             @RequestParam(required = false) Long teamId,
@@ -306,17 +323,22 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         try {
             Course course = courseService.getCourseById(courseId);
             project.setCourse(course);
+
+            // Define estado inicial
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.PLANEAMENTO);
 
+            // Grava o Projeto
+            // Nota: As datas (startDate/endDate) vêm automaticamente no objeto 'project'
             Project savedProject = projectService.createProject(project);
 
+            // Associar Equipa (Se selecionada)
             if (teamId != null) {
                 Team team = teamService.getTeamById(teamId);
                 team.setProject(savedProject);
                 teamService.updateTeam(team.getId(), team);
             }
 
-            redirectAttributes.addFlashAttribute("successMessage", "Projeto iniciado em Planeamento!");
+            redirectAttributes.addFlashAttribute("successMessage", "Projeto '" + project.getName() + "' criado com sucesso!");
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar projeto: " + e.getMessage());
@@ -325,11 +347,57 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
+    // Apagar Projeto (Web)
+    @PostMapping("/projects/delete")
+    public String deleteProjectWeb(
+            @RequestParam Long projectId,
+            @RequestParam Long teacherId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            projectService.deleteProject(projectId);
+            redirectAttributes.addFlashAttribute("successMessage", "Projeto eliminado e equipas desassociadas com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar projeto: " + e.getMessage());
+            // Se der erro, volta para a página do projeto
+            return "redirect:/view/project/" + projectId + "/user/" + teacherId;
+        }
+
+        // Se sucesso, volta para a dashboard do professor
+        return "redirect:/view/teacher/home/" + teacherId;
+    }
+
+    // CRIAR SPRINT
+    @PostMapping("/sprints/create")
+    public String createSprintWeb(
+            @RequestParam Long projectId,
+            @RequestParam Long userId, // Para voltar à página certa
+            @ModelAttribute Sprint sprint,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            // Define estado inicial
+            sprint.setStatus(pt.up.edscrum.enums.SprintStatus.TODO);
+
+            // O SprintService já trata de associar ao projeto
+            sprintService.createSprint(projectId, sprint);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Sprint criada com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar sprint: " + e.getMessage());
+        }
+
+        // Redireciona de volta para os detalhes do projeto
+        return "redirect:/view/project/" + projectId + "/user/" + userId;
+    }
+
+// 2. ATUALIZAR CREATE TEAM
     @PostMapping("/teams/create")
     public String createTeamWeb(
             @RequestParam String name,
             @RequestParam Long courseId,
-            @RequestParam Long teacherId,
+            @RequestParam Long teacherId, // Vamos usar este ID para o redirecionamento
+            @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) Long scrumMasterId,
             @RequestParam(required = false) Long productOwnerId,
             @RequestParam(required = false) List<Long> developerIds,
@@ -339,6 +407,11 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
             Team team = new Team();
             team.setName(name);
             team.setCourse(course);
+
+            if (projectId != null) {
+                Project project = projectService.getProjectById(projectId);
+                team.setProject(project);
+            }
 
             if (scrumMasterId != null) {
                 team.setScrumMaster(userService.getUserById(scrumMasterId));
@@ -355,10 +428,37 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
             }
 
             teamService.createTeam(team);
-            redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com membros associados!");
+            redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com sucesso!");
+
+            if (projectId != null) {
+                return "redirect:/view/project/" + projectId + "/user/" + teacherId;
+            }
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
+            if (projectId != null) {
+                return "redirect:/view/project/" + projectId + "/user/" + teacherId;
+            }
         }
+        return "redirect:/view/teacher/home/" + teacherId;
+    }
+
+    // --- Apagar Equipa ---
+    @PostMapping("/teams/delete")
+    public String deleteTeamWeb(
+            @RequestParam Long teamId,
+            @RequestParam Long teacherId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            // O serviço de equipas apaga a equipa pelo ID
+            teamService.deleteTeam(teamId);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Equipa eliminada com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar equipa: " + e.getMessage());
+        }
+
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
@@ -378,24 +478,24 @@ public String handleForgotPassword(@RequestParam String email, Model model) {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
- @PostMapping("/api/teacher/settings")
-public String updateTeacherSettings(@RequestParam String name,
-        @RequestParam String email,
-        @RequestParam(required = false) boolean notificationAwards,
-        @RequestParam(required = false) boolean notificationRankings) {
-    
-    // CORREÇÃO: Adicionar .orElse(null) para extrair o User do Optional
-    User teacher = userService.getUserByEmail(email).orElse(null);
+    @PostMapping("/api/teacher/settings")
+    public String updateTeacherSettings(@RequestParam String name,
+            @RequestParam String email,
+            @RequestParam(required = false) boolean notificationAwards,
+            @RequestParam(required = false) boolean notificationRankings) {
 
-    if (teacher != null) {
-        teacher.setName(name);
-        teacher.setNotificationAwards(notificationAwards);
-        teacher.setNotificationRankings(notificationRankings);
-        userService.updateUser(teacher.getId(), teacher);
-        return "redirect:/view/teacher/home/" + teacher.getId();
+        // CORREÇÃO: Adicionar .orElse(null) para extrair o User do Optional
+        User teacher = userService.getUserByEmail(email).orElse(null);
+
+        if (teacher != null) {
+            teacher.setName(name);
+            teacher.setNotificationAwards(notificationAwards);
+            teacher.setNotificationRankings(notificationRankings);
+            userService.updateUser(teacher.getId(), teacher);
+            return "redirect:/view/teacher/home/" + teacher.getId();
+        }
+        return "redirect:/";
     }
-    return "redirect:/";
-}
 
     @PostMapping("/teacher/profile/update")
     public String updateTeacherProfile(
@@ -441,6 +541,27 @@ public String updateTeacherSettings(@RequestParam String name,
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
+// 3. ATUALIZAR ASSIGN TEAM
+    @PostMapping("/projects/assign-team")
+    public String assignTeamToProject(
+            @RequestParam Long projectId,
+            @RequestParam Long teamId,
+            @RequestParam Long userId, // Necessário para voltar à página
+            RedirectAttributes redirectAttributes) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            Team team = teamService.getTeamById(teamId);
+
+            team.setProject(project);
+            teamService.updateTeam(team.getId(), team);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Equipa associada com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao associar equipa: " + e.getMessage());
+        }
+        return "redirect:/view/project/" + projectId + "/user/" + userId;
+    }
+
     @PostMapping("/action/assign-award")
     public String assignAwardAction(@RequestParam Long courseId,
             @RequestParam Long awardId,
@@ -453,14 +574,79 @@ public String updateTeacherSettings(@RequestParam String name,
         return "redirect:/view/teacher/course/" + courseId;
     }
 
-    @GetMapping("/view/project/{id}")
-    public String projectDetails(@PathVariable Long id, Model model) {
+    // Método Atualizado: Agora recebe userId para carregar a Navbar correta
+    @GetMapping("/view/project/{projectId}/user/{userId}")
+    public String projectDetails(@PathVariable Long projectId, @PathVariable Long userId, Model model) {
         try {
-            ProjectDetailsDTO project = dashboardService.getProjectDetails(id);
+            // 1. Carregar o Utilizador (Professor) para a Navbar
+            User user = userService.getUserById(userId);
+
+            // Coloca no modelo como 'teacher' para a navbar funcionar igual à home
+            if ("TEACHER".equals(user.getRole())) {
+                model.addAttribute("teacher", user);
+            } else {
+                model.addAttribute("student", user); // Caso um aluno aceda (opcional)
+            }
+
+            // 2. Carregar os Detalhes do Projeto
+            ProjectDetailsDTO project = dashboardService.getProjectDetails(projectId);
             model.addAttribute("project", project);
+
+            // 3. Carregar lista de alunos para os modais de equipa
+            model.addAttribute("students", userService.getAllStudents());
+
             return "projectDetails";
+
         } catch (Exception e) {
-            return "redirect:/?error=project_not_found";
+            e.printStackTrace();
+            return "redirect:/?error=project_error";
+        }
+    }
+
+    @GetMapping("/view/sprint/{sprintId}/user/{userId}")
+    public String sprintDashboard(@PathVariable Long sprintId, @PathVariable Long userId, Model model) {
+        try {
+            User user = userService.getUserById(userId);
+            if ("TEACHER".equals(user.getRole())) {
+                model.addAttribute("teacher", user);
+            } else {
+                model.addAttribute("student", user);
+            }
+
+            Sprint sprint = sprintService.getSprintById(sprintId);
+            model.addAttribute("sprint", sprint);
+
+            // Dados calculados
+            int progress = sprintService.calculateSprintProgress(sprintId);
+            model.addAttribute("sprintProgress", progress);
+
+            // Contadores para o cabeçalho das colunas
+            long todoCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("TODO")).count();
+            long progressCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("IN_PROGRESS")).count();
+            long testingCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("TESTING")).count();
+            long doneCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("DONE")).count();
+
+            model.addAttribute("todoCount", todoCount);
+            model.addAttribute("progressCount", progressCount);
+            model.addAttribute("testingCount", testingCount);
+            model.addAttribute("doneCount", doneCount);
+            model.addAttribute("totalStories", sprint.getUserStories().size());
+
+            return "sprintDashboard";
+        } catch (Exception e) {
+            return "redirect:/?error=sprint_error";
+        }
+    }
+
+    // API PARA O DRAG AND DROP (Retorna JSON simples)
+    @PostMapping("/api/stories/{storyId}/move")
+    @ResponseBody
+    public ResponseEntity<?> moveStory(@PathVariable Long storyId, @RequestParam String status) {
+        try {
+            sprintService.updateUserStoryStatus(storyId, status);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -470,7 +656,7 @@ public String updateTeacherSettings(@RequestParam String name,
         try {
             // 1. Tenta obter os dados do serviço
             StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
-            
+
             // 2. Verifica se o resultado é nulo (segurança extra)
             if (data == null) {
                 throw new RuntimeException("Dados do estudante não encontrados ou vazios.");
@@ -478,7 +664,7 @@ public String updateTeacherSettings(@RequestParam String name,
 
             // 3. Adiciona ao modelo para o Thymeleaf
             model.addAttribute("student", data);
-            
+
             // Sucesso: Retorna a view
             return "studentHome";
 

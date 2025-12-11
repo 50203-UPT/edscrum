@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>EduScrum Awards - Professor</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
@@ -214,6 +215,47 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
         }
+
+        /* BOTÃO ELIMINAR */
+    .btn-delete-team {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #dee2e6;
+        color: #dc3545; /* Vermelho original */
+        background-color: white;
+        border-radius: 50%; /* Redondo */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-delete-team:hover {
+        background-color: #dc3545; /* Fundo vermelho vivo */
+        color: white !important;   /* FORÇAR ÍCONE BRANCO */
+        border-color: #dc3545;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3); /* Sombra vermelha suave */
+        transform: translateY(-2px); /* Efeito de elevação */
+    }
+    
+    .btn-delete-team:active {
+        transform: translateY(0);
+    }
+
+    /* Botão de Eliminar no Modo Escuro */
+.dark-theme .btn-delete-team {
+    background-color: #2c2c2c !important;
+    border-color: #444 !important;
+    color: #ef5350 !important; /* Vermelho mais claro para contraste */
+}
+
+.dark-theme .btn-delete-team:hover {
+    background-color: #dc3545 !important; /* Vermelho normal no hover */
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4) !important;
+}
     </style>
 </head>
 <body class="teacher-bg">
@@ -335,23 +377,20 @@
                                         </small>
                                     </div>
                                 </div>
-                               <div class="d-flex align-items-center gap-4">
-                            <div class="text-end">
-                                <div class="fw-bold text-dark" style="font-size: 0.9rem;" 
-                                    th:text="'Score: ' + ${project.progress} + '%'">Score: 0%</div>
-                                    
-                                <span class="badge bg-light text-dark border rounded-pill px-2 py-0" 
-                                    style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="text-end">
+                                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">Score: 0%</div>
+                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
+                                        </div>
+    
+                                        <a th:href="@{'/view/project/' + ${project.id} + '/user/' + ${teacher.id}}" 
+                                            class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px;">
+                                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <a th:href="@{'/view/project/' + ${project.id}}" 
-                            class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
-                            style="width: 32px; height: 32px;">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
-                            </a>
-                        </div>
-                            </div>
-                        </div>
                         <div th:if="${#lists.isEmpty(course.projects)}" class="text-center py-3 border border-dashed rounded bg-light"><small class="text-muted">Nenhum projeto criado.</small></div>
                     </div>
                 </div>
@@ -361,16 +400,40 @@
 
         <div id="teams" class="tab-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <div><h3 class="fw-bold mb-1">Equipas Scrum</h3><p class="text-muted">Visão geral de todas as equipas</p></div>
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTeamModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Equipa</button>
+                <div>
+                    <h3 class="fw-bold mb-1">Equipas Scrum</h3>
+                    <p class="text-muted">Visão geral de todas as equipas</p>
+                </div>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTeamModal">
+                    <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Equipa
+                </button>
             </div>
+            
             <div class="row g-4">
                 <div class="col-md-6" th:each="team : ${teams}">
                     <div class="content-card h-100 position-relative">
+                        
                         <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
-                            <div><h5 class="fw-bold mb-0 text-dark"><i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i><span th:text="${team.name}">Nome</span></h5><small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small></div>
-                            <div class="fw-bold text-warning d-flex align-items-center"><i data-lucide="trophy" class="w-4 h-4 me-1"></i> - pts</div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">
+                                    <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
+                                    <span th:text="${team.name}">Nome Equipa</span>
+                                </h5>
+                                <small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <button class="btn-delete-team shadow-sm"
+                                   data-bs-toggle="modal" 
+                                   data-bs-target="#deleteTeamModal"
+                                    th:data-team-id="${team.id}"
+                                    onclick="prepareDeleteTeamModal(this)"
+                                    title="Eliminar Equipa">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                </button>
+                            </div>
                         </div>
+
                         <div class="d-flex flex-column gap-2">
                             <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
                                 <div class="d-flex align-items-center gap-2">
@@ -396,7 +459,10 @@
                         </div>
                     </div>
                 </div>
-                <div th:if="${#lists.isEmpty(teams)}" class="col-12"><div class="alert alert-warning">Não existem equipas criadas.</div></div>
+                
+                <div th:if="${#lists.isEmpty(teams)}" class="col-12">
+                     <div class="alert alert-warning">Não existem equipas criadas.</div>
+                </div>
             </div>
         </div>
 
@@ -592,26 +658,90 @@
         </div>
     </div>
 
+    <div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-danger">Eliminar Equipa</h4>
+                        <p class="text-muted small mb-0">Esta ação é irreversível.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0 text-dark">Tem a certeza que deseja eliminar esta equipa? <br>Os membros ficarão sem equipa atribuída.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <form th:action="@{/teams/delete}" method="POST" class="w-100 d-flex gap-2">
+                        <input type="hidden" name="teamId" id="deleteTeamIdField">
+                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                        
+                        <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="newProjectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Novo Projeto</h4><p class="text-muted small mb-0">Adicionar projeto.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Novo Projeto</h4>
+                        <p class="text-muted small mb-0">Definir detalhes e cronograma.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
                 <div class="modal-body">
                     <form th:action="@{/projects/create}" method="POST">
                         <input type="hidden" name="teacherId" th:value="${teacher.id}" />
                         <input type="hidden" id="modalCourseId" name="courseId" />
-                        <div class="mb-3"><label class="form-label fw-bold small">Nome do Projeto</label><input type="text" name="name" class="form-control bg-light border-0 py-2" required></div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome do Projeto</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Sistema de Gestão" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Descrição / Objetivos</label>
+                            <textarea name="sprintGoals" class="form-control bg-light border-0" rows="3" placeholder="Objetivos principais do projeto..."></textarea>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Data de Início</label>
+                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Data de Fim</label>
+                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Associar Equipa</label>
                             <select name="teamId" id="projectTeamSelect" class="form-select bg-light border-0 py-2">
-                                <option value="" selected>Sem equipa</option>
-                                <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}" th:data-course-id="${team.course != null ? team.course.id : ''}"></option>
+                                <option value="" selected>Sem equipa (apenas planeamento)</option>
+                                <option th:each="team : ${availableTeams}" 
+                                    th:value="${team.id}" 
+                                    th:text="${team.name}" 
+                                    th:data-course-id="${team.course != null ? team.course.id : ''}">
+                                </option>
                             </select>
+                            <small class="text-muted" style="font-size: 0.7rem;">Apenas equipas deste curso são mostradas.</small>
                         </div>
-                        <div class="mb-3"><label class="form-label fw-bold small">Objetivos</label><textarea name="sprintGoals" class="form-control bg-light border-0" rows="3"></textarea></div>
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0"><button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Projeto</button></div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Projeto</button>
+                        </div>
                     </form>
                 </div>
+
             </div>
         </div>
     </div>
@@ -961,6 +1091,7 @@
                 else opt.style.display = 'none';
             });
         }
+
         function filterAwards(type, btnElement) {
             const buttons = btnElement.parentElement.querySelectorAll('button');
             buttons.forEach(btn => { btn.classList.remove('btn-primary', 'text-white'); btn.classList.add('btn-white', 'border', 'text-muted'); });
@@ -1001,6 +1132,11 @@
             container.appendChild(newRow);
             lucide.createIcons();
             updateOptions();
+        }
+
+        function prepareDeleteTeamModal(button) {
+            const teamId = button.getAttribute('data-team-id');
+            document.getElementById('deleteTeamIdField').value = teamId;
         }
 
         // Notification Sidebar JavaScript

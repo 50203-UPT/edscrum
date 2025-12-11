@@ -5,45 +5,59 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Project;
+import pt.up.edscrum.model.Team; // Importar
 import pt.up.edscrum.repository.ProjectRepository;
+import pt.up.edscrum.repository.TeamRepository; // Importar
 
 @Service
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final TeamRepository teamRepository; // NOVO
 
-    // Injeção via construtor
-    public ProjectService(ProjectRepository projectRepository) {
+    // Injeção via construtor (Adicionar TeamRepository)
+    public ProjectService(ProjectRepository projectRepository, TeamRepository teamRepository) {
         this.projectRepository = projectRepository;
+        this.teamRepository = teamRepository;
     }
 
-    // Listar todos os projetos
     public List<Project> getAllProjects() {
         return projectRepository.findAll();
     }
 
-    // Buscar projeto por ID
     public Project getProjectById(Long id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
     }
 
-    // Criar novo projeto
     public Project createProject(Project project) {
         return projectRepository.save(project);
     }
 
-    // Atualizar projeto
     public Project updateProject(Long id, Project projectDetails) {
         Project project = getProjectById(id);
         project.setName(projectDetails.getName());
         project.setSprintGoals(projectDetails.getSprintGoals());
         project.setCourse(projectDetails.getCourse());
+        // Se quiseres atualizar datas aqui também, podes adicionar
+        project.setStartDate(projectDetails.getStartDate());
+        project.setEndDate(projectDetails.getEndDate());
         return projectRepository.save(project);
     }
 
-    // Apagar projeto
+    // MÉTODO APAGAR
     public void deleteProject(Long id) {
+        Project project = getProjectById(id);
+
+        // 1. Desassociar equipas antes de apagar
+        if (project.getTeams() != null) {
+            for (Team team : project.getTeams()) {
+                team.setProject(null);
+                teamRepository.save(team);
+            }
+        }
+
+        // 2. Apagar o projeto (agora seguro)
         projectRepository.deleteById(id);
     }
 }

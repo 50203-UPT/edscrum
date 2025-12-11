@@ -2,252 +2,454 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Detalhes do Projeto</title>
+    <title>Gestão do Projeto</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
-        /* Layout específico baseado nas imagens */
         body { background-color: #f8f9fa; }
+        .main-container { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
         
-        .main-container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
+        .project-header-card {
+            background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #edf2f7;
+        }
 
-        /* HEADER */
-        .project-header {
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;
+        /* === BOTÃO DE VOLTAR === */
+        .btn-back-custom {
+            display: flex; align-items: center; justify-content: center;
+            width: 42px; height: 42px; border-radius: 12px;
+            color: #6c757d; transition: all 0.2s ease; text-decoration: none; margin-right: 8px;
         }
-        .header-btn {
-            background: white; border: 1px solid #e5e7eb; color: #374151; font-weight: 600;
-            padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px;
-            text-decoration: none; transition: all 0.2s;
+        .btn-back-custom:hover {
+            background-color: #0d6efd; color: white;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25); transform: translateY(-1px);
         }
-        .header-btn:hover { background: #f9fafb; color: #111827; }
         
-        .score-badge {
-            background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+        /* === ABAS DA PÁGINA === */
+        .tabs-container {
+            display: flex; gap: 10px; padding: 0 20px; background: white;
+            border-bottom: 1px solid #dee2e6; margin-bottom: 1.5rem; border-radius: 12px 12px 0 0; 
         }
-
-        /* CARDS GERAIS */
-        .layout-card {
-            background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        .tab-btn {
+            background: transparent !important; border: none; border-bottom: 3px solid transparent;
+            padding: 12px 20px; font-weight: 500; color: #6c757d; outline: none !important;
+            position: relative; top: 1px; transition: all 0.2s ease;
         }
-
-        /* EQUIPA (Image 1) */
-        .role-badge { 
-            font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-block; margin-top: 4px;
-        }
-        /* Cores exatas da imagem */
-        .role-sm { background-color: #f3e8ff; color: #7e22ce; /* Roxo */ }
-        .role-po { background-color: #dbeafe; color: #1e40af; /* Azul */ }
-        .role-dev { background-color: #dcfce7; color: #15803d; /* Verde */ }
-
-        /* PROGRESSO GERAL (Image 1) */
-        .progress-label { font-size: 0.9rem; color: #4b5563; font-weight: 500; margin-bottom: 8px; }
-        .custom-progress { height: 10px; background-color: #e5e7eb; border-radius: 99px; overflow: hidden; }
-        .custom-bar { background-color: #3b82f6; height: 100%; border-radius: 99px; }
+        .tab-btn:hover { color: #0d6efd; background-color: rgba(13, 110, 253, 0.05) !important; }
+        .tab-btn.active { border-bottom: 3px solid #0d6efd; color: #0d6efd !important; font-weight: 700; }
         
-        .stat-item { text-align: center; }
-        .stat-val { display: block; font-size: 1.5rem; font-weight: 700; color: #111827; }
-        .stat-lbl { font-size: 0.875rem; color: #6b7280; }
+        .custom-tab-content { display: none; }
+        .custom-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* SPRINTS (Image 2) */
-        .sprint-card {
-            border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+        /* LISTAS */
+        .sprint-item {
+            background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+            margin-bottom: 16px; transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .sprint-badge {
-            padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; color: white;
-        }
-        .badge-90 { background-color: #3b82f6; } /* Azul */
-        .badge-85 { background-color: #8b5cf6; } /* Roxo */
-        .badge-0 { background-color: #9ca3af; }  /* Cinza */
+        .sprint-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-todo { background-color: #94a3b8; }
+        .status-progress { background-color: #3b82f6; }
+        .status-done { background-color: #22c55e; }
 
-        .obj-list { list-style: none; padding-left: 0; margin-top: 12px; margin-bottom: 0; }
-        .obj-list li { 
-            position: relative; padding-left: 20px; font-size: 0.9rem; color: #4b5563; margin-bottom: 4px;
-        }
-        .obj-list li::before {
-            content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px;
-            border: 1px solid #9ca3af; border-radius: 50%; /* Bolinha vazia como na imagem */
-        }
-
-        /* AWARDS (Image 2) */
-        .award-row {
-            background-color: #fdfdfd; border: 1px solid #f3f4f6; border-radius: 12px; padding: 16px;
+        .member-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .icon-box {
-            width: 48px; height: 48px; background-color: #fef9c3; border-radius: 12px; /* Amarelo claro */
-            display: flex; align-items: center; justify-content: center; color: #ca8a04;
-        }
+        .role-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase;}
+        .role-SM { background-color: #f3e8ff; color: #7e22ce; }
+        .role-PO { background-color: #dbeafe; color: #1e40af; }
+        .role-Developer { background-color: #dcfce7; color: #15803d; }
 
-        /* DARK THEME OVERRIDES */
-        body.dark-theme .project-header h2, body.dark-theme .stat-val { color: white; }
-        body.dark-theme .layout-card, body.dark-theme .header-btn, body.dark-theme .sprint-card {
-            background-color: #1e1e1e; border-color: #333; color: #e0e0e0;
-        }
-        body.dark-theme .role-sm { background-color: #4c1d95; color: #e9d5ff; }
-        body.dark-theme .role-po { background-color: #1e3a8a; color: #bfdbfe; }
-        body.dark-theme .role-dev { background-color: #14532d; color: #bbf7d0; }
-        body.dark-theme .custom-progress { background-color: #333; }
-        body.dark-theme .award-row { background-color: #1e1e1e; border-color: #333; }
-        body.dark-theme .icon-box { background-color: #422006; color: #facc15; }
+        /* NOTIFICATIONS */
+        .notification-sidebar { position: fixed; top: 0; right: -400px; width: 400px; height: 100%; background-color: #f8f9fa; box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); z-index: 1050; transition: right 0.3s ease-in-out; display: flex; flex-direction: column; border-left: 1px solid #e9ecef; }
+        .notification-sidebar.open { right: 0; }
+        .notification-sidebar-header { padding: 1.5rem; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; }
+        .notification-sidebar-body { flex-grow: 1; padding: 1.5rem; overflow-y: auto; }
+        .notification-item { background-color: transparent; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 1rem; transition: all 0.2s ease; color: #212529; }
+        .notification-item:hover { background-color: rgba(0, 0, 0, 0.05); }
+        .notification-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
     </style>
 </head>
-<body class="student-bg"> 
+<body class="teacher-bg">
 
-    <nav class="navbar navbar-dark bg-transparent fixed-top p-3">
-        <div class="container-fluid">
-            <button class="btn btn-light rounded-circle shadow-sm" onclick="history.back()">
-                <i data-lucide="arrow-left" class="text-dark"></i>
-            </button>
+    <nav class="navbar-teacher d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top" style="z-index: 1000;">
+        <div class="d-flex align-items-center gap-2">
+            <a href="#" onclick="history.back(); return false;" class="btn-back-custom" title="Voltar">
+                <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+            </a>
+            <div class="bg-primary text-white p-2 rounded-3 shadow-sm d-flex align-items-center justify-content-center">
+                <i data-lucide="trophy" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="ms-2">
+                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum Awards</h5>
+                <small class="text-muted">Gestão de Projeto</small>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-4">
+            <div id="notificationBellContainer" class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light" onclick="toggleNotificationSidebar()">
+                <i id="notificationBellIcon" data-lucide="bell" class="text-secondary"></i>
+                <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
+            </div>
+            <div class="vr text-muted opacity-25" style="height: 30px;"></div>
+            <div class="dropdown">
+                <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="text-end d-none d-md-block">
+                        <div class="profile-name fw-bold text-dark" th:text="${teacher.name}">Prof. Nome</div>
+                        <div class="profile-email small text-muted" th:text="${teacher.email}">email@upt.pt</div>
+                    </div>
+                    <img th:if="${teacher.profileImage != null}" th:src="@{'/uploads/profile-images/' + ${teacher.profileImage}}" class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
+                    <div th:unless="${teacher.profileImage != null}" class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; font-size: 1.2rem;" th:text="${#strings.substring(teacher.name,0,1)}">T</div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
+                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
+                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal"><i data-lucide="settings" class="w-4 h-4 inline me-2 opacity-50"></i> Configurações</a></li>
+                    <li><hr class="dropdown-divider my-2"></li>
+                    <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i data-lucide="log-out" class="w-4 h-4 inline me-2 opacity-50"></i> Sair</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <div class="container main-container pt-5 mt-4">
-        
-        <div class="project-header">
-            <div>
-                <h2 class="fw-bold mb-1" style="font-size: 2rem; color: #111827;" th:text="${project.name}">E-commerce Platform</h2>
-                <p class="text-muted mb-0" th:text="${project.description ?: 'Sem descrição disponível.'}">Plataforma de comércio...</p>
-            </div>
-            <div class="d-flex gap-3 align-items-center">
-                <a href="#" class="header-btn">
-                    <i data-lucide="list-todo" style="width: 18px;"></i> Gerir Sprints
-                </a>
-                <div class="score-badge" th:text="'Score: ' + ${project.globalScore} + '%'">Score: 76%</div>
-            </div>
+    <div id="notificationSidebar" class="notification-sidebar">
+        <div class="notification-sidebar-header">
+            <h5 class="fw-bold mb-0" onclick="toggleNotificationSidebar()">Notificações</h5>
+            <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
         </div>
-
-        <div class="layout-card" th:if="${project.team != null}">
-            <h5 class="fw-bold mb-4" style="color: #111827;" th:text="'Equipa: ' + ${project.team.name}">Equipa: Team Beta</h5>
-            
-            <div class="row g-4">
-                <div class="col-6 col-md-3" th:if="${project.team.scrumMaster != null}">
-                    <div class="fw-bold text-dark mb-1" th:text="${project.team.scrumMaster.name}">Carlos Ferreira</div>
-                    <span class="role-badge role-sm">Scrum Master</span>
-                </div>
-
-                <div class="col-6 col-md-3" th:if="${project.team.productOwner != null}">
-                    <div class="fw-bold text-dark mb-1" th:text="${project.team.productOwner.name}">Sofia Martins</div>
-                    <span class="role-badge role-po">Product Owner</span>
-                </div>
-
-                <div class="col-6 col-md-3" th:each="dev : ${project.team.developers}">
-                    <div class="fw-bold text-dark mb-1" th:text="${dev.name}">Ricardo Lima</div>
-                    <span class="role-badge role-dev">Developer</span>
+        <div class="notification-sidebar-body">
+            <div id="notificationsContainer">
+                <div class="text-center text-muted mt-4" id="noNotifications" style="display: none;">
+                    <i data-lucide="bell-off" class="w-8 h-8 mb-2"></i>
+                    <p>Nenhuma notificação nova.</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="layout-card">
-            <h5 class="fw-bold mb-4" style="color: #111827;">
-                <i data-lucide="trending-up" class="inline w-5 h-5 me-2"></i> Progresso Geral
-            </h5>
-            
-            <div class="d-flex justify-content-between progress-label">
-                <span>Conclusão de Tarefas (Sprints)</span>
-                <span th:text="${project.completedTasks} + ' / ' + ${project.totalTasks} + ' (' + ${project.progressPercentage} + '%)'">2 / 3 (66%)</span>
-            </div>
-            
-            <div class="custom-progress mb-4">
-                <div class="custom-bar" th:style="'width: ' + ${project.progressPercentage} + '%'"></div>
-            </div>
+    <div class="container main-container pt-4">
 
-            <div class="row pt-2">
-                <div class="col-4 stat-item border-end">
-                    <span class="stat-val" th:text="${project.totalSprints}">2</span>
-                    <span class="stat-lbl">Sprints</span>
-                </div>
-                <div class="col-4 stat-item border-end">
-                    <span class="stat-val" th:text="${project.globalScore} + '%'">76%</span>
-                    <span class="stat-lbl">Score Global</span>
-                </div>
-                <div class="col-4 stat-item">
-                    <span class="stat-val" th:text="${project.totalAwards}">1</span>
-                    <span class="stat-lbl">Prémios</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="layout-card">
-            <h5 class="fw-bold mb-4" style="color: #111827;">
-                <i data-lucide="target" class="inline w-5 h-5 me-2"></i> Sprints
-            </h5>
-            
-            <div th:each="sprint : ${project.sprints}" class="sprint-card">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 1.1rem;" th:text="${sprint.name}">Sprint 1 - Foundation</h6>
-                    <span class="sprint-badge" 
-                          th:classappend="${sprint.status?.name() == 'DONE' ? 'badge-90' : (sprint.status?.name() == 'IN_PROGRESS' ? 'badge-85' : 'badge-0')}"
-                          th:text="${sprint.status?.name() == 'DONE' ? '100%' : (sprint.status?.name() == 'IN_PROGRESS' ? '50%' : '0%')}">90%</span>
+        <div class="project-header-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="badge rounded-pill px-3 py-2"
+                              th:classappend="${project.status == 'CONCLUIDO' ? 'bg-success' : (project.status == 'EM_CURSO' ? 'bg-primary' : 'bg-secondary')}"
+                              th:text="${#strings.replace(project.status, '_', ' ')}">EM CURSO</span>
+                        <span class="text-muted small fw-bold text-uppercase" th:text="${project.courseName}">Engenharia de Software</span>
+                    </div>
+                    <h1 class="fw-bold text-dark mb-1" th:text="${project.name}">Nome do Projeto</h1>
+                    <p class="text-muted mb-0" th:text="${project.description}">Descrição do projeto...</p>
                 </div>
                 
-                <div class="small text-muted mb-3">
-                    <i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> 
-                    <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">01/02/2025 - 14/02/2025</span>
-                </div>
-
-                <div class="d-flex justify-content-between progress-label" style="font-size: 0.8rem;">
-                    <span>Progresso</span>
-                    <span th:text="${sprint.status?.name() == 'DONE' ? 'Completo' : 'Em andamento'}">X tarefas</span>
-                </div>
-                <div class="custom-progress mb-3" style="height: 6px;">
-                    <div class="custom-bar" 
-                         th:style="'width: ' + (${sprint.status?.name() == 'DONE' ? '100%' : (sprint.status?.name() == 'IN_PROGRESS' ? '50%' : '5%')})"></div>
-                </div>
-
-                <div class="mt-3">
-                    <div class="small text-muted mb-1">Objetivos:</div>
-                    <ul class="obj-list">
-                        <li>Concluir todas as user stories planeadas.</li>
-                        <li th:text="'Estado atual: ' + ${sprint.status}">Estado</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div th:if="${#lists.isEmpty(project.sprints)}" class="text-center text-muted py-3">
-                Não existem sprints criadas.
-            </div>
-        </div>
-
-        <div class="layout-card">
-            <h5 class="fw-bold mb-4" style="color: #111827;">Prémios Conquistados</h5>
-            
-            <div th:each="award : ${project.awards}" class="award-row mb-2">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="icon-box">
-                        <i data-lucide="trophy" style="width: 24px;"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark" th:text="${award.award.name}">Perfect Sprint</div>
-                        <div class="small text-muted" th:text="'Equipa ' + ${project.team.name}">Equipa Team Beta</div>
-                    </div>
-                </div>
                 <div class="text-end">
-                    <div class="fw-bold" style="color: #111827;" th:text="'+' + ${award.pointsEarned} + ' pontos'">+80 pontos</div>
-                    <div class="small text-muted">Recentemente</div> 
+                    <div class="d-flex align-items-center gap-2 text-muted mb-1">
+                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                        <small th:text="${project.startDate} + ' - ' + ${project.endDate}">Datas</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 justify-content-end text-dark fw-bold">
+                        <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
+                        <span th:text="${#lists.size(project.sprints)} + ' Sprints'">0 Sprints</span>
+                    </div>
                 </div>
-            </div>
-
-            <div th:if="${#lists.isEmpty(project.awards)}" class="text-center text-muted py-3">
-                Ainda sem prémios conquistados.
             </div>
         </div>
 
+        <div class="tabs-container shadow-sm rounded-3">
+            <button class="tab-btn active" onclick="openTab('sprints', this)">
+                <i data-lucide="list-todo" class="w-4 h-4 inline me-2"></i> Sprints
+            </button>
+            <button class="tab-btn" onclick="openTab('team', this)">
+                <i data-lucide="users" class="w-4 h-4 inline me-2"></i> Equipa
+            </button>
+        </div>
+
+        <div id="sprints" class="custom-tab-content active">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-dark mb-0">Gestão de Sprints</h4>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#newSprintModal" 
+                        onclick="updateSprintNumber()">
+                    <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Sprint
+                </button>
+            </div>
+
+            <div th:each="sprint : ${project.sprints}" class="sprint-item">
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="p-3 bg-light rounded-3 border"><i data-lucide="target" class="text-primary w-6 h-6"></i></div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" th:classappend="${sprint.status.name() == 'DONE' ? 'status-done' : (sprint.status.name() == 'IN_PROGRESS' ? 'status-progress' : 'status-todo')}"></span>
+                            <span class="small text-muted fw-bold text-uppercase" 
+                                  th:text="${#strings.replace(sprint.status, '_', ' ')}">IN PROGRESS</span> </div>
+                        <h5 class="fw-bold text-dark mb-0 mt-1" th:text="${sprint.name}">Sprint 1</h5>
+                        <small class="text-muted" th:text="${sprint.startDate} + ' até ' + ${sprint.endDate}">Datas</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-4">
+                    <a th:href="@{'/view/sprint/' + ${sprint.id} + '/user/' + ${teacher.id}}" class="btn btn-outline-primary rounded-pill px-4 fw-bold btn-sm">Ver Board</a>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(project.sprints)}" class="text-center py-5"><p class="text-muted">Ainda não há sprints criadas.</p></div>
+        </div>
+
+        <div id="team" class="custom-tab-content">
+            <div class="text-end mb-3">
+                 <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
+                    <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Projeto
+                 </button>
+            </div>
+
+            <div th:if="${project.teamName != null}">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="content-card bg-primary text-white border-0 h-100 p-4 rounded-4">
+                            <div class="d-flex justify-content-between">
+                                <div><h5 class="fw-bold text-white mb-1" th:text="${project.teamName}">Nome Equipa</h5><span class="opacity-75">Pontuação</span></div>
+                                <i data-lucide="shield" class="w-8 h-8 opacity-50"></i>
+                            </div>
+                            <h2 class="display-4 fw-bold mt-3 mb-0 text-white" th:text="${project.teamTotalXP}">0</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                         <div class="content-card h-100 p-4 rounded-4 bg-white border">
+                            <h6 class="fw-bold text-dark mb-3">Prémios</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span th:each="award : ${project.teamAwards}" class="badge bg-warning text-dark border border-warning rounded-pill p-2 px-3 d-flex align-items-center gap-2">
+                                    <i data-lucide="trophy" class="w-3 h-3"></i> <span th:text="${award.award.name}">Prémio</span>
+                                </span>
+                                <span th:if="${#lists.isEmpty(project.teamAwards)}" class="text-muted small">Sem prémios.</span>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+                <h5 class="fw-bold text-dark mb-3">Membros</h5>
+                <div class="row g-3">
+                    <div class="col-md-12" th:each="member : ${project.members}">
+                        <div class="member-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary border" style="width: 45px; height: 45px;" th:text="${#strings.substring(member.name,0,1)}">A</div>
+                                <div><h6 class="fw-bold text-dark mb-0" th:text="${member.name}">Nome</h6><span class="role-badge" th:classappend="${member.role == 'Scrum Master' ? 'role-SM' : (member.role == 'Product Owner' ? 'role-PO' : 'role-Developer')}" th:text="${member.role}">Role</span></div>
+                            </div>
+                            <div class="text-end d-flex gap-4 align-items-center">
+                                <div><div class="small text-muted">Prémios</div><div class="fw-bold text-dark" th:text="${member.awardsCount}">0</div></div>
+                                <div class="text-end"><div class="small text-muted">XP</div><div class="fw-bold text-primary" style="font-size: 1.2rem;" th:text="${member.individualXP}">0</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${project.teamName == null}" class="text-center py-5 content-card border-dashed">
+                <div class="mb-3 p-3 bg-light rounded-circle d-inline-block"><i data-lucide="users" class="w-10 h-10 text-muted opacity-50"></i></div>
+                <h5 class="fw-bold text-dark">Este projeto não tem equipa</h5>
+                <button class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addTeamModal"><i data-lucide="plus" class="w-4 h-4 inline me-2"></i> Adicionar Equipa</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="newSprintModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <span id="nextSprintLabel" class="text-muted small fw-bold text-uppercase" style="letter-spacing: 1px;">SPRINT 1</span>
+                        <h4 class="modal-title fw-bold mt-1">Nova Sprint</h4>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/sprints/create}" method="POST">
+                        <input type="hidden" name="projectId" th:value="${project.id}">
+                        <input type="hidden" name="userId" th:value="${teacher.id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome da Sprint</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Planeamento Inicial" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Descrição</label>
+                            <textarea name="description" class="form-control bg-light border-0" rows="3" placeholder="Objetivos e entregas desta sprint..."></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Data Início</label>
+                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Data Fim</label>
+                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Sprint</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Adicionar Equipa</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <ul class="nav nav-pills mb-4 gap-2 bg-light p-1 rounded-pill" id="pills-tab" role="tablist">
+                        <li class="nav-item flex-fill"><button class="nav-link active w-100 rounded-pill fw-bold" id="pills-existing-tab" data-bs-toggle="pill" data-bs-target="#pills-existing" type="button">Existente</button></li>
+                        <li class="nav-item flex-fill"><button class="nav-link w-100 rounded-pill fw-bold" id="pills-new-tab" data-bs-toggle="pill" data-bs-target="#pills-new" type="button">Nova</button></li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent" style="display: block !important;">
+                        <div class="tab-pane fade show active" id="pills-existing">
+                            <form th:action="@{/projects/assign-team}" method="POST">
+                                <input type="hidden" name="projectId" th:value="${project.id}">
+                                <input type="hidden" name="userId" th:value="${teacher.id}">
+                                <div class="mb-3"><label class="form-label fw-bold small">Equipas Disponíveis</label><select name="teamId" class="form-select bg-light border-0 py-3" required><option value="" disabled selected>Selecione...</option><option th:each="t : ${project.availableTeams}" th:value="${t.id}" th:text="${t.name}"></option></select></div>
+                                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2" th:disabled="${#lists.isEmpty(project.availableTeams)}">Associar</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="pills-new">
+                            <form th:action="@{/teams/create}" method="POST">
+                                <input type="hidden" name="projectId" th:value="${project.id}">
+                                <input type="hidden" name="courseId" th:value="${project.courseId}">
+                                <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                                <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0" required></div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><label class="form-label small">SM</label><select name="scrumMasterId" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Escolher...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
+                                    <div class="col-6"><label class="form-label small">PO</label><select name="productOwnerId" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Escolher...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
+                                </div>
+                                <div class="mb-3"><label class="form-label small d-flex justify-content-between">Developers <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperFieldProject()">+ Adicionar</button></label>
+                                    <div id="developers-container-project"><div class="input-group mb-2 developer-row"><select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Selecionar Developer...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div></div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">Criar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold text-danger">Eliminar Projeto</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><p class="mb-0">Tem a certeza? As equipas serão desassociadas.</p></div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <form th:action="@{/projects/delete}" method="POST" class="w-100 d-flex gap-2">
+                        <input type="hidden" name="projectId" th:value="${project.id}">
+                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                        <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Configurações</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form th:action="@{/api/teacher/settings}" method="POST">
+                        <input type="hidden" name="email" th:value="${teacher.email}">
+                        <div class="p-3 bg-light rounded-3 mb-3 border"><h6 class="fw-bold small mb-3 text-dark">Aparência</h6><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="theme-switcher"><label class="form-check-label" for="theme-switcher">Modo Noturno</label></div></div>
+                        <div class="modal-footer border-0 pt-0 px-0"><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Editar Perfil</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+                        <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required></div>
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0"><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
     <script>
         lucide.createIcons();
-        
-        // Ativar Dark Mode se estiver salvo
+        function openTab(tabId, btnElement) {
+            document.querySelectorAll('.custom-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+        function toggleNotificationSidebar() {
+            const sidebar = document.getElementById('notificationSidebar');
+            sidebar.classList.toggle('open');
+        }
+        function updateSprintNumber() {
+            const currentCount = document.querySelectorAll('.sprint-item').length;
+            const nextNumber = currentCount + 1;
+            const label = document.getElementById('nextSprintLabel');
+            if (label) label.textContent = 'SPRINT ' + nextNumber;
+        }
+
+        function updateOptions() {
+            const allSelects = document.querySelectorAll('.member-select');
+            const selectedValues = new Set();
+            allSelects.forEach(select => { if (select.value && select.value !== "") selectedValues.add(select.value); });
+            allSelects.forEach(select => {
+                const myValue = select.value;
+                const options = select.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (!opt.value) return;
+                    if (selectedValues.has(opt.value) && opt.value !== myValue) opt.disabled = true;
+                    else opt.disabled = false;
+                });
+            });
+        }
+        function addDeveloperFieldProject() {
+            const container = document.getElementById('developers-container-project');
+            const firstRow = container.querySelector('.developer-row');
+            const newRow = firstRow.cloneNode(true);
+            const select = newRow.querySelector('select');
+            select.value = "";
+            if (!newRow.querySelector('.btn-remove')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-light border-0 text-danger ms-2 btn-remove';
+                removeBtn.innerHTML = '<i data-lucide="trash-2" style="width:16px;"></i>';
+                removeBtn.onclick = function() { this.parentElement.remove(); updateOptions(); };
+                newRow.appendChild(removeBtn);
+            }
+            container.appendChild(newRow);
+            lucide.createIcons();
+            updateOptions();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            const themeSwitcher = document.getElementById('theme-switcher');
             const body = document.body;
             const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'dark') {
-                body.classList.add('dark-theme');
+            if (currentTheme === 'dark') { body.classList.add('dark-theme'); if(themeSwitcher) themeSwitcher.checked = true; }
+            if(themeSwitcher) {
+                themeSwitcher.addEventListener('change', () => {
+                    if (themeSwitcher.checked) { body.classList.add('dark-theme'); localStorage.setItem('theme', 'dark'); } 
+                    else { body.classList.remove('dark-theme'); localStorage.setItem('theme', 'light'); }
+                });
             }
         });
     </script>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sprint Dashboard</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body { background-color: #f8f9fa; overflow-x: hidden; }
+        .main-container { max-width: 1400px; margin: 0 auto; padding-bottom: 50px; }
+        
+        /* HEADER */
+        .sprint-header {
+            background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #edf2f7;
+        }
+
+        /* KANBAN BOARD */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .kanban-column {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 500px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .column-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #cbd5e1;
+        }
+        
+        .col-title { font-weight: 700; color: #475569; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-count { background: #e2e8f0; color: #64748b; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+
+        /* Cores das colunas (Opcional, borda superior colorida) */
+        .col-todo { border-top: 4px solid #94a3b8; }
+        .col-progress { border-top: 4px solid #f59e0b; } /* Amarelo/Laranja */
+        .col-testing { border-top: 4px solid #8b5cf6; } /* Roxo */
+        .col-done { border-top: 4px solid #10b981; } /* Verde */
+
+        /* USER STORY CARD */
+        .story-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .story-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+        .story-card:active { cursor: grabbing; }
+
+        .priority-badge { font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .prio-HIGH { background-color: #fee2e2; color: #ef4444; }
+        .prio-MEDIUM { background-color: #ffedd5; color: #f97316; }
+        .prio-LOW { background-color: #d1fae5; color: #10b981; }
+
+        .assignee-avatar {
+            width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; 
+            font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #64748b;
+        }
+
+        .btn-back-custom {
+            display: flex; align-items: center; justify-content: center;
+            width: 42px; height: 42px; border-radius: 12px;
+            color: #6c757d; transition: all 0.2s ease; text-decoration: none; margin-right: 8px;
+        }
+        .btn-back-custom:hover {
+            background-color: #0d6efd; color: white;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25); transform: translateY(-1px);
+        }
+        
+        /* Dragging visuals */
+        .kanban-column.drag-over { background-color: #e2e8f0; border-style: dashed; }
+        .story-card.dragging { opacity: 0.5; }
+
+        /* Dark Theme overrides */
+        body.dark-theme .kanban-column { background-color: #1e1e1e; border-color: #333; }
+        body.dark-theme .sprint-header { background-color: #1e1e1e; border-color: #333; }
+        body.dark-theme .story-card { background-color: #2c2c2c; border-color: #444; color: #e0e0e0; }
+        body.dark-theme .story-card:hover { background-color: #333; }
+        body.dark-theme .col-title { color: #a0aec0; }
+        body.dark-theme .col-count { background-color: #333; color: #cbd5e1; }
+    </style>
+</head>
+<body class="teacher-bg"> <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top p-3" style="z-index: 1000;">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <a href="#" onclick="history.back(); return false;" class="btn-back-custom">
+                    <i data-lucide="arrow-left" style="width: 20px;"></i>
+                </a>
+                <div>
+                    <h6 class="mb-0 fw-bold" th:text="${sprint.project.name}">Nome Projeto</h6>
+                    <small class="text-muted">Sprint Dashboard</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                 <div class="d-none d-md-block text-end">
+                    <div class="fw-bold text-dark small" th:text="${teacher != null ? teacher.name : student.name}">User</div>
+                    <div class="text-muted small" style="font-size: 0.7rem;" th:text="${teacher != null ? 'Professor' : 'Estudante'}">Role</div>
+                </div>
+                <div class="bg-light rounded-circle border d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                     <i data-lucide="user" class="w-4 h-4 text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container pt-4">
+
+        <div class="sprint-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i data-lucide="target" class="text-primary w-6 h-6"></i>
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${sprint.name}">Sprint 2</h2>
+                        <span class="badge rounded-pill px-3" 
+                              th:classappend="${sprint.status.name() == 'DONE' ? 'bg-success' : (sprint.status.name() == 'IN_PROGRESS' ? 'bg-warning text-dark' : 'bg-secondary')}"
+                              th:text="${sprint.status}">IN PROGRESS</span>
+                    </div>
+                    <p class="text-muted mb-0 ps-1" th:text="${sprint.description}">Descrição da sprint...</p>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <span class="fw-bold small text-dark">Sprint Progress</span>
+                    <span class="fw-bold small text-primary" th:text="${sprintProgress} + '%'">38%</span>
+                </div>
+                <div class="progress" style="height: 10px; border-radius: 99px; background-color: #e9ecef;">
+                    <div class="progress-bar bg-success rounded-pill" role="progressbar" 
+                         th:style="'width: ' + ${sprintProgress} + '%'"></div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <span th:text="${doneCount} + ' de ' + ${totalStories} + ' user stories'">5/13 story points</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="kanban-board">
+            
+            <div class="kanban-column col-todo" ondragover="allowDrop(event)" ondrop="drop(event, 'TODO')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                <div class="column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-muted"></i>
+                        <span class="col-title">To Do</span>
+                    </div>
+                    <span class="col-count" th:text="${todoCount}">0</span>
+                </div>
+                
+                <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'TODO'}" 
+                     class="story-card" draggable="true" ondragstart="drag(event)" 
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#5</span>
+                        <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">HIGH</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.95rem;" th:text="${story.name}">Database Schema</h6>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
+                            <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-column col-progress" ondragover="allowDrop(event)" ondrop="drop(event, 'IN_PROGRESS')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                <div class="column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i data-lucide="loader-2" class="w-4 h-4 text-warning"></i>
+                        <span class="col-title">In Progress</span>
+                    </div>
+                    <span class="col-count" th:text="${progressCount}">0</span>
+                </div>
+                 <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'IN_PROGRESS'}" 
+                     class="story-card" draggable="true" ondragstart="drag(event)" 
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
+                        <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">MEDIUM</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2" th:text="${story.name}">Task Name</h6>
+                    <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
+                         <div class="d-flex align-items-center gap-2">
+                            <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
+                            <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-column col-testing" ondragover="allowDrop(event)" ondrop="drop(event, 'TESTING')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                <div class="column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i data-lucide="flask-conical" class="w-4 h-4 text-primary"></i> <span class="col-title">Testing</span>
+                    </div>
+                    <span class="col-count" th:text="${testingCount}">0</span>
+                </div>
+                <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'TESTING'}" 
+                     class="story-card" draggable="true" ondragstart="drag(event)" 
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                     <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
+                        <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">LOW</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2" th:text="${story.name}">Task Name</h6>
+                     <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
+                         <div class="d-flex align-items-center gap-2">
+                            <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
+                            <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-column col-done" ondragover="allowDrop(event)" ondrop="drop(event, 'DONE')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                <div class="column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-success"></i>
+                        <span class="col-title">Done</span>
+                    </div>
+                    <span class="col-count" th:text="${doneCount}">0</span>
+                </div>
+                 <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'DONE'}" 
+                     class="story-card" draggable="true" ondragstart="drag(event)" 
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                     <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
+                        <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">HIGH</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2" style="text-decoration: line-through; opacity: 0.7;" th:text="${story.name}">Task Name</h6>
+                     <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
+                         <div class="d-flex align-items-center gap-2">
+                            <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
+                            <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        lucide.createIcons();
+
+        // DRAG AND DROP LOGIC
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.dataTransfer.setData("storyId", ev.target.getAttribute("data-id"));
+            ev.target.classList.add('dragging');
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dragEnter(ev) {
+            if (ev.target.classList.contains('kanban-column')) {
+                ev.target.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(ev) {
+            if (ev.target.classList.contains('kanban-column')) {
+                ev.target.classList.remove('drag-over');
+            }
+        }
+
+        function drop(ev, newStatus) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var storyId = ev.dataTransfer.getData("storyId");
+            var draggedElement = document.getElementById(data);
+            
+            // Encontrar a coluna alvo (pode ser o target direto ou um pai)
+            let column = ev.target;
+            while(column && !column.classList.contains('kanban-column')) {
+                column = column.parentElement;
+            }
+
+            if (column) {
+                column.classList.remove('drag-over');
+                column.appendChild(draggedElement);
+                draggedElement.classList.remove('dragging');
+
+                // CHAMADA API PARA ATUALIZAR STATUS
+                fetch(`/api/stories/${storyId}/move?status=${newStatus}`, {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        console.log("Status updated to " + newStatus);
+                        // Opcional: Atualizar contadores ou barra de progresso via JS sem reload
+                        // Para simplificar, fazemos reload para atualizar tudo (barra, contadores)
+                        location.reload(); 
+                    } else {
+                        alert("Erro ao mover tarefa.");
+                        location.reload(); // Reverter visualmente
+                    }
+                });
+            }
+        }
+
+        // Ativar Dark Mode se estiver salvo
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>

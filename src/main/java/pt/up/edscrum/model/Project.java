@@ -1,5 +1,6 @@
 package pt.up.edscrum.model;
 
+import java.time.LocalDate; // IMPORTANTE
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -25,6 +26,10 @@ public class Project {
     private String name;
     private String sprintGoals;
 
+    // NOVOS CAMPOS
+    private LocalDate startDate;
+    private LocalDate endDate;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -37,7 +42,6 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status = ProjectStatus.PLANEAMENTO;
-
 
     // Getters e Setters
     public Long getId() {
@@ -62,6 +66,23 @@ public class Project {
 
     public void setSprintGoals(String sprintGoals) {
         this.sprintGoals = sprintGoals;
+    }
+
+    // GETTERS E SETTERS DAS DATAS
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
 
     public Course getCourse() {
@@ -96,14 +117,12 @@ public class Project {
         this.status = status;
     }
 
+    // Helper para progresso
     public int getProgress() {
         if (sprints == null || sprints.isEmpty()) {
             return 0;
         }
-        long doneSprints = sprints.stream()
-                .filter(s -> s.getStatus() == SprintStatus.DONE)
-                .count();
-        
+        long doneSprints = sprints.stream().filter(s -> s.getStatus() == SprintStatus.DONE).count();
         return (int) ((doneSprints * 100.0) / sprints.size());
     }
 }

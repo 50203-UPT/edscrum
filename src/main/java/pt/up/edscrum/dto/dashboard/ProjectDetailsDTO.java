@@ -1,69 +1,164 @@
 package pt.up.edscrum.dto.dashboard;
 
+import java.time.LocalDate;
 import java.util.List;
+
 import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.TeamAward;
 
 public class ProjectDetailsDTO {
+
     private Long id;
     private String name;
-    private String description; // Vem de sprintGoals do projeto
-    
-    // Dados da Equipa
-    private Team team;
-    
-    // Dados de Progresso
-    private int totalSprints;
-    private int globalScore; // Média ou soma
-    private int totalAwards;
-    
-    // Progresso de Tarefas (Simulado para o visual)
-    private int completedTasks;
-    private int totalTasks;
-    private int progressPercentage;
+    private String description;
+    private String courseName;
+    private String status;
+    private LocalDate startDate;
+    private LocalDate endDate;
 
-    // Listas
+    // Dados da Equipa Principal
+    private String teamName;
+    private int teamTotalXP;
+    private List<TeamMemberDTO> members;
+    private List<TeamAward> teamAwards;
+
+    private Long courseId;
+    private List<Team> availableTeams;
+
     private List<Sprint> sprints;
-    private List<TeamAward> awards;
 
-    // Construtor vazio
-    public ProjectDetailsDTO() {}
+    // Classe interna para detalhes dos membros
+    public static class TeamMemberDTO {
+
+        public Long id;
+        public String name;
+        public String role; // SM, PO, Dev
+        public int individualXP;
+        public int awardsCount; // Quantidade de prémios individuais
+
+        public TeamMemberDTO(Long id, String name, String role, int individualXP, int awardsCount) {
+            this.id = id;
+            this.name = name;
+            this.role = role;
+            this.individualXP = individualXP;
+            this.awardsCount = awardsCount;
+        }
+    }
+
+    public ProjectDetailsDTO() {
+    }
 
     // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getName() {
+        return name;
+    }
 
-    public Team getTeam() { return team; }
-    public void setTeam(Team team) { this.team = team; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public int getTotalSprints() { return totalSprints; }
-    public void setTotalSprints(int totalSprints) { this.totalSprints = totalSprints; }
+    public String getDescription() {
+        return description;
+    }
 
-    public int getGlobalScore() { return globalScore; }
-    public void setGlobalScore(int globalScore) { this.globalScore = globalScore; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public int getTotalAwards() { return totalAwards; }
-    public void setTotalAwards(int totalAwards) { this.totalAwards = totalAwards; }
+    public String getCourseName() {
+        return courseName;
+    }
 
-    public int getCompletedTasks() { return completedTasks; }
-    public void setCompletedTasks(int completedTasks) { this.completedTasks = completedTasks; }
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
 
-    public int getTotalTasks() { return totalTasks; }
-    public void setTotalTasks(int totalTasks) { this.totalTasks = totalTasks; }
+    public String getStatus() {
+        return status;
+    }
 
-    public int getProgressPercentage() { return progressPercentage; }
-    public void setProgressPercentage(int progressPercentage) { this.progressPercentage = progressPercentage; }
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    public List<Sprint> getSprints() { return sprints; }
-    public void setSprints(List<Sprint> sprints) { this.sprints = sprints; }
-    
-    public List<TeamAward> getAwards() { return awards; }
-    public void setAwards(List<TeamAward> awards) { this.awards = awards; }
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
+
+    public int getTeamTotalXP() {
+        return teamTotalXP;
+    }
+
+    public void setTeamTotalXP(int teamTotalXP) {
+        this.teamTotalXP = teamTotalXP;
+    }
+
+    public List<TeamMemberDTO> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<TeamMemberDTO> members) {
+        this.members = members;
+    }
+
+    public List<TeamAward> getTeamAwards() {
+        return teamAwards;
+    }
+
+    public void setTeamAwards(List<TeamAward> teamAwards) {
+        this.teamAwards = teamAwards;
+    }
+
+    public List<Sprint> getSprints() {
+        return sprints;
+    }
+
+    public void setSprints(List<Sprint> sprints) {
+        this.sprints = sprints;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+
+    public List<Team> getAvailableTeams() {
+        return availableTeams;
+    }
+
+    public void setAvailableTeams(List<Team> availableTeams) {
+        this.availableTeams = availableTeams;
+    }
 }

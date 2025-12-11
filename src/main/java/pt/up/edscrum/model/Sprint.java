@@ -1,7 +1,9 @@
 package pt.up.edscrum.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import pt.up.edscrum.enums.SprintStatus;
 
 @Entity
@@ -20,16 +23,20 @@ public class Sprint {
     private Long id;
 
     private String name;
+    private String description;
 
     private LocalDate startDate;
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    private SprintStatus status; //TODO, IN_PROGRESS, DONE
+    private SprintStatus status = SprintStatus.TODO;
 
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
+
+    @OneToMany(mappedBy = "sprint", cascade = CascadeType.ALL)
+    private List<UserStory> userStories;
 
     // Getters & Setters
     public Long getId() {
@@ -47,6 +54,14 @@ public class Sprint {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getDescription() {
+        return description;
+    } // Getter Novo
+
+    public void setDescription(String description) {
+        this.description = description;
+    } // Setter Novo
 
     public LocalDate getStartDate() {
         return startDate;
@@ -78,5 +93,13 @@ public class Sprint {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public List<UserStory> getUserStories() {
+        return userStories;
+    }
+
+    public void setUserStories(List<UserStory> userStories) {
+        this.userStories = userStories;
     }
 }

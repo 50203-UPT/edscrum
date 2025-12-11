@@ -8,27 +8,26 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // IMPORTANTE
 
+import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 import pt.up.edscrum.dto.dashboard.ProjectProgressDTO;
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
-import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
-import pt.up.edscrum.enums.SprintStatus; // Importar Enum
+import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO; // Importar Enum
+import pt.up.edscrum.enums.SprintStatus;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Project;
-import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
+import pt.up.edscrum.model.TeamAward;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.ScoreRepository;
 import pt.up.edscrum.repository.StudentAwardRepository;
+import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
-import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
-import pt.up.edscrum.model.TeamAward;
-import pt.up.edscrum.repository.TeamAwardRepository;
 
 @Service
 public class DashboardService {
@@ -42,7 +41,7 @@ public class DashboardService {
     private final ScoreRepository scoreRepo;
     private final EnrollmentRepository enrollmentRepo;
 
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo,TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo) {
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
@@ -54,25 +53,24 @@ public class DashboardService {
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
-   
     @Transactional(readOnly = true)
     public TeacherDashboardDTO getTeacherDashboard(Long courseId) {
         Course course = courseRepo.findById(courseId).orElseThrow(() -> new RuntimeException("Curso não encontrado"));
         TeacherDashboardDTO dto = new TeacherDashboardDTO();
         dto.setCourseId(course.getId());
         dto.setCourseName(course.getName());
-        
+
         // Contagens
         dto.setTotalStudents(course.getEnrollments() != null ? course.getEnrollments().size() : 0);
         dto.setTotalTeams((int) teamRepo.countByCourseId(courseId));
         dto.setTotalProjects((int) projectRepo.countByCourseId(courseId));
-        
+
         // Projetos e Progresso
         dto.setProjects(projectRepo.findByCourseId(courseId).stream().map(p -> {
             ProjectProgressDTO pp = new ProjectProgressDTO();
             pp.setProjectId(p.getId());
             pp.setProjectName(p.getName());
-            
+
             // Lógica de progresso corrigida e segura contra Nulos
             if (p.getSprints() == null || p.getSprints().isEmpty()) {
                 pp.setCompletionPercentage(0);
@@ -85,14 +83,14 @@ public class DashboardService {
             }
             return pp;
         }).collect(Collectors.toList()));
-        
+
         // Stats de prémios (Pode retornar lista vazia se a query no repo estiver incorreta, mas não crasha)
         try {
             dto.setAwardStats(studentAwardRepo.countAwardsByCourse(courseId));
         } catch (Exception e) {
             dto.setAwardStats(new ArrayList<>()); // Fallback seguro
         }
-        
+
         return dto;
     }
 
@@ -108,7 +106,7 @@ public class DashboardService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setProfileImage(user.getProfileImage());
-        
+
         // CORREÇÃO: Preencher campos do modal para evitar erro no Thymeleaf
         dto.setNotificationAwards(user.isNotificationAwards());
         dto.setNotificationRankings(user.isNotificationRankings());
@@ -206,57 +204,56 @@ public class DashboardService {
                 .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
 
         ProjectDetailsDTO dto = new ProjectDetailsDTO();
+
+        // Cabeçalho
         dto.setId(project.getId());
         dto.setName(project.getName());
         dto.setDescription(project.getSprintGoals());
-        
-        // --- A. DADOS DA EQUIPA E PRÉMIOS ---
-        // Assume-se que o projeto tem uma equipa ativa (lógica simplificada para 1 equipa)
+        dto.setCourseName(project.getCourse().getName());
+        dto.setStatus(project.getStatus().name());
+        dto.setStartDate(project.getStartDate());
+        dto.setEndDate(project.getEndDate());
+        dto.setSprints(project.getSprints());
+        dto.setCourseId(project.getCourse().getId());
+        dto.setAvailableTeams(teamRepo.findAvailableTeamsByCourse(project.getCourse().getId()));
+
+        // Dados da Equipa (Assumindo 1 equipa por projeto para simplificar visualização)
         if (project.getTeams() != null && !project.getTeams().isEmpty()) {
             Team team = project.getTeams().get(0);
-            dto.setTeam(team);
-            
-            // Buscar prémios reais da BD
-            List<TeamAward> awards = teamAwardRepo.findByTeamId(team.getId());
-            dto.setAwards(awards);
-            dto.setTotalAwards(awards.size());
-            
-            // Score Global: Soma dos pontos reais ganhos pela equipa
-            int score = awards.stream().mapToInt(TeamAward::getPointsEarned).sum();
-            dto.setGlobalScore(score); 
-        } else {
-            dto.setAwards(new ArrayList<>());
-            dto.setGlobalScore(0);
+            dto.setTeamName(team.getName());
+
+            // 1. XP e Prémios da Equipa
+            List<TeamAward> tAwards = teamAwardRepo.findByTeamId(team.getId());
+            dto.setTeamAwards(tAwards);
+            int teamScore = tAwards.stream().mapToInt(TeamAward::getPointsEarned).sum();
+            dto.setTeamTotalXP(teamScore);
+
+            // 2. Membros e seus XPs individuais
+            List<ProjectDetailsDTO.TeamMemberDTO> members = new ArrayList<>();
+
+            // Helper para criar DTO de membro
+            if (team.getScrumMaster() != null) {
+                User u = team.getScrumMaster();
+                members.add(createMemberDTO(u, "Scrum Master"));
+            }
+            if (team.getProductOwner() != null) {
+                User u = team.getProductOwner();
+                members.add(createMemberDTO(u, "Product Owner"));
+            }
+            for (User dev : team.getDevelopers()) {
+                members.add(createMemberDTO(dev, "Developer"));
+            }
+            dto.setMembers(members);
         }
-
-        // --- B. CÁLCULO DE PROGRESSO REAL (BASEADO EM SPRINTS) ---
-        List<Sprint> sprints = project.getSprints();
-        dto.setSprints(sprints);
-        
-        int totalSprints = (sprints != null) ? sprints.size() : 0;
-        dto.setTotalSprints(totalSprints);
-
-        // Como não há tabela de Tarefas, a unidade de progresso é a Sprint.
-        // Progresso = Sprints Concluídas (DONE) vs Total de Sprints.
-        int sprintsCompleted = 0;
-        
-        if (sprints != null) {
-            sprintsCompleted = (int) sprints.stream()
-                .filter(s -> s.getStatus() == SprintStatus.DONE)
-                .count();
-        }
-
-        // Preenche o DTO usando Sprints como contagem de "tarefas"
-        dto.setTotalTasks(totalSprints);
-        dto.setCompletedTasks(sprintsCompleted);
-        
-        // Percentagem Real
-        int percent = (totalSprints > 0) ? (sprintsCompleted * 100 / totalSprints) : 0;
-        dto.setProgressPercentage(percent);
 
         return dto;
     }
 
+    private ProjectDetailsDTO.TeamMemberDTO createMemberDTO(User u, String role) {
+        int xp = calculateTotalPointsForStudent(u.getId()); // Reutiliza método existente
+        int awardsCount = studentAwardRepo.findAllByStudentId(u.getId()).size();
+        return new ProjectDetailsDTO.TeamMemberDTO(u.getId(), u.getName(), role, xp, awardsCount);
+    }
 
     public List<RankingDTO> getStudentRanking(Long courseId) {
         List<RankingDTO> classRanking = new ArrayList<>();
