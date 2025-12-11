@@ -86,17 +86,19 @@ public class WebController {
         }
         return "forgotPassword";
     }
-
-    @PostMapping("/forgotPassword")
-    public String handleForgotPassword(@RequestParam String email, Model model) {
-        User user = userService.getUserByEmail(email);
-        if (user == null) {
-            model.addAttribute("error", "Email não existe na base de dados.");
-            return "forgotPassword";
-        }
-        // Email exists, redirect to success
-        return "redirect:/forgotPassword?success=true&email=" + email;
+@PostMapping("/forgotPassword")
+public String handleForgotPassword(@RequestParam String email, Model model) {
+    
+    // CORREÇÃO: Adicionar .orElse(null)
+    User user = userService.getUserByEmail(email).orElse(null);
+    
+    if (user == null) {
+        model.addAttribute("error", "Email não existe na base de dados.");
+        return "forgotPassword";
     }
+    // Email exists, redirect to success
+    return "redirect:/forgotPassword?success=true&email=" + email;
+}
 
     @PostMapping("/auth/web/login")
     public String webLogin(@RequestParam String email,
@@ -376,21 +378,24 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    @PostMapping("/api/teacher/settings")
-    public String updateTeacherSettings(@RequestParam String name,
-            @RequestParam String email,
-            @RequestParam(required = false) boolean notificationAwards,
-            @RequestParam(required = false) boolean notificationRankings) {
-        User teacher = userService.getUserByEmail(email);
-        if (teacher != null) {
-            teacher.setName(name);
-            teacher.setNotificationAwards(notificationAwards);
-            teacher.setNotificationRankings(notificationRankings);
-            userService.updateUser(teacher.getId(), teacher);
-            return "redirect:/view/teacher/home/" + teacher.getId();
-        }
-        return "redirect:/";
+ @PostMapping("/api/teacher/settings")
+public String updateTeacherSettings(@RequestParam String name,
+        @RequestParam String email,
+        @RequestParam(required = false) boolean notificationAwards,
+        @RequestParam(required = false) boolean notificationRankings) {
+    
+    // CORREÇÃO: Adicionar .orElse(null) para extrair o User do Optional
+    User teacher = userService.getUserByEmail(email).orElse(null);
+
+    if (teacher != null) {
+        teacher.setName(name);
+        teacher.setNotificationAwards(notificationAwards);
+        teacher.setNotificationRankings(notificationRankings);
+        userService.updateUser(teacher.getId(), teacher);
+        return "redirect:/view/teacher/home/" + teacher.getId();
     }
+    return "redirect:/";
+}
 
     @PostMapping("/teacher/profile/update")
     public String updateTeacherProfile(
