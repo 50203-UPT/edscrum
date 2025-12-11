@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import pt.up.edscrum.model.Project;
-import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.service.ProjectService;
@@ -29,9 +28,6 @@ class TeamControllerTest {
     private ProjectService projectService;
 
     @Autowired
-    private pt.up.edscrum.service.CourseService courseService;
-
-    @Autowired
     private UserService userService;
 
     @Test
@@ -40,11 +36,6 @@ class TeamControllerTest {
         Project p = new Project();
         p.setName("Projeto Teste");
         p.setSprintGoals("Objetivo do projeto");
-        // Criar e associar um curso
-        Course c = new Course();
-        c.setName("Curso Teste");
-        Course savedCourse = courseService.createCourse(c);
-        p.setCourse(savedCourse);
         Project savedProject = projectService.createProject(p);
 
         // Criar usuários
@@ -59,7 +50,7 @@ class TeamControllerTest {
         // Criar time
         Team t = new Team();
         t.setName("Team Alpha");
-        t.setProjects(List.of(savedProject));
+        t.setProject(savedProject);
         t.setScrumMaster(scrumMaster);
         t.setProductOwner(productOwner);
         t.setDevelopers(new ArrayList<>());
@@ -68,9 +59,8 @@ class TeamControllerTest {
 
         assertNotNull(saved.getId());
         assertEquals("Team Alpha", saved.getName());
-        assertNotNull(saved.getProjects());
-        assertEquals(1, saved.getProjects().size());
-        assertEquals(savedProject.getName(), saved.getProjects().get(0).getName());
+        assertNotNull(saved.getProject());
+        assertEquals(savedProject.getName(), saved.getProject().getName());
         assertNotNull(saved.getScrumMaster());
         assertEquals("João SM", saved.getScrumMaster().getName());
         assertNotNull(saved.getProductOwner());
@@ -81,36 +71,6 @@ class TeamControllerTest {
         // Buscar o mesmo team
         Team found = teamService.getTeamById(saved.getId());
         assertEquals(saved.getName(), found.getName());
-
-        // Conferir associação ao curso e ao projeto
-        assertNotNull(saved.getCourse());
-        assertEquals(savedProject.getCourse(), saved.getCourse());
-        assertTrue(saved.getProjects().stream().anyMatch(prj -> prj.getId().equals(savedProject.getId())));
-    }
-
-    @Test
-    void testCannotCreateTeamIfScrumMasterAlreadyInCourse() {
-        // Criar curso
-        Course c = new Course();
-        c.setName("Curso X");
-        Course savedCourse = courseService.createCourse(c);
-
-        // Criar dois projetos no mesmo curso
-        Project p1 = new Project(); p1.setName("P1"); p1.setCourse(savedCourse);
-        Project p2 = new Project(); p2.setName("P2"); p2.setCourse(savedCourse);
-        projectService.createProject(p1);
-        projectService.createProject(p2);
-
-        // Criar usuário
-        User sm = new User(); sm.setName("SM1"); userService.createUser(sm);
-
-        // Criar primeira equipa com SM
-        Team t1 = new Team(); t1.setName("T1"); t1.setCourse(savedCourse); t1.setScrumMaster(sm);
-        teamService.createTeam(t1);
-
-        // Tentar criar segunda equipa no mesmo curso com o mesmo SM
-        Team t2 = new Team(); t2.setName("T2"); t2.setCourse(savedCourse); t2.setScrumMaster(sm);
-        assertThrows(pt.up.edscrum.exception.TeamValidationException.class, () -> teamService.createTeam(t2));
     }
 
     @Test

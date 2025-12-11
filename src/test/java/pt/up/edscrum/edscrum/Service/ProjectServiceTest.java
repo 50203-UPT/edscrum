@@ -2,12 +2,10 @@ package pt.up.edscrum.edscrum.Service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Project;
@@ -39,28 +37,6 @@ class ProjectServiceTest {
         assertNotNull(saved.getId());
         assertEquals("Projeto SDG", saved.getName());
         assertEquals("Curso Teste", saved.getCourse().getName());
-    }
-
-    @Test
-    void testCreateProjectInvalidDates() {
-        Project p = new Project();
-        p.setName("Projeto Datas");
-        java.time.LocalDate today = java.time.LocalDate.now();
-        p.setStartDate(today.plusDays(10));
-        p.setEndDate(today.plusDays(5));
-
-        assertThrows(ResponseStatusException.class, () -> projectService.createProject(p));
-    }
-
-    @Test
-    void testCreateProjectStartNotAfterNow() {
-        Project p = new Project();
-        p.setName("Projeto Datas 2");
-        java.time.LocalDate today = java.time.LocalDate.now();
-        p.setStartDate(today);
-        p.setEndDate(today.plusDays(5));
-
-        assertThrows(ResponseStatusException.class, () -> projectService.createProject(p));
     }
 
     @Test

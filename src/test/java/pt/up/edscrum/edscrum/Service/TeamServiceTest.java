@@ -67,7 +67,7 @@ class TeamServiceTest {
 
         Team team = new Team();
         team.setName("Team Alpha");
-        team.setProjects(List.of(p));
+        team.setProject(p);
         team.setScrumMaster(sm);
         team.setProductOwner(po);
         team.setDevelopers(List.of(dev1, dev2));

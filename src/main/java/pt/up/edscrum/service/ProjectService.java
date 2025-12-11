@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Project;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import pt.up.edscrum.model.Team; // Importar
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository; // Importar
@@ -33,15 +31,6 @@ public class ProjectService {
     }
 
     public Project createProject(Project project) {
-        // Validação das datas: se ambas as datas existirem, validar ordem e data de início > data atual
-        if (project.getStartDate() != null && project.getEndDate() != null) {
-            if (!project.getStartDate().isBefore(project.getEndDate())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início deve ser anterior à data de fim");
-            }
-            if (!project.getStartDate().isAfter(java.time.LocalDate.now())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início deve ser após a data atual");
-            }
-        }
         return projectRepository.save(project);
     }
 
@@ -53,15 +42,6 @@ public class ProjectService {
         // Se quiseres atualizar datas aqui também, podes adicionar
         project.setStartDate(projectDetails.getStartDate());
         project.setEndDate(projectDetails.getEndDate());
-        // Se ambas as datas são fornecidas, validamos também no update
-        if (project.getStartDate() != null && project.getEndDate() != null) {
-            if (!project.getStartDate().isBefore(project.getEndDate())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início deve ser anterior à data de fim");
-            }
-            if (!project.getStartDate().isAfter(java.time.LocalDate.now())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data de início deve ser após a data atual");
-            }
-        }
         return projectRepository.save(project);
     }
 
@@ -72,10 +52,8 @@ public class ProjectService {
         // 1. Desassociar equipas antes de apagar
         if (project.getTeams() != null) {
             for (Team team : project.getTeams()) {
-                if (team.getProjects() != null) {
-                    team.getProjects().remove(project);
-                    teamRepository.save(team);
-                }
+                team.setProject(null);
+                teamRepository.save(team);
             }
         }
 

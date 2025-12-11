@@ -20,13 +20,9 @@ public class Team {
 
     private String name;
 
-        @ManyToMany
-        @JoinTable(
-            name = "team_projects",
-            joinColumns = @JoinColumn(name = "team_id"),
-            inverseJoinColumns = @JoinColumn(name = "project_id")
-        )
-        private List<Project> projects;
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -67,12 +63,12 @@ public class Team {
         this.name = name;
     }
 
-    public List<Project> getProjects() {
-        return projects;
+    public Project getProject() {
+        return project;
     }
 
-    public void setProjects(List<Project> projects) {
-        this.projects = projects;
+    public void setProject(Project project) {
+        this.project = project;
     }
 
     public User getScrumMaster() {

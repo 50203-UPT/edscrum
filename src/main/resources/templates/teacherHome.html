@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{teacher.dashboard.title} + ' - ' + #{app.title}">Dashboard Professor</title>
+    <title>EduScrum Awards - Professor</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
@@ -167,6 +167,42 @@
             font-size: 0.8rem;
             opacity: 0.8;
             color: inherit;
+        }
+
+        .notification-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Colors set by Bootstrap classes in HTML */
+            color: white; /* Reverted to original white icon color */
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-content h6 {
+            font-size: 0.95rem;
+            font-weight: 600; /* Reverted to original font-weight */
+            margin-bottom: 0.25rem;
+            color: var(--bs-body-color); /* Ensure text color adapts to theme */
+        }
+
+        .notification-content p {
+            font-size: 0.85rem;
+            color: #6c757d; /* Reverted to original muted text color */
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: #adb5bd; /* Reverted to original muted text color */
+            text-align: right;
+            flex-shrink: 0;
         }
 
         .notification-actions {
@@ -661,7 +697,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form th:action="@{/projects/create}" method="POST" onsubmit="return validateProjectDates()">
+                    <form th:action="@{/projects/create}" method="POST">
                         <input type="hidden" name="teacherId" th:value="${teacher.id}" />
                         <input type="hidden" id="modalCourseId" name="courseId" />
 
@@ -678,13 +714,11 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Data de Início</label>
-                                <input type="date" name="startDate" id="projectStartDate" class="form-control bg-light border-0 py-2" required>
-                                <div class="text-danger small mt-1" id="projectStartDateError" style="display: none;">A data de início deve ser após a data atual.</div>
+                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Data de Fim</label>
-                                <input type="date" name="endDate" id="projectEndDate" class="form-control bg-light border-0 py-2" required>
-                                <div class="text-danger small mt-1" id="projectEndDateError" style="display: none;">A data de fim deve ser após a data de início.</div>
+                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                         </div>
                         
@@ -1295,37 +1329,6 @@
             interval = seconds / 3600;
             if (interval > 1) return Math.floor(interval) + " horas atrás";
             return Math.floor(seconds / 60) + " minutos atrás";
-        }
-
-        function validateProjectDates() {
-            const startDateInput = document.getElementById('projectStartDate');
-            const endDateInput = document.getElementById('projectEndDate');
-            const startDateError = document.getElementById('projectStartDateError');
-            const endDateError = document.getElementById('projectEndDateError');
-
-            startDateError.style.display = 'none';
-            endDateError.style.display = 'none';
-
-            const startDate = new Date(startDateInput.value);
-            const endDate = new Date(endDateInput.value);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Reset time for accurate date comparison
-
-            let isValid = true;
-
-            if (startDate < today) {
-                startDateError.textContent = 'A data de início deve ser após a data atual.';
-                startDateError.style.display = 'block';
-                isValid = false;
-            }
-
-            if (endDate <= startDate) {
-                endDateError.textContent = 'A data de fim deve ser após a data de início.';
-                endDateError.style.display = 'block';
-                isValid = false;
-            }
-
-            return isValid;
         }
 
         // Auto-dismiss success alerts after 3 seconds

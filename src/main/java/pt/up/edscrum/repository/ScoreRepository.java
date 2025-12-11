@@ -34,8 +34,8 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
 
     // Ranking de Equipas
     @Query("SELECT new pt.up.edscrum.dto.dashboard.RankingDTO(s.team.id, s.team.name, s.totalPoints) "
-            + "FROM Score s JOIN s.team.projects p WHERE s.team.id IS NOT NULL AND s.user.id IS NULL "
-            + "AND p.course.id = :courseId "
+            + "FROM Score s WHERE s.team.id IS NOT NULL AND s.user.id IS NULL "
+            + "AND s.team.project.course.id = :courseId "
             + "ORDER BY s.totalPoints DESC")
     List<RankingDTO> getTeamRanking(Long courseId);
 }
