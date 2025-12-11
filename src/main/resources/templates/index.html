@@ -117,7 +117,7 @@
                 <input id="teacher-password" type="password" placeholder="••••••••" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
             </div>
           </div>
-          <button class="text-blue-600 hover:underline text-sm font-medium" onclick="forgotPassword()">Esqueceu a palavra-passe?</button>
+          <a th:href="@{/reset-password}" class="text-blue-600 hover:underline text-sm font-medium">Esqueceu a palavra-passe?</a>
           <button class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all" onclick="login('teacher')">Entrar como Professor</button>
         </div>
 
@@ -140,7 +140,7 @@
                 <input id="student-password" type="password" placeholder="••••••••" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" required />
             </div>
           </div>
-          <button class="text-blue-600 hover:underline text-sm font-medium" onclick="forgotPassword()">Esqueceu a palavra-passe?</button>
+          <a th:href="@{/reset-password}" class="text-blue-600 hover:underline text-sm font-medium">Esqueceu a palavra-passe?</a>
           <button class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all" onclick="login('student')">Entrar como Estudante</button>
         </div>
 
@@ -259,10 +259,6 @@
         else errorMessage.textContent = msg;
         errorMessage.classList.remove('hidden');
       }
-    }
-
-    function forgotPassword() {
-      window.location.href = '/forgotPassword';
     }
   </script>
 </body>

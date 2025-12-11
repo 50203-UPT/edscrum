@@ -1,6 +1,7 @@
 package pt.up.edscrum.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,7 @@ public class UserService {
     }
 
     // Buscar usuário por Email
-    public User getUserByEmail(String email) {
+    public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 

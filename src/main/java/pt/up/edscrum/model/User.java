@@ -1,5 +1,6 @@
 package pt.up.edscrum.model;
 
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,6 +25,10 @@ public class User {
     private boolean notificationRankings = true;
 
     private String profileImage;
+    
+    // Colunas para recuperação de password
+    private String resetCode;
+    private LocalDateTime resetCodeExpiry;
 
     // Getters e Setters
     public Long getId() {
@@ -90,9 +95,24 @@ public class User {
         this.profileImage = profileImage;
     }
 
-    @Override
-    public String toString() {
-        return "User [id=" + id + "Password=" + password + ", name=" + name + ", email=" + email + ", role=" + role + "]";
+    public String getResetCode() {
+        return resetCode;
     }
 
+    public void setResetCode(String resetCode) {
+        this.resetCode = resetCode;
+    }
+
+    public LocalDateTime getResetCodeExpiry() {
+        return resetCodeExpiry;
+    }
+
+    public void setResetCodeExpiry(LocalDateTime resetCodeExpiry) {
+        this.resetCodeExpiry = resetCodeExpiry;
+    }
+
+    @Override
+    public String toString() {
+        return "User [id=" + id + ", name=" + name + ", email=" + email + ", role=" + role + "]";
+    }
 }
