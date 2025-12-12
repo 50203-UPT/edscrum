@@ -9,10 +9,12 @@ import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Score;
+import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.ScoreRepository;
+import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
 import pt.up.edscrum.service.DashboardService;
 
@@ -38,19 +40,26 @@ public class DashboardControllerTest {
 
     @Autowired
     private ScoreRepository scoreRepository;
+    
+    @Autowired
+    private TeamRepository teamRepository;
 
     private Course testCourse;
     private User teacher;
 
     @BeforeEach
     void setUp() {
-        // Limpar dados na ordem correta para evitar FK violations
+        // Limpar dados na ordem correta para respeitar as constraints
         scoreRepository.deleteAll();
         enrollmentRepository.deleteAll();
+        // Se houver times associados aos cursos, remova-os primeiro
+        if (teamRepository != null) {
+            teamRepository.deleteAll();
+        }
         courseRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Criar Teacher e salvar antes de associar ao curso
+        // Criar Teacher
         teacher = new User();
         teacher.setName("Test Teacher");
         teacher.setEmail("teacher@test.com");
@@ -88,26 +97,27 @@ public class DashboardControllerTest {
 
     @Test
     void testGetStudentRankingsFlow() {
-        // Arrange: Criar dois estudantes, matriculá-los no curso e atribuir pontuações
+        // --- Criar estudantes e pontuações ---
         User student1 = createAndSaveStudent("Student A", "student.a@test.com");
-        createAndSaveEnrollment(student1, testCourse);
-        createAndSaveScore(student1, 150);
-
         User student2 = createAndSaveStudent("Student B", "student.b@test.com");
+
+        createAndSaveEnrollment(student1, testCourse);
         createAndSaveEnrollment(student2, testCourse);
+
+        createAndSaveScore(student1, 150);
         createAndSaveScore(student2, 200);
 
-        // Act: Chamar o método do serviço que retorna a lista de RankingDTOs
+        // --- Chamar o método correto do serviço ---
         List<RankingDTO> rankings = dashboardService.getStudentRanking(testCourse.getId());
 
-        // Assert
+        // --- Assert ---
         assertNotNull(rankings);
         assertEquals(2, rankings.size());
-        // Verificar a ordem e conteúdo baseado no DTO
+
+        // Verificar ordem decrescente
         assertEquals("Student B", rankings.get(0).getName());
-        assertEquals(200, rankings.get(0).getTotalPoints());
+        assertEquals(200L, rankings.get(0).getTotalPoints());
         assertEquals("Student A", rankings.get(1).getName());
-        assertEquals(150, rankings.get(1).getTotalPoints());
+        assertEquals(150L, rankings.get(1).getTotalPoints());
     }
 }
-
