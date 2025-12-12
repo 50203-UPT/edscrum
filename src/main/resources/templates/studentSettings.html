@@ -108,7 +108,10 @@
     </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/app.js}"></script>
     <script>
+        lucide.createIcons();
+
         const themeSwitcher = document.getElementById('theme-switcher');
         const body = document.body;
 
@@ -129,6 +132,11 @@
                 themeSwitcher.checked = true;
             }
         })();
+
+        function toggleNotificationSidebar() {
+            const sidebar = document.getElementById('notificationSidebar');
+            sidebar.classList.toggle('open');
+        }
     </script>
 </body>
 </html>

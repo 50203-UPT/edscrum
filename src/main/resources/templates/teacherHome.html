@@ -263,11 +263,11 @@
     <nav class="navbar-teacher d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-3">
             <div class="bg-primary text-white p-2 rounded-3 shadow-sm">
-                <i data-lucide="trophy" style="width: 24px; height: 24px;"></i>
+                <i data-lucide="user-cog" style="width: 24px; height: 24px;"></i>
             </div>
             <div>
-                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum Awards</h5>
-                <small class="text-muted">Dashboard do Professor</small>
+                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5>
+                <small class="text-muted">Área do Professor</small>
             </div>
         </div>
 
@@ -1496,96 +1496,48 @@
             notificationBellIcon.classList.remove('text-danger');
             notificationBellIcon.classList.add('text-secondary');
 
+            // Try to fetch from the real API first
+            let notifications = [];
             try {
-                // Try to fetch from the real API first
-                let notifications = [];
-                try {
-                    const response = await fetch('/api/notifications/teacher');
-                    if (response.ok) {
-                        notifications = await response.json();
-                    } else {
-                        throw new Error('API returned ' + response.status);
-                    }
-                } catch (apiError) {
-                    console.log('Using mock data due to API error:', apiError);
-                    // Mock notifications data
-                    notifications = [
-                        {
-                            id: 1,
-                            title: "Bem-vindo ao EduScrum!",
-                            message: "O seu registo foi concluído com sucesso.",
-                            type: "WELCOME",
-                            timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-                            read: true
-                        },
-                        {
-                            id: 2,
-                            title: "Novo projeto criado",
-                            message: "O projeto 'Sistema de Gestão Escolar' foi criado com sucesso.",
-                            type: "PROJECT_CREATED",
-                            link: "/projects/1",
-                            timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-                            read: true
-                        },
-                        {
-                            id: 3,
-                            title: "Atualização disponível",
-                            message: "Uma nova versão do sistema está disponível. Atualize para a versão 2.0.0",
-                            type: "SYSTEM",
-                            timestamp: new Date().toISOString(),
-                            read: false
-                        }
-                    ];
-
-                    // Simulate API delay
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-
-                // Display the notifications
-                notificationsContainer.innerHTML = '';
-
-                if (notifications.length === 0) {
-                    noNotificationsMessage.style.display = 'block';
-                    notificationsContainer.appendChild(noNotificationsMessage);
+                const response = await fetch('/api/notifications/teacher');
+                if (response.ok) {
+                    notifications = await response.json();
                 } else {
-                    noNotificationsMessage.style.display = 'none';
-                    notifications.forEach(notification => {
-                        const notificationElement = createNotificationElement(notification);
-                        notificationsContainer.appendChild(notificationElement);
-                    });
+                    console.log('API returned ' + response.status + ', using empty list');
                 }
+            } catch (apiError) {
+                console.log('API error:', apiError, '- using empty list');
+            }
 
-                // Update the unread count
-                const unreadCount = notifications.filter(n => !n.read).length;
-                if (unreadCount > 0) {
-                    notificationCountBadge.textContent = unreadCount;
-                    notificationCountBadge.style.display = 'block';
-                    notificationBellIcon.classList.remove('text-secondary');
-                    notificationBellIcon.classList.add('text-danger');
-                } else {
-                    notificationCountBadge.style.display = 'none';
-                    notificationBellIcon.classList.remove('text-danger');
-                    notificationBellIcon.classList.add('text-secondary');
-                }
+            // Display the notifications
+            notificationsContainer.innerHTML = '';
 
-                // Re-initialize Lucide icons for any new elements
-                lucide.createIcons();
+            if (notifications.length === 0) {
+                noNotificationsMessage.style.display = 'block';
+                notificationsContainer.appendChild(noNotificationsMessage);
+            } else {
+                noNotificationsMessage.style.display = 'none';
+                notifications.forEach(notification => {
+                    const notificationElement = createNotificationElement(notification);
+                    notificationsContainer.appendChild(notificationElement);
+                });
+            }
 
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                notificationsContainer.innerHTML = `
-                    <div class="text-center text-danger mt-4">
-                        <i data-lucide="alert-triangle" class="w-8 h-8 mb-2"></i>
-                        <p class="mt-2">Erro ao carregar notificações.</p>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="fetchNotifications()">
-                            Tentar novamente
-                        </button>
-                    </div>`;
-                lucide.createIcons();
+            // Update the unread count
+            const unreadCount = notifications.filter(n => !n.read).length;
+            if (unreadCount > 0) {
+                notificationCountBadge.textContent = unreadCount;
+                notificationCountBadge.style.display = 'block';
+                notificationBellIcon.classList.remove('text-secondary');
+                notificationBellIcon.classList.add('text-danger');
+            } else {
                 notificationCountBadge.style.display = 'none';
                 notificationBellIcon.classList.remove('text-danger');
                 notificationBellIcon.classList.add('text-secondary');
             }
+
+            // Re-initialize Lucide icons for any new elements
+            lucide.createIcons();
         }
 
         function createNotificationElement(notification) {

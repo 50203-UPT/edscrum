@@ -1,14 +1,8 @@
 package pt.up.edscrum.controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional; // For Optional<User> from userService.getUserByEmail
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +10,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -673,6 +666,9 @@ public class WebController {
 
             // Buscar membros da equipa do projeto
             Project project = sprint.getProject();
+            if (project != null) {
+                model.addAttribute("projectId", project.getId());
+            }
             if (project != null && project.getTeams() != null && !project.getTeams().isEmpty()) {
                 Team team = project.getTeams().get(0); // Pega a primeira equipa associada ao projeto
                 List<User> teamMembers = teamService.getTeamMembers(team.getId());

@@ -3,7 +3,6 @@ package pt.up.edscrum.dto.dashboard;
 import java.util.List;
 
 import pt.up.edscrum.model.Course;
-import pt.up.edscrum.model.Project;
 
 public class StudentDashboardDTO {
 
