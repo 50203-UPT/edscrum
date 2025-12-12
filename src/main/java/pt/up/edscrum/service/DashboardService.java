@@ -22,8 +22,6 @@ import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.TeamAward;
 import pt.up.edscrum.model.User;
-import pt.up.edscrum.model.UserStory;
-import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.ProjectRepository;
@@ -44,15 +42,10 @@ public class DashboardService {
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
     private final EnrollmentRepository enrollmentRepo;
-<<<<<<< HEAD
+    private final AwardService awardService;
     private final SprintService sprintService;
 
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, SprintService sprintService) {
-=======
-    private final AwardService awardService;
-
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService) {
->>>>>>> 8a1e95a786e99e79afaa040cca965c8a32afd549
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService, SprintService sprintService) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
@@ -61,11 +54,8 @@ public class DashboardService {
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
         this.enrollmentRepo = enrollmentRepo;
-<<<<<<< HEAD
-        this.sprintService = sprintService;
-=======
         this.awardService = awardService;
->>>>>>> 8a1e95a786e99e79afaa040cca965c8a32afd549
+        this.sprintService = sprintService;
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
