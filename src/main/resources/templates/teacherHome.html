@@ -630,56 +630,81 @@
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
                 <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Criar Nova Equipa</h4><p class="text-muted small mb-0">Defina o nome e atribua os papéis.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <div class="modal-body">
-                    <form th:action="@{/teams/create}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
-                        <div class="mb-3"><label class="form-label fw-bold small">Nome da Equipa</label><input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Team Alpha" required></div>
-                        <div class="mb-4"><label class="form-label fw-bold small">Curso</label><select name="courseId" class="form-select bg-light border-0 py-2" required><option value="" selected disabled>Selecione um curso</option><option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name}"></option></select></div>
-                        <hr class="text-muted opacity-25 my-4">
-                        <h6 class="fw-bold small mb-3">Membros da Equipa</h6>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label small text-muted">Product Owner</label>
-                                    <select name="productOwnerId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
-                                        <option value="" selected>Escolher...</option>
-                                        <option th:each="s : ${students}" 
-                                                th:value="${s.id}" 
-                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
-                                        </option>
-                                    </select>
-                                </div>
+                 <form th:action="@{/teams/create}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
 
-                                <div class="col-md-6">
-                                    <label class="form-label small text-muted">Scrum Master</label>
-                                    <select name="scrumMasterId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
-                                        <option value="" selected>Escolher...</option>
-                                        <option th:each="s : ${students}" 
-                                                th:if="${s.role == 'STUDENT'}"
-                                                th:value="${s.id}" 
-                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome da Equipa</label>
+                        <input type="text" name="name" class="form-control bg-light border-0" required>
+                    </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers 
-                                    <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperField()">+ Adicionar outro</button>
-                                </label>
-                                <div id="developers-container">
-                                    <div class="input-group mb-2 developer-row">
-                                        <select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
-                                            <option value="" selected>Selecionar Developer...</option>
-                                            <option th:each="s : ${students}" 
-                                                    th:if="${s.role == 'STUDENT'}"
-                                                    th:value="${s.id}" 
-                                                    th:text="${s.studentTag} + ' - ' + ${s.name}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Curso</label>
+                        <select id="teamCourseSelect" name="courseId" class="form-select bg-light border-0" required onchange="updateTakenStatus()">
+                            <option value="">Selecione o curso...</option>
+                            <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name} + ' (' + ${c.code} + ')'"></option>
+                        </select>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Product Owner</label>
+                            <select name="productOwnerId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
+                                <option value="">Escolher...</option>
+                                
+                                <option th:each="s : ${students}" 
+                                        th:if="${s.role == 'TEACHER'}"
+                                        th:value="${s.id}" 
+                                        th:text="${s.name}">
+                                </option>
+
+                                <option th:each="s : ${students}" 
+                                        th:if="${s.role == 'STUDENT'}"
+                                        th:value="${s.id}" 
+                                        th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                        th:data-student-id="${s.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Scrum Master</label>
+                            <select name="scrumMasterId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
+                                <option value="">Escolher...</option>
+                                <option th:each="s : ${students}" 
+                                        th:if="${s.role == 'STUDENT'}"
+                                        th:value="${s.id}" 
+                                        th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                        th:data-student-id="${s.id}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers 
+                            <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperField()">+ Adicionar outro</button>
+                        </label>
+                        <div id="developers-container">
+                            <div class="input-group mb-2 developer-row">
+                                <select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
+                                    <option value="">Selecionar Developer...</option>
+                                    <option th:each="s : ${students}" 
+                                            th:if="${s.role == 'STUDENT'}"
+                                            th:value="${s.id}" 
+                                            th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                            th:data-student-id="${s.id}">
+                                    </option>
+                                </select>
                             </div>
-                        <div class="modal-footer border-0 pt-0 px-0"><button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Equipa</button></div>
-                    </form>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Equipa</button>
+                    </div>
+                </form>
                 </div>
             </div>
         </div>
@@ -950,8 +975,8 @@
         </div>
     </div>
 
-    <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    <script>
+  <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script th:inline="javascript">
         let previewImg = null;
         let hasExistingImage = false;
 
@@ -1128,26 +1153,98 @@
         }
 
         // FUNÇÕES PARA EQUIPA
+        
+        /*<![CDATA[*/
+        // Recebe o mapa do backend: { courseId: [studentId1, studentId2], ... }
+        const takenMap = /*[[${takenMap}]]*/ {}; 
+        /*]]>*/
+
+        function updateTakenStatus() {
+            const courseSelect = document.getElementById('teamCourseSelect');
+            const courseId = courseSelect.value;
+            
+            // Lista de IDs ocupados para o curso selecionado
+            const takenIds = (courseId && takenMap[courseId]) ? takenMap[courseId] : [];
+
+            // Percorre todos os selects de membros
+            const allSelects = document.querySelectorAll('.member-select');
+            
+            allSelects.forEach(select => {
+                const options = select.querySelectorAll('option');
+                options.forEach(opt => {
+                    // Se for professor (sem data-student-id), ignora e mantém ativo
+                    if (!opt.getAttribute('data-student-id')) return;
+
+                    const sId = parseInt(opt.getAttribute('data-student-id'));
+
+                    // Se o ID estiver na lista de ocupados deste curso
+                    if (takenIds.includes(sId)) {
+                        opt.setAttribute('data-taken', 'true');
+                        opt.disabled = true; // Fica cinzento nativamente
+                        
+                        // Se estava selecionado, limpa a seleção
+                        if (select.value == sId) {
+                            select.value = ""; 
+                        }
+                    } else {
+                        opt.setAttribute('data-taken', 'false');
+                        // O updateOptions() reativará se não estiver duplicado localmente
+                    }
+                });
+            });
+
+            // Chama a função de atualização visual local
+            updateOptions();
+        }
+
         function updateOptions() {
             const allSelects = document.querySelectorAll('.member-select');
             const selectedValues = new Set();
-            allSelects.forEach(select => { if (select.value && select.value !== "") selectedValues.add(select.value); });
+            
+            // 1. Recolhe valores selecionados localmente
+            allSelects.forEach(select => { 
+                if (select.value && select.value !== "") selectedValues.add(select.value); 
+            });
+
+            // 2. Aplica bloqueios
             allSelects.forEach(select => {
                 const myValue = select.value;
                 const options = select.querySelectorAll('option');
+                
                 options.forEach(opt => {
                     if (!opt.value) return;
-                    if (selectedValues.has(opt.value) && opt.value !== myValue) opt.disabled = true;
-                    else opt.disabled = false;
+
+                    // A. Bloqueio por Curso (Server-side) - Prioritário
+                    if (opt.getAttribute('data-taken') === 'true') {
+                        opt.disabled = true;
+                        return; 
+                    }
+
+                    // B. Bloqueio Local (Já escolhido noutro campo)
+                    if (selectedValues.has(opt.value) && opt.value !== myValue) {
+                        opt.disabled = true;
+                    } else {
+                        opt.disabled = false;
+                    }
                 });
             });
         }
+
         function addDeveloperField() {
             const container = document.getElementById('developers-container');
             const firstRow = container.querySelector('.developer-row');
             const newRow = firstRow.cloneNode(true);
             const select = newRow.querySelector('select');
             select.value = "";
+            
+            // Remove qualquer estado de "taken" residual do clone
+            const options = select.querySelectorAll('option');
+            options.forEach(opt => {
+                // Se o curso selecionado bloquear este aluno, mantém taken=true
+                // Caso contrário, limpa
+                // O updateTakenStatus correria aqui idealmente, mas o updateOptions vai corrigir o disable
+            });
+
             if (!newRow.querySelector('.btn-remove')) {
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
@@ -1158,7 +1255,10 @@
             }
             container.appendChild(newRow);
             lucide.createIcons();
-            updateOptions();
+            
+            // Garante que o estado visual (disabled) está correto para o novo campo
+            // baseando-se no curso atual selecionado
+            updateTakenStatus(); 
         }
 
         function prepareDeleteTeamModal(button) {

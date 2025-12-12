@@ -278,6 +278,9 @@ public class WebController {
         // CORREÇÃO: Usar getAllUsers() em vez de getAllStudents() para garantir que todos aparecem no modal
         model.addAttribute("students", userService.getAllUsers());
 
+        // Necessário para o bloqueio dinâmico no modal de criação
+        model.addAttribute("takenMap", teamService.getTakenStudentsMap());
+
         return "teacherHome";
     }
 
@@ -575,25 +578,27 @@ public class WebController {
     }
 
     // Método Atualizado: Agora recebe userId para carregar a Navbar correta
-    @GetMapping("/view/project/{projectId}/user/{userId}")
+   @GetMapping("/view/project/{projectId}/user/{userId}")
     public String projectDetails(@PathVariable Long projectId, @PathVariable Long userId, Model model) {
         try {
-            // 1. Carregar o Utilizador (Professor) para a Navbar
             User user = userService.getUserById(userId);
 
-            // Coloca no modelo como 'teacher' para a navbar funcionar igual à home
             if ("TEACHER".equals(user.getRole())) {
                 model.addAttribute("teacher", user);
             } else {
-                model.addAttribute("student", user); // Caso um aluno aceda (opcional)
+                model.addAttribute("student", user);
             }
 
-            // 2. Carregar os Detalhes do Projeto
             ProjectDetailsDTO project = dashboardService.getProjectDetails(projectId);
             model.addAttribute("project", project);
 
-            // 3. Carregar lista de alunos para os modais de equipa
-            model.addAttribute("students", userService.getAllStudents());
+            // Carregar todos os utilizadores (Professores e Alunos)
+            model.addAttribute("students", userService.getAllUsers());
+
+            // --- NOVO: Lista de Alunos já ocupados neste curso ---
+            // O project.getCourseId() vem do DTO
+            java.util.Set<Long> takenIds = teamService.getTakenStudentIdsByCourse(project.getCourseId());
+            model.addAttribute("takenStudentIds", takenIds);
 
             return "projectDetails";
 

@@ -319,19 +319,34 @@
                             </form>
                         </div>
                         <div class="tab-pane fade" id="pills-new">
-                            <form th:action="@{/teams/create}" method="POST">
-                                <input type="hidden" name="projectId" th:value="${project.id}">
-                                <input type="hidden" name="courseId" th:value="${project.courseId}">
-                                <input type="hidden" name="teacherId" th:value="${teacher.id}">
-                                <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0" required></div>
-                             <div class="row g-2 mb-3">
+                        <form th:action="@{/teams/create}" method="POST">
+                            <input type="hidden" name="projectId" th:value="${project.id}">
+                            <input type="hidden" name="courseId" th:value="${project.courseId}">
+                            <input type="hidden" name="teacherId" th:value="${teacher != null ? teacher.id : ''}">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Nome da Equipa</label>
+                                <input type="text" name="name" class="form-control bg-light border-0" required>
+                            </div>
+
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
                                     <label class="form-label small text-muted">Product Owner</label>
                                     <select name="productOwnerId" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
                                         <option value="">Escolher...</option>
+                                        
                                         <option th:each="s : ${students}" 
+                                                th:if="${s.role == 'TEACHER'}"
                                                 th:value="${s.id}" 
-                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
+                                                th:text="${s.name}">
+                                        </option>
+
+                                        <option th:each="s : ${students}" 
+                                                th:if="${s.role == 'STUDENT'}"
+                                                th:value="${s.id}" 
+                                                th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                                th:disabled="${#sets.contains(takenStudentIds, s.id)}"
+                                                th:data-taken="${#sets.contains(takenStudentIds, s.id)}">
                                         </option>
                                     </select>
                                 </div>
@@ -343,16 +358,35 @@
                                         <option th:each="s : ${students}" 
                                                 th:if="${s.role == 'STUDENT'}"
                                                 th:value="${s.id}" 
-                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
+                                                th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                                th:disabled="${#sets.contains(takenStudentIds, s.id)}"
+                                                th:data-taken="${#sets.contains(takenStudentIds, s.id)}">
                                         </option>
                                     </select>
                                 </div>
                             </div>
-                                <div class="mb-3"><label class="form-label small d-flex justify-content-between">Developers <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperFieldProject()">+ Adicionar</button></label>
-                                    <div id="developers-container-project"><div class="input-group mb-2 developer-row"><select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Selecionar Developer...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div></div>
+
+                            <div class="mb-3">
+                                <label class="form-label small d-flex justify-content-between">Developers 
+                                    <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperFieldProject()">+ Adicionar</button>
+                                </label>
+                                <div id="developers-container-project">
+                                    <div class="input-group mb-2 developer-row">
+                                        <select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
+                                            <option value="">Selecionar Developer...</option>
+                                            <option th:each="s : ${students}" 
+                                                    th:if="${s.role == 'STUDENT'}"
+                                                    th:value="${s.id}" 
+                                                    th:text="${s.studentTag} + ' - ' + ${s.name}"
+                                                    th:disabled="${#sets.contains(takenStudentIds, s.id)}"
+                                                    th:data-taken="${#sets.contains(takenStudentIds, s.id)}">
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">Criar</button>
-                            </form>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">Criar Equipa</button>
+                        </form>
                         </div>
                     </div>
                 </div>
@@ -428,19 +462,46 @@
         }
 
         function updateOptions() {
-            const allSelects = document.querySelectorAll('.member-select');
-            const selectedValues = new Set();
-            allSelects.forEach(select => { if (select.value && select.value !== "") selectedValues.add(select.value); });
-            allSelects.forEach(select => {
-                const myValue = select.value;
-                const options = select.querySelectorAll('option');
-                options.forEach(opt => {
-                    if (!opt.value) return;
-                    if (selectedValues.has(opt.value) && opt.value !== myValue) opt.disabled = true;
-                    else opt.disabled = false;
-                });
+        const allSelects = document.querySelectorAll('.member-select');
+        const selectedValues = new Set();
+        
+        // 1. Recolhe valores selecionados (apenas dos campos ativos)
+        allSelects.forEach(select => { 
+            if (select.value && select.value !== "") {
+                selectedValues.add(select.value); 
+            }
+        });
+
+        // 2. Atualiza estados
+        allSelects.forEach(select => {
+            const myValue = select.value;
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(opt => {
+                if (!opt.value) return; 
+
+                // Se já estiver ocupado pelo servidor (data-taken="true")
+                if (opt.getAttribute('data-taken') === 'true') {
+                    opt.disabled = true; 
+                    // NÃO mexemos no style aqui. O browser trata de o pôr cinzento.
+                    return;
+                }
+
+                // Se estiver selecionado noutro dropdown local
+                if (selectedValues.has(opt.value) && opt.value !== myValue) {
+                    opt.disabled = true;
+                } else {
+                    opt.disabled = false;
+                }
             });
-        }
+        });
+    }
+
+    // Executa ao carregar para bloquear os 'taken' iniciais
+    document.addEventListener('DOMContentLoaded', function() {
+        updateOptions();
+    });
+    
         function addDeveloperFieldProject() {
             const container = document.getElementById('developers-container-project');
             const firstRow = container.querySelector('.developer-row');
