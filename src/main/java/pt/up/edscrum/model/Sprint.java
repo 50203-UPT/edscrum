@@ -29,7 +29,7 @@ public class Sprint {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    private SprintStatus status = SprintStatus.TODO;
+    private SprintStatus status = SprintStatus.PLANEAMENTO;
 
     @ManyToOne
     @JoinColumn(name = "project_id")

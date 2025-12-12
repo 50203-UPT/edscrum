@@ -20,6 +20,7 @@ public class UserStory {
 
     private String name;
     private String description;
+    private Integer storyPoints; // Esforço estimado
 
     @Enumerated(EnumType.STRING)
     private UserStoryPriority priority;
@@ -58,6 +59,14 @@ public class UserStory {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getStoryPoints() {
+        return storyPoints;
+    }
+
+    public void setStoryPoints(Integer storyPoints) {
+        this.storyPoints = storyPoints;
     }
 
     public UserStoryPriority getPriority() {

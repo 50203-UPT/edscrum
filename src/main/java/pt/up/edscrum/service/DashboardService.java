@@ -17,9 +17,12 @@ import pt.up.edscrum.enums.SprintStatus;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Project;
+import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.TeamAward;
 import pt.up.edscrum.model.User;
+import pt.up.edscrum.model.UserStory;
+import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.ProjectRepository;
@@ -40,8 +43,9 @@ public class DashboardService {
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
     private final EnrollmentRepository enrollmentRepo;
+    private final SprintService sprintService;
 
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo) {
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, SprintService sprintService) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
@@ -50,6 +54,7 @@ public class DashboardService {
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
         this.enrollmentRepo = enrollmentRepo;
+        this.sprintService = sprintService;
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
@@ -77,7 +82,7 @@ public class DashboardService {
             } else {
                 long total = p.getSprints().size();
                 long done = p.getSprints().stream()
-                        .filter(s -> s.getStatus() != null && s.getStatus() == SprintStatus.DONE) // Comparação segura
+                        .filter(s -> s.getStatus() != null && s.getStatus() == SprintStatus.CONCLUIDO) // Comparação segura
                         .count();
                 pp.setCompletionPercentage(total == 0 ? 0 : (done * 100.0 / total));
             }
@@ -170,7 +175,12 @@ public class DashboardService {
             });
         }
         
-        dto.setProjects(allStudentProjects);
+        // 5. Converter Projects para ProjectWithProgressDTO com cálculo de progresso
+        List<pt.up.edscrum.dto.dashboard.ProjectWithProgressDTO> projectsWithProgress = new ArrayList<>();
+        for (Project project : allStudentProjects) {
+            projectsWithProgress.add(convertProjectToDTO(project));
+        }
+        dto.setProjects(projectsWithProgress);
 
         return dto;
     }
@@ -334,5 +344,78 @@ public class DashboardService {
         dto.setClassAverage(0);
         dto.setCurrentRank(0);
         dto.setTopStudents(new ArrayList<>());
+    }
+
+    // Método para converter Project em ProjectWithProgressDTO
+    private pt.up.edscrum.dto.dashboard.ProjectWithProgressDTO convertProjectToDTO(Project project) {
+        pt.up.edscrum.dto.dashboard.ProjectWithProgressDTO dto = new pt.up.edscrum.dto.dashboard.ProjectWithProgressDTO();
+        dto.setId(project.getId());
+        dto.setName(project.getName());
+        dto.setSprintGoals(project.getSprintGoals());
+        dto.setStartDate(project.getStartDate());
+        dto.setEndDate(project.getEndDate());
+        dto.setStatus(project.getStatus());
+
+        // Converter sprints e calcular progresso do projeto
+        List<pt.up.edscrum.dto.dashboard.SprintWithProgressDTO> sprintsWithProgress = new ArrayList<>();
+        int totalSprintProgress = 0;
+        int sprintCount = 0;
+
+        if (project.getSprints() != null && !project.getSprints().isEmpty()) {
+            for (Sprint sprint : project.getSprints()) {
+                pt.up.edscrum.dto.dashboard.SprintWithProgressDTO sprintDTO = convertSprintToDTO(sprint);
+                sprintsWithProgress.add(sprintDTO);
+                totalSprintProgress += sprintDTO.getProgress();
+                sprintCount++;
+            }
+            // Progresso do projeto é a média dos progressos dos sprints
+            dto.setProgress(sprintCount > 0 ? totalSprintProgress / sprintCount : 0);
+        } else {
+            dto.setProgress(0);
+        }
+
+        dto.setSprints(sprintsWithProgress);
+
+        // Adicionar membros da equipa
+        List<User> projectMembers = new ArrayList<>();
+        if (project.getTeams() != null) {
+            for (Team team : project.getTeams()) {
+                // Adicionar Scrum Master
+                if (team.getScrumMaster() != null && !projectMembers.contains(team.getScrumMaster())) {
+                    projectMembers.add(team.getScrumMaster());
+                }
+                // Adicionar Product Owner
+                if (team.getProductOwner() != null && !projectMembers.contains(team.getProductOwner())) {
+                    projectMembers.add(team.getProductOwner());
+                }
+                // Adicionar Developers
+                if (team.getDevelopers() != null) {
+                    for (User developer : team.getDevelopers()) {
+                        if (!projectMembers.contains(developer)) {
+                            projectMembers.add(developer);
+                        }
+                    }
+                }
+            }
+        }
+        dto.setMembers(projectMembers);
+
+        return dto;
+    }
+
+    // Método para converter Sprint em SprintWithProgressDTO
+    private pt.up.edscrum.dto.dashboard.SprintWithProgressDTO convertSprintToDTO(Sprint sprint) {
+        pt.up.edscrum.dto.dashboard.SprintWithProgressDTO dto = new pt.up.edscrum.dto.dashboard.SprintWithProgressDTO();
+        dto.setId(sprint.getId());
+        dto.setName(sprint.getName());
+        dto.setDescription(sprint.getDescription());
+        dto.setStartDate(sprint.getStartDate());
+        dto.setEndDate(sprint.getEndDate());
+        dto.setStatus(sprint.getStatus());
+
+        // Calcular progresso com base nas user stories
+        dto.setProgress(sprintService.calculateSprintProgress(sprint.getId()));
+
+        return dto;
     }
 }

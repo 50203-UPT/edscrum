@@ -374,13 +374,13 @@ public class WebController {
     @PostMapping("/sprints/create")
     public String createSprintWeb(
             @RequestParam Long projectId,
-            @RequestParam Long userId, // Para voltar à página certa
+            @RequestParam(required = false) Long studentId, // Alunos criam sprints
             @ModelAttribute Sprint sprint,
             RedirectAttributes redirectAttributes) {
 
         try {
             // Define estado inicial
-            sprint.setStatus(pt.up.edscrum.enums.SprintStatus.TODO);
+            sprint.setStatus(pt.up.edscrum.enums.SprintStatus.PLANEAMENTO);
 
             // O SprintService já trata de associar ao projeto
             sprintService.createSprint(projectId, sprint);
@@ -391,7 +391,7 @@ public class WebController {
         }
 
         // Redireciona de volta para os detalhes do projeto
-        return "redirect:/view/project/" + projectId + "/user/" + userId;
+        return "redirect:/view/project/" + projectId + "/user/" + studentId;
     }
 
 // 2. ATUALIZAR CREATE TEAM
@@ -597,6 +597,14 @@ public class WebController {
             }
 
             ProjectDetailsDTO project = dashboardService.getProjectDetails(projectId);
+            
+            // Debug: Log do status do projeto
+            System.out.println("=== PROJECT DETAILS DEBUG ===");
+            System.out.println("Project ID: " + projectId);
+            System.out.println("Project Status: " + project.getStatus());
+            System.out.println("Is Student: " + ("STUDENT".equals(user.getRole())));
+            System.out.println("============================");
+            
             model.addAttribute("project", project);
 
             // Carregar todos os utilizadores (Professores e Alunos)
@@ -628,6 +636,14 @@ public class WebController {
             Sprint sprint = sprintService.getSprintById(sprintId);
             model.addAttribute("sprint", sprint);
 
+            // Buscar membros da equipa do projeto
+            Project project = sprint.getProject();
+            if (project != null && project.getTeams() != null && !project.getTeams().isEmpty()) {
+                Team team = project.getTeams().get(0); // Pega a primeira equipa associada ao projeto
+                List<User> teamMembers = teamService.getTeamMembers(team.getId());
+                model.addAttribute("teamMembers", teamMembers);
+            }
+
             // Dados calculados
             int progress = sprintService.calculateSprintProgress(sprintId);
             model.addAttribute("sprintProgress", progress);
@@ -644,21 +660,14 @@ public class WebController {
             model.addAttribute("doneCount", doneCount);
             model.addAttribute("totalStories", sprint.getUserStories().size());
 
+            // Verificar se todas as stories estão DONE
+            boolean allDone = sprint.getUserStories().isEmpty() || 
+                             sprint.getUserStories().stream().allMatch(s -> s.getStatus().name().equals("DONE"));
+            model.addAttribute("canComplete", allDone && !sprint.getUserStories().isEmpty());
+
             return "sprintDashboard";
         } catch (Exception e) {
             return "redirect:/?error=sprint_error";
-        }
-    }
-
-    // API PARA O DRAG AND DROP (Retorna JSON simples)
-    @PostMapping("/api/stories/{storyId}/move")
-    @ResponseBody
-    public ResponseEntity<?> moveStory(@PathVariable Long storyId, @RequestParam String status) {
-        try {
-            sprintService.updateUserStoryStatus(storyId, status);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

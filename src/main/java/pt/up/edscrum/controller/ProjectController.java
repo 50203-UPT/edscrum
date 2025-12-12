@@ -53,4 +53,26 @@ public class ProjectController {
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<?> completeProject(@PathVariable Long id) {
+        try {
+            projectService.completeProject(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao concluir projeto: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/reopen")
+    public ResponseEntity<?> reopenProject(@PathVariable Long id) {
+        try {
+            projectService.reopenProject(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao reabrir projeto: " + e.getMessage());
+        }
+    }
 }

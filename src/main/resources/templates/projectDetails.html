@@ -54,7 +54,7 @@
         .sprint-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .status-todo { background-color: #94a3b8; }
-        .status-progress { background-color: #3b82f6; }
+        .status-progress { background-color: #f59e0b; }
         .status-done { background-color: #22c55e; }
 
         .member-card {
@@ -65,6 +65,10 @@
         .role-SM { background-color: #f3e8ff; color: #7e22ce; }
         .role-PO { background-color: #dbeafe; color: #1e40af; }
         .role-Developer { background-color: #dcfce7; color: #15803d; }
+        
+        /* Cores do estado do projeto */
+        .bg-warning { background-color: #f59e0b !important; }
+        .bg-secondary { background-color: #94a3b8 !important; }
 
         /* NOTIFICATIONS */
         .notification-sidebar { position: fixed; top: 0; right: -400px; width: 400px; height: 100%; background-color: #f8f9fa; box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); z-index: 1050; transition: right 0.3s ease-in-out; display: flex; flex-direction: column; border-left: 1px solid #e9ecef; }
@@ -76,19 +80,20 @@
         .notification-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
     </style>
 </head>
-<body class="teacher-bg">
+<body th:class="${teacher != null and teacher != null ? 'teacher-bg' : 'student-bg'}">
 
-    <nav class="navbar-teacher d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top" style="z-index: 1000;">
+    <nav th:class="'d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top ' + (${teacher != null ? 'navbar-teacher' : 'navbar-student'})" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-2">
-            <a href="#" onclick="history.back(); return false;" class="btn-back-custom" title="Voltar">
+            <a th:href="${teacher != null ? '/view/teacher/home/' + teacher.id : '/view/student/home/' + student.id}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
-            <div class="bg-primary text-white p-2 rounded-3 shadow-sm d-flex align-items-center justify-content-center">
-                <i data-lucide="trophy" style="width: 24px; height: 24px;"></i>
+            <div th:class="'text-white p-2 rounded-3 shadow-sm d-flex align-items-center justify-content-center ' + (${teacher != null ? 'bg-primary' : 'bg-success'})">
+                <i th:if="${teacher != null}" data-lucide="folder-kanban" style="width: 24px; height: 24px;"></i>
+                <i th:unless="${teacher != null}" data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i>
             </div>
             <div class="ms-2">
-                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum Awards</h5>
-                <small class="text-muted">Gestão de Projeto</small>
+                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5>
+                <small class="text-muted" th:text="${teacher != null ? 'Gestão do Projeto' : 'Detalhes do Projeto'}">Detalhes</small>
             </div>
         </div>
 
@@ -101,14 +106,19 @@
             <div class="dropdown">
                 <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="text-end d-none d-md-block">
-                        <div class="profile-name fw-bold text-dark" th:text="${teacher.name}">Prof. Nome</div>
-                        <div class="profile-email small text-muted" th:text="${teacher.email}">email@upt.pt</div>
+                        <div class="profile-name fw-bold text-dark" th:text="${teacher != null ? teacher.name : student.name}">Utilizador</div>
+                        <div class="profile-email small text-muted" th:text="${teacher != null ? teacher.email : student.email}">email@upt.pt</div>
                     </div>
-                    <img th:if="${teacher.profileImage != null}" th:src="@{'/uploads/profile-images/' + ${teacher.profileImage}}" class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
-                    <div th:unless="${teacher.profileImage != null}" class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; font-size: 1.2rem;" th:text="${#strings.substring(teacher.name,0,1)}">T</div>
+                    <img th:if="${(teacher != null ? teacher.profileImage : student.profileImage) != null}" 
+                         th:src="@{'/uploads/profile-images/' + ${teacher != null ? teacher.profileImage : student.profileImage}}" 
+                         class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
+                    <div th:unless="${(teacher != null ? teacher.profileImage : student.profileImage) != null}" 
+                         th:class="'profile-avatar ' + (${teacher != null ? 'bg-primary' : 'bg-success'}) + ' text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm'" 
+                         style="width: 42px; height: 42px; font-size: 1.2rem;" 
+                         th:text="${#strings.substring((teacher != null ? teacher.name : student.name),0,1)}">U</div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
-                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
+                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" th:data-bs-target="${teacher != null ? '#editProfileModal' : '#editStudentProfileModal'}"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
                     <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal"><i data-lucide="settings" class="w-4 h-4 inline me-2 opacity-50"></i> Configurações</a></li>
                     <li><hr class="dropdown-divider my-2"></li>
                     <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i data-lucide="log-out" class="w-4 h-4 inline me-2 opacity-50"></i> Sair</a></li>
@@ -139,7 +149,7 @@
                 <div>
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <span class="badge rounded-pill px-3 py-2"
-                              th:classappend="${project.status == 'CONCLUIDO' ? 'bg-success' : (project.status == 'EM_CURSO' ? 'bg-primary' : 'bg-secondary')}"
+                              th:classappend="${project.status == 'CONCLUIDO' ? 'bg-success' : (project.status == 'EM_CURSO' ? 'bg-warning text-dark' : 'bg-secondary')}"
                               th:text="${#strings.replace(project.status, '_', ' ')}">EM CURSO</span>
                         <span class="text-muted small fw-bold text-uppercase" th:text="${project.courseName}">Engenharia de Software</span>
                     </div>
@@ -155,6 +165,32 @@
                     <div class="d-flex align-items-center gap-2 justify-content-end text-dark fw-bold">
                         <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
                         <span th:text="${#lists.size(project.sprints)} + ' Sprints'">0 Sprints</span>
+                    </div>
+                    <div class="d-flex gap-2 mt-3" th:if="${student != null}">
+                        <!-- Botão Concluir: aparece quando status NÃO é CONCLUIDO -->
+                        <button th:if="${project.status != 'CONCLUIDO'}" 
+                                class="btn btn-success btn-sm rounded-pill px-3" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#completeProjectModal">
+                            <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir Projeto
+                        </button>
+                        
+                        <!-- Botão Reabrir: aparece quando status É CONCLUIDO (amarelo como no sprint) -->
+                        <button th:if="${project.status == 'CONCLUIDO'}" 
+                                class="btn btn-warning btn-sm rounded-pill px-3" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#reopenProjectModal">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Projeto
+                        </button>
+                    </div>
+                    
+                    <!-- Botões do Professor -->
+                    <div class="d-flex gap-2 mt-3" th:if="${teacher != null}">
+                        <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteProjectModal">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Projeto
+                        </button>
                     </div>
                 </div>
             </div>
@@ -174,7 +210,10 @@
         </div>
 
         <div id="sprints" class="custom-tab-content active">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4" th:if="${teacher != null}">
+                <h4 class="fw-bold text-dark mb-0">Sprints do Projeto</h4>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4" th:if="${student != null}">
                 <h4 class="fw-bold text-dark mb-0">Gestão de Sprints</h4>
                 <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" 
                         data-bs-toggle="modal" 
@@ -189,7 +228,7 @@
                     <div class="p-3 bg-light rounded-3 border"><i data-lucide="target" class="text-primary w-6 h-6"></i></div>
                     <div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="status-dot" th:classappend="${sprint.status.name() == 'DONE' ? 'status-done' : (sprint.status.name() == 'IN_PROGRESS' ? 'status-progress' : 'status-todo')}"></span>
+                            <span class="status-dot" th:classappend="${sprint.status.name() == 'CONCLUIDO' ? 'status-done' : (sprint.status.name() == 'EM_CURSO' ? 'status-progress' : 'status-todo')}"></span>
                             <span class="small text-muted fw-bold text-uppercase" 
                                   th:text="${#strings.replace(sprint.status, '_', ' ')}">IN PROGRESS</span> </div>
                         <h5 class="fw-bold text-dark mb-0 mt-1" th:text="${sprint.name}">Sprint 1</h5>
@@ -197,7 +236,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-4">
-                    <a th:href="@{'/view/sprint/' + ${sprint.id} + '/user/' + ${teacher.id}}" class="btn btn-outline-primary rounded-pill px-4 fw-bold btn-sm">Ver Board</a>
+                    <a th:href="@{'/view/sprint/' + ${sprint.id} + '/user/' + ${teacher != null ? teacher.id : student.id}}" class="btn btn-outline-primary rounded-pill px-4 fw-bold btn-sm">Ver Board</a>
                 </div>
             </div>
             
@@ -205,8 +244,11 @@
         </div>
 
         <div id="team" class="custom-tab-content">
-            <div class="text-end mb-3">
-                 <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
+            <div class="text-end mb-3" th:if="${teacher != null}">
+                 <button th:if="${project.teamName == null}" class="btn btn-primary rounded-pill px-4 me-2" data-bs-toggle="modal" data-bs-target="#addTeamModal">
+                    <i data-lucide="users-round" class="w-4 h-4 inline me-1"></i> Adicionar Equipa
+                 </button>
+                 <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
                     <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Projeto
                  </button>
             </div>
@@ -271,7 +313,7 @@
                 <div class="modal-body">
                     <form id="newSprintForm" th:action="@{/sprints/create}" method="POST">
                         <input type="hidden" name="projectId" th:value="${project.id}">
-                        <input type="hidden" name="userId" th:value="${teacher.id}">
+                        <input type="hidden" name="studentId" th:value="${student != null ? student.id : ''}">
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Nome da Sprint</label>
@@ -317,7 +359,7 @@
                         <div class="tab-pane fade show active" id="pills-existing">
                             <form th:action="@{/projects/assign-team}" method="POST">
                                 <input type="hidden" name="projectId" th:value="${project.id}">
-                                <input type="hidden" name="userId" th:value="${teacher.id}">
+                                <input type="hidden" name="userId" th:value="${teacher != null ? teacher.id : student.id}">
                                 <div class="mb-3"><label class="form-label fw-bold small">Equipas Disponíveis</label><select name="teamId" class="form-select bg-light border-0 py-3" required><option value="" disabled selected>Selecione...</option><option th:each="t : ${project.availableTeams}" th:value="${t.id}" th:text="${t.name}"></option></select></div>
                                 <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2" th:disabled="${#lists.isEmpty(project.availableTeams)}">Associar</button>
                             </form>
@@ -406,10 +448,56 @@
                 <div class="modal-footer border-0 pt-2 px-0 pb-0">
                     <form th:action="@{/projects/delete}" method="POST" class="w-100 d-flex gap-2">
                         <input type="hidden" name="projectId" th:value="${project.id}">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                        <input type="hidden" name="teacherId" th:value="${teacher != null ? teacher.id : student.id}">
                         <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="completeProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-success">Concluir Projeto</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja marcar este projeto como concluído?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Todos os sprints devem estar concluídos para completar o projeto.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" onclick="confirmCompleteProject()" th:attr="data-project-id=${project.id}">
+                        <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="reopenProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-warning">Reabrir Projeto</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja reabrir este projeto?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">O projeto voltará ao estado EM_CURSO.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold" onclick="confirmReopenProject()" th:attr="data-project-id=${project.id}">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir
+                    </button>
                 </div>
             </div>
         </div>
@@ -420,10 +508,10 @@
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
                 <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Configurações</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <form th:action="@{/api/teacher/settings}" method="POST">
-                        <input type="hidden" name="email" th:value="${teacher.email}">
+                    <form th:action="${teacher != null ? '/api/teacher/settings' : '/api/student/settings'}" method="POST">
+                        <input type="hidden" name="email" th:value="${teacher != null ? teacher.email : student.email}">
                         <div class="p-3 bg-light rounded-3 mb-3 border"><h6 class="fw-bold small mb-3 text-dark">Aparência</h6><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="theme-switcher"><label class="form-check-label" for="theme-switcher">Modo Noturno</label></div></div>
-                        <div class="modal-footer border-0 pt-0 px-0"><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar</button></div>
+                        <div class="modal-footer border-0 pt-0 px-0"><button type="submit" th:class="${teacher != null ? 'btn btn-primary rounded-pill px-4 fw-bold' : 'btn btn-success rounded-pill px-4 fw-bold'}">Guardar</button></div>
                     </form>
                 </div>
             </div>
@@ -436,9 +524,35 @@
                 <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Editar Perfil</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
-                        <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required></div>
+                        <input type="hidden" name="teacherId" th:value="${teacher != null ? teacher.id : ''}" />
+                        <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher != null ? teacher.name : ''}" required></div>
                         <div class="modal-footer border-0 pt-4 px-0 pb-0"><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editStudentProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Editar Perfil</h4>
+                        <p class="text-muted small mb-0">Atualiza os teus dados.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/api/student/profile/update}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="id" th:value="${student != null ? student.id : ''}" />
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${student != null ? student.name : ''}" required>
+                        </div>
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Guardar</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -458,6 +572,161 @@
             const sidebar = document.getElementById('notificationSidebar');
             sidebar.classList.toggle('open');
         }
+
+        function confirmCompleteProject() {
+            const projectId = document.querySelector('#completeProjectModal button[data-project-id]').getAttribute('data-project-id');
+            if (!projectId) {
+                console.error('ID do projeto não encontrado.');
+                return;
+            }
+            
+            // Verifica se todos os sprints estão concluídos
+            const allSprints = document.querySelectorAll('.sprint-item');
+            let allCompleted = true;
+            let incompleteSprints = [];
+            
+            allSprints.forEach(sprint => {
+                const statusText = sprint.querySelector('.small.text-muted.fw-bold.text-uppercase');
+                if (statusText) {
+                    const status = statusText.textContent.trim();
+                    if (status !== 'CONCLUIDO') {
+                        allCompleted = false;
+                        const sprintName = sprint.querySelector('h5.fw-bold.text-dark');
+                        if (sprintName) {
+                            incompleteSprints.push(sprintName.textContent.trim());
+                        }
+                    }
+                }
+            });
+            
+            if (!allCompleted) {
+                // Fecha o modal atual
+                const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                if (modal) modal.hide();
+                
+                // Mostra alerta de erro
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.style.maxWidth = '500px';
+                alertDiv.innerHTML = `
+                    <strong><i data-lucide="alert-triangle" class="w-4 h-4 inline me-2"></i>Atenção!</strong><br>
+                    Não é possível concluir o projeto. Os seguintes sprints ainda não estão concluídos:<br>
+                    <ul class="mb-0 mt-2">
+                        ${incompleteSprints.map(name => `<li>${name}</li>`).join('')}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+                lucide.createIcons();
+                
+                // Remove o alerta após 5 segundos
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+                
+                return;
+            }
+            
+            fetch(`/projects/${projectId}/complete`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Fecha o modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                    if (modal) modal.hide();
+                    
+                    // Mostra mensagem de sucesso
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                    successDiv.style.zIndex = '9999';
+                    successDiv.style.maxWidth = '500px';
+                    successDiv.innerHTML = `
+                        <strong><i data-lucide="check-circle" class="w-4 h-4 inline me-2"></i>Sucesso!</strong> Projeto concluído com sucesso.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(successDiv);
+                    lucide.createIcons();
+                    
+                    // Redireciona após 1.5 segundos
+                    setTimeout(() => {
+                        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                    }, 1500);
+                } else {
+                    return response.text().then(text => {
+                        // Fecha o modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                        if (modal) modal.hide();
+                        
+                        // Mostra mensagem de erro
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                        errorDiv.style.zIndex = '9999';
+                        errorDiv.style.maxWidth = '500px';
+                        errorDiv.innerHTML = `
+                            <strong><i data-lucide="x-circle" class="w-4 h-4 inline me-2"></i>Erro!</strong> ${text || 'Não foi possível concluir o projeto.'}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.body.appendChild(errorDiv);
+                        lucide.createIcons();
+                        
+                        setTimeout(() => {
+                            errorDiv.remove();
+                        }, 5000);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                if (modal) modal.hide();
+                
+                // Mostra mensagem de erro
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                errorDiv.style.zIndex = '9999';
+                errorDiv.style.maxWidth = '500px';
+                errorDiv.innerHTML = `
+                    <strong><i data-lucide="x-circle" class="w-4 h-4 inline me-2"></i>Erro!</strong> Erro de conexão ao concluir projeto.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(errorDiv);
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            });
+        }
+
+        function confirmReopenProject() {
+            const projectId = document.querySelector('#reopenProjectModal button[data-project-id]').getAttribute('data-project-id');
+            if (!projectId) {
+                console.error('ID do projeto não encontrado.');
+                return;
+            }
+            fetch(`/projects/${projectId}/reopen`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                } else {
+                    return response.text().then(text => {
+                        console.error('Erro ao reabrir projeto:', text);
+                        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+            });
+        }
+
         function updateSprintNumber() {
             const currentCount = document.querySelectorAll('.sprint-item').length;
             const nextNumber = currentCount + 1;
@@ -671,6 +940,21 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Log do status atual do projeto
+            const projectStatus = '[[${project.status}]]';
+            const isStudent = '[[${student != null}]]' === 'true';
+            console.log('=== PROJECT DETAILS DEBUG ===');
+            console.log('Status do projeto:', projectStatus);
+            console.log('É estudante?:', isStudent);
+            console.log('Status é CONCLUIDO?:', projectStatus === 'CONCLUIDO');
+            console.log('Status é diferente de CONCLUIDO?:', projectStatus !== 'CONCLUIDO');
+            console.log('Botões presentes:', {
+                completeBtn: document.querySelector('[onclick*="completeProject"]'),
+                reopenBtn: document.querySelector('[onclick*="reopenProject"]'),
+                allButtons: document.querySelectorAll('button[data-project-id]')
+            });
+            console.log('===========================');
+            
             const themeSwitcher = document.getElementById('theme-switcher');
             const body = document.body;
             const currentTheme = localStorage.getItem('theme');

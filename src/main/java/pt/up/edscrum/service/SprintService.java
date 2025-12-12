@@ -66,17 +66,71 @@ public class SprintService {
         userStoryRepository.save(story);
     }
 
-    // Calcula percentagem para o Dashboard
+    // Calcula percentagem para o Dashboard baseado no status de cada story
+    // TODO = 0%, IN_PROGRESS = 25%, TESTING = 75%, DONE = 100%
     public int calculateSprintProgress(Long sprintId) {
         Sprint sprint = getSprintById(sprintId);
         if (sprint.getUserStories() == null || sprint.getUserStories().isEmpty()) {
             return 0;
         }
 
-        long doneCount = sprint.getUserStories().stream()
-                .filter(us -> us.getStatus() == UserStoryStatus.DONE)
-                .count();
+        // Calcular média dos valores fixos de cada story
+        double totalProgress = sprint.getUserStories().stream()
+                .mapToDouble(us -> {
+                    return switch (us.getStatus()) {
+                        case TODO -> 0.0;
+                        case IN_PROGRESS -> 25.0;
+                        case TESTING -> 75.0;
+                        case DONE -> 100.0;
+                    };
+                })
+                .sum();
 
-        return (int) ((doneCount * 100.0) / sprint.getUserStories().size());
+        int totalStories = sprint.getUserStories().size();
+        return (int) (totalProgress / totalStories);
+    }
+
+    public Sprint completeSprint(Long sprintId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new RuntimeException("Sprint não encontrada"));
+
+        // Verificar se todas as user stories estão DONE
+        boolean allDone = sprint.getUserStories().stream()
+                .allMatch(us -> us.getStatus() == UserStoryStatus.DONE);
+
+        if (!allDone) {
+            throw new RuntimeException("Não é possível marcar o sprint como concluído. Todas as User Stories devem estar concluídas (DONE).");
+        }
+
+        sprint.setStatus(pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
+        return sprintRepository.save(sprint);
+    }
+
+    public Sprint reopenSprint(Long sprintId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new RuntimeException("Sprint não encontrada"));
+
+        sprint.setStatus(pt.up.edscrum.enums.SprintStatus.EM_CURSO);
+        
+        // Se o projeto estiver concluído, reabri-lo automaticamente
+        Project project = sprint.getProject();
+        if (project != null && project.getStatus() == pt.up.edscrum.enums.ProjectStatus.CONCLUIDO) {
+            project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
+        }
+        
+        return sprintRepository.save(sprint);
+    }
+
+    public void deleteSprint(Long sprintId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new RuntimeException("Sprint não encontrada"));
+        
+        // Eliminar todas as user stories associadas
+        if (sprint.getUserStories() != null && !sprint.getUserStories().isEmpty()) {
+            userStoryRepository.deleteAll(sprint.getUserStories());
+        }
+        
+        // Eliminar o sprint
+        sprintRepository.delete(sprint);
     }
 }

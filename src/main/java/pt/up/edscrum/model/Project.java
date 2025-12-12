@@ -122,7 +122,7 @@ public class Project {
         if (sprints == null || sprints.isEmpty()) {
             return 0;
         }
-        long doneSprints = sprints.stream().filter(s -> s.getStatus() == SprintStatus.DONE).count();
+        long doneSprints = sprints.stream().filter(s -> s.getStatus() == SprintStatus.CONCLUIDO).count();
         return (int) ((doneSprints * 100.0) / sprints.size());
     }
 }

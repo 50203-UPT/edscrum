@@ -38,7 +38,21 @@ public class CourseService {
     }
 
     public List<Course> getCoursesByTeacher(Long teacherId) {
-        return courseRepository.findByTeacherId(teacherId);
+        List<Course> courses = courseRepository.findByTeacherIdWithProjects(teacherId);
+        // Initialize collections to avoid lazy loading issues
+        courses.forEach(course -> {
+            if (course.getProjects() != null) {
+                course.getProjects().forEach(project -> {
+                    if (project.getSprints() != null) {
+                        project.getSprints().size(); // Force initialization
+                    }
+                    if (project.getTeams() != null) {
+                        project.getTeams().size(); // Force initialization
+                    }
+                });
+            }
+        });
+        return courses;
     }
 
     public Course createCourse(Course course) {

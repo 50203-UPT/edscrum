@@ -43,7 +43,7 @@ public class StudentDashboardDTO {
     private List<PointHistoryDTO> pointHistory;
     private List<RankingDTO> topStudents; // Top 5 para a tabela
 
-    private List<Project> projects;
+    private List<ProjectWithProgressDTO> projects;
     private List<Course> enrolledCourses;
     private List<Course> availableCourses;
 
@@ -248,11 +248,11 @@ public class StudentDashboardDTO {
         this.topStudents = topStudents;
     }
 
-    public List<Project> getProjects() {
+    public List<ProjectWithProgressDTO> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(List<ProjectWithProgressDTO> projects) {
         this.projects = projects;
     }
 

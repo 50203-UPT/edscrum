@@ -60,4 +60,29 @@ public class ProjectService {
         // 2. Apagar o projeto (agora seguro)
         projectRepository.deleteById(id);
     }
+
+    // Completar Projeto (apenas se todos os sprints estiverem concluídos)
+    public void completeProject(Long projectId) {
+        Project project = getProjectById(projectId);
+        
+        // Verificar se todos os sprints estão concluídos
+        if (project.getSprints() != null && !project.getSprints().isEmpty()) {
+            boolean allSprintsDone = project.getSprints().stream()
+                .allMatch(sprint -> sprint.getStatus() == pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
+            
+            if (!allSprintsDone) {
+                throw new IllegalStateException("Todos os sprints devem estar concluídos antes de marcar o projeto como concluído.");
+            }
+        }
+        
+        project.setStatus(pt.up.edscrum.enums.ProjectStatus.CONCLUIDO);
+        projectRepository.save(project);
+    }
+
+    // Reabrir Projeto
+    public void reopenProject(Long projectId) {
+        Project project = getProjectById(projectId);
+        project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
+        projectRepository.save(project);
+    }
 }

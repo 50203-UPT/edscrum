@@ -97,6 +97,24 @@ public class TeamService {
         return teamRepository.findAvailableTeamsByCourse(courseId);
     }
 
+    // Retorna todos os membros de uma equipa (SM, PO e Developers)
+    public List<User> getTeamMembers(Long teamId) {
+        Team team = getTeamById(teamId);
+        java.util.List<User> members = new java.util.ArrayList<>();
+        
+        if (team.getScrumMaster() != null) {
+            members.add(team.getScrumMaster());
+        }
+        if (team.getProductOwner() != null) {
+            members.add(team.getProductOwner());
+        }
+        if (team.getDevelopers() != null) {
+            members.addAll(team.getDevelopers());
+        }
+        
+        return members;
+    }
+
     // Retorna um Mapa: ID do Curso -> Conjunto de IDs de Alunos Ocupados
     public java.util.Map<Long, java.util.Set<Long>> getTakenStudentsMap() {
         java.util.Map<Long, java.util.Set<Long>> map = new java.util.HashMap<>();

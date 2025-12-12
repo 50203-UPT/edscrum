@@ -124,39 +124,59 @@
 
         <div class="sprint-header">
             <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
+                <div class="flex-grow-1">
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <i data-lucide="target" class="text-primary w-6 h-6"></i>
                         <h2 class="fw-bold mb-0 text-dark" th:text="${sprint.name}">Sprint 2</h2>
                         <span class="badge rounded-pill px-3" 
-                              th:classappend="${sprint.status.name() == 'DONE' ? 'bg-success' : (sprint.status.name() == 'IN_PROGRESS' ? 'bg-warning text-dark' : 'bg-secondary')}"
+                              th:classappend="${sprint.status.name() == 'CONCLUIDO' ? 'bg-success' : (sprint.status.name() == 'EM_CURSO' ? 'bg-warning text-dark' : 'bg-secondary')}"
                               th:text="${sprint.status}">IN PROGRESS</span>
                     </div>
                     <p class="text-muted mb-0 ps-1" th:text="${sprint.description}">Descrição da sprint...</p>
                 </div>
                 <div class="text-end">
-                    <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
+                    <div class="mb-2">
+                        <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button th:if="${student != null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
+                            <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova User Story
+                        </button>
+                        <button th:if="${canComplete and student != null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
+                            <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir Sprint
+                        </button>
+                        <button th:if="${student != null and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Sprint
+                        </button>
+                        <button th:if="${student != null}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Sprint
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div class="mt-4">
                 <div class="d-flex justify-content-between align-items-end mb-2">
                     <span class="fw-bold small text-dark">Sprint Progress</span>
-                    <span class="fw-bold small text-primary" th:text="${sprintProgress} + '%'">38%</span>
+                    <span class="fw-bold small" 
+                          th:classappend="${sprint.status.name() == 'CONCLUIDO' ? 'text-success' : 'text-primary'}"
+                          th:text="${sprintProgress} + '%'">38%</span>
                 </div>
                 <div class="progress" style="height: 10px; border-radius: 99px; background-color: #e9ecef;">
-                    <div class="progress-bar bg-success rounded-pill" role="progressbar" 
+                    <div class="progress-bar rounded-pill" 
+                         th:classappend="${sprint.status.name() == 'CONCLUIDO' ? 'bg-success' : 'bg-primary'}"
+                         role="progressbar" 
                          th:style="'width: ' + ${sprintProgress} + '%'"></div>
                 </div>
-                <div class="mt-2 text-muted small">
-                    <span th:text="${doneCount} + ' de ' + ${totalStories} + ' user stories'">5/13 story points</span>
+                <div class="mt-2 d-flex justify-content-between align-items-center">
+                    <span class="text-muted small" th:text="${doneCount} + ' de ' + ${totalStories} + ' user stories concluídas'">5/13 user stories</span>
                 </div>
             </div>
         </div>
 
         <div class="kanban-board">
             
-            <div class="kanban-column col-todo" ondragover="allowDrop(event)" ondrop="drop(event, 'TODO')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+            <div class="kanban-column col-todo" th:attrappend="ondragover=${sprint.status.name() != 'CONCLUIDO' ? 'allowDrop(event)' : ''}, ondrop=${sprint.status.name() != 'CONCLUIDO' ? 'drop(event, &quot;PLANEAMENTO&quot;)' : ''}, ondragenter=${sprint.status.name() != 'CONCLUIDO' ? 'dragEnter(event)' : ''}, ondragleave=${sprint.status.name() != 'CONCLUIDO' ? 'dragLeave(event)' : ''}">
                 <div class="column-header">
                     <div class="d-flex align-items-center gap-2">
                         <i data-lucide="list" class="w-4 h-4 text-muted"></i>
@@ -165,26 +185,33 @@
                     <span class="col-count" th:text="${todoCount}">0</span>
                 </div>
                 
-                <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'TODO'}" 
-                     class="story-card" draggable="true" ondragstart="drag(event)" 
-                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'PLANEAMENTO'}" 
+                     class="story-card" 
+                     th:attr="draggable=${sprint.status.name() != 'CONCLUIDO' ? 'true' : 'false'}"
+                     th:attrappend="ondragstart=${sprint.status.name() != 'CONCLUIDO' ? 'drag(event)' : ''}, ondblclick=${sprint.status.name() != 'CONCLUIDO' ? 'editStory(this)' : ''}"
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}" 
+                     th:data-name="${story.name}" th:data-description="${story.description}"
+                     th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
+                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
                     
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#5</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">HIGH</span>
                     </div>
                     <h6 class="fw-bold text-dark mb-2" style="font-size: 0.95rem;" th:text="${story.name}">Database Schema</h6>
+                    <p class="text-muted small mb-2" style="font-size: 0.85rem;" th:text="${story.description}">Descrição</p>
                     
                     <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
                         <div class="d-flex align-items-center gap-2">
                             <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
                             <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
                         </div>
+                        <span class="badge bg-info text-white rounded-pill" th:text="${story.storyPoints != null ? story.storyPoints + ' pts' : '0 pts'}">3 pts</span>
                     </div>
                 </div>
             </div>
 
-            <div class="kanban-column col-progress" ondragover="allowDrop(event)" ondrop="drop(event, 'IN_PROGRESS')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+            <div class="kanban-column col-progress" th:attrappend="ondragover=${sprint.status.name() != 'CONCLUIDO' ? 'allowDrop(event)' : ''}, ondrop=${sprint.status.name() != 'CONCLUIDO' ? 'drop(event, &quot;EM_CURSO&quot;)' : ''}, ondragenter=${sprint.status.name() != 'CONCLUIDO' ? 'dragEnter(event)' : ''}, ondragleave=${sprint.status.name() != 'CONCLUIDO' ? 'dragLeave(event)' : ''}">
                 <div class="column-header">
                     <div class="d-flex align-items-center gap-2">
                         <i data-lucide="loader-2" class="w-4 h-4 text-warning"></i>
@@ -192,25 +219,32 @@
                     </div>
                     <span class="col-count" th:text="${progressCount}">0</span>
                 </div>
-                 <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'IN_PROGRESS'}" 
-                     class="story-card" draggable="true" ondragstart="drag(event)" 
-                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                 <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'EM_CURSO'}" 
+                     class="story-card" 
+                     th:attr="draggable=${sprint.status.name() != 'CONCLUIDO' ? 'true' : 'false'}"
+                     th:attrappend="ondragstart=${sprint.status.name() != 'CONCLUIDO' ? 'drag(event)' : ''}, ondblclick=${sprint.status.name() != 'CONCLUIDO' ? 'editStory(this)' : ''}"
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}"
+                     th:data-name="${story.name}" th:data-description="${story.description}"
+                     th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
+                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
                     
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">MEDIUM</span>
                     </div>
                     <h6 class="fw-bold text-dark mb-2" th:text="${story.name}">Task Name</h6>
+                    <p class="text-muted small mb-2" style="font-size: 0.85rem;" th:text="${story.description}">Descrição</p>
                     <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
                          <div class="d-flex align-items-center gap-2">
                             <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
                             <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
                         </div>
+                        <span class="badge bg-info text-white rounded-pill" th:text="${story.storyPoints != null ? story.storyPoints + ' pts' : '0 pts'}">3 pts</span>
                     </div>
                 </div>
             </div>
 
-            <div class="kanban-column col-testing" ondragover="allowDrop(event)" ondrop="drop(event, 'TESTING')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+            <div class="kanban-column col-testing" th:attrappend="ondragover=${sprint.status.name() != 'CONCLUIDO' ? 'allowDrop(event)' : ''}, ondrop=${sprint.status.name() != 'CONCLUIDO' ? 'drop(event, &quot;TESTING&quot;)' : ''}, ondragenter=${sprint.status.name() != 'CONCLUIDO' ? 'dragEnter(event)' : ''}, ondragleave=${sprint.status.name() != 'CONCLUIDO' ? 'dragLeave(event)' : ''}">
                 <div class="column-header">
                     <div class="d-flex align-items-center gap-2">
                         <i data-lucide="flask-conical" class="w-4 h-4 text-primary"></i> <span class="col-title">Testing</span>
@@ -218,23 +252,30 @@
                     <span class="col-count" th:text="${testingCount}">0</span>
                 </div>
                 <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'TESTING'}" 
-                     class="story-card" draggable="true" ondragstart="drag(event)" 
-                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                     class="story-card" 
+                     th:attr="draggable=${sprint.status.name() != 'CONCLUIDO' ? 'true' : 'false'}"
+                     th:attrappend="ondragstart=${sprint.status.name() != 'CONCLUIDO' ? 'drag(event)' : ''}, ondblclick=${sprint.status.name() != 'CONCLUIDO' ? 'editStory(this)' : ''}"
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}"
+                     th:data-name="${story.name}" th:data-description="${story.description}"
+                     th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
+                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
                      <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">LOW</span>
                     </div>
                     <h6 class="fw-bold text-dark mb-2" th:text="${story.name}">Task Name</h6>
+                    <p class="text-muted small mb-2" style="font-size: 0.85rem;" th:text="${story.description}">Descrição</p>
                      <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
                          <div class="d-flex align-items-center gap-2">
                             <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
                             <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
                         </div>
+                        <span class="badge bg-info text-white rounded-pill" th:text="${story.storyPoints != null ? story.storyPoints + ' pts' : '0 pts'}">3 pts</span>
                     </div>
                 </div>
             </div>
 
-            <div class="kanban-column col-done" ondragover="allowDrop(event)" ondrop="drop(event, 'DONE')" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+            <div class="kanban-column col-done" th:attrappend="ondragover=${sprint.status.name() != 'CONCLUIDO' ? 'allowDrop(event)' : ''}, ondrop=${sprint.status.name() != 'CONCLUIDO' ? 'drop(event, &quot;DONE&quot;)' : ''}, ondragenter=${sprint.status.name() != 'CONCLUIDO' ? 'dragEnter(event)' : ''}, ondragleave=${sprint.status.name() != 'CONCLUIDO' ? 'dragLeave(event)' : ''}">
                 <div class="column-header">
                     <div class="d-flex align-items-center gap-2">
                         <i data-lucide="check-circle-2" class="w-4 h-4 text-success"></i>
@@ -243,18 +284,25 @@
                     <span class="col-count" th:text="${doneCount}">0</span>
                 </div>
                  <div th:each="story : ${sprint.userStories}" th:if="${story.status.name() == 'DONE'}" 
-                     class="story-card" draggable="true" ondragstart="drag(event)" 
-                     th:id="'story-' + ${story.id}" th:data-id="${story.id}">
+                     class="story-card" 
+                     th:attr="draggable=${sprint.status.name() != 'CONCLUIDO' ? 'true' : 'false'}"
+                     th:attrappend="ondragstart=${sprint.status.name() != 'CONCLUIDO' ? 'drag(event)' : ''}, ondblclick=${sprint.status.name() != 'CONCLUIDO' ? 'editStory(this)' : ''}"
+                     th:id="'story-' + ${story.id}" th:data-id="${story.id}"
+                     th:data-name="${story.name}" th:data-description="${story.description}"
+                     th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
+                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
                      <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">HIGH</span>
                     </div>
                     <h6 class="fw-bold text-dark mb-2" style="text-decoration: line-through; opacity: 0.7;" th:text="${story.name}">Task Name</h6>
+                    <p class="text-muted small mb-2" style="font-size: 0.85rem; text-decoration: line-through; opacity: 0.7;" th:text="${story.description}">Descrição</p>
                      <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
                          <div class="d-flex align-items-center gap-2">
                             <div class="assignee-avatar" th:text="${story.assignee != null ? #strings.substring(story.assignee.name,0,1) : '?'}">?</div>
                             <span class="small text-muted" th:text="${story.assignee != null ? story.assignee.name : 'Unassigned'}">Unassigned</span>
                         </div>
+                        <span class="badge bg-success text-white rounded-pill" th:text="${story.storyPoints != null ? story.storyPoints + ' pts' : '0 pts'}">3 pts</span>
                     </div>
                 </div>
             </div>
@@ -262,7 +310,199 @@
         </div>
     </div>
 
+    <!-- Modal Concluir Sprint -->
+    <div class="modal fade" id="completeSprintModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-primary">Concluir Sprint</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja marcar esta sprint como concluída?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Todas as User Stories devem estar em DONE para completar a sprint.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" onclick="confirmCompleteSprint()" data-bs-dismiss="modal">
+                        <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reabrir Sprint -->
+    <div class="modal fade" id="reopenSprintModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-warning">Reabrir Sprint</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja reabrir esta sprint?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">A sprint voltará ao estado EM_CURSO.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold" onclick="confirmReopenSprint()" data-bs-dismiss="modal">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminar Sprint -->
+    <div class="modal fade" id="deleteSprintModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-danger">Eliminar Sprint</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja eliminar esta sprint?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0 text-danger fw-bold">Esta ação não pode ser desfeita. Todas as User Stories desta sprint serão perdidas.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="confirmDeleteSprint()" data-bs-dismiss="modal">
+                        <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Sim, Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para criar User Story -->
+    <div class="modal fade" id="newUserStoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Nova User Story</h4>
+                        <p class="text-muted small mb-0">Adicionar nova tarefa à sprint</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newUserStoryForm">
+                        <input type="hidden" name="sprintId" th:value="${sprint.id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome da User Story</label>
+                            <input type="text" id="storyName" class="form-control bg-light border-0 py-2" placeholder="ex: Implementar sistema de login" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Descrição</label>
+                            <textarea id="storyDescription" class="form-control bg-light border-0" rows="3" placeholder="Descreve o que precisa ser feito..."></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Prioridade</label>
+                                <select id="storyPriority" class="form-select bg-light border-0 py-2" required>
+                                    <option value="LOW">Baixa</option>
+                                    <option value="MEDIUM" selected>Média</option>
+                                    <option value="HIGH">Alta</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Story Points</label>
+                                <input type="number" id="storyPoints" class="form-control bg-light border-0 py-2" min="1" max="21" value="3" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label fw-bold small">Atribuir a</label>
+                            <select id="storyAssignee" class="form-select bg-light border-0 py-2">
+                                <option value="">Não atribuído</option>
+                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}">Membro</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Criar User Story</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar User Story -->
+    <div class="modal fade" id="editUserStoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Editar User Story</h4>
+                        <p class="text-muted small mb-0">Atualizar informações da tarefa</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserStoryForm">
+                        <input type="hidden" id="editStoryId">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome da User Story</label>
+                            <input type="text" id="editStoryName" class="form-control bg-light border-0 py-2" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Descrição</label>
+                            <textarea id="editStoryDescription" class="form-control bg-light border-0" rows="3"></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Prioridade</label>
+                                <select id="editStoryPriority" class="form-select bg-light border-0 py-2" required>
+                                    <option value="LOW">Baixa</option>
+                                    <option value="MEDIUM">Média</option>
+                                    <option value="HIGH">Alta</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Story Points</label>
+                                <input type="number" id="editStoryPoints" class="form-control bg-light border-0 py-2" min="1" max="21" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label fw-bold small">Atribuir a</label>
+                            <select id="editStoryAssignee" class="form-select bg-light border-0 py-2">
+                                <option value="">Não atribuído</option>
+                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}">Membro</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="deleteStory()">Eliminar</button>
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    <script th:inline="javascript">
+        const sprintId = /*[[${sprint.id}]]*/ 0;
+    </script>
     <script>
         lucide.createIcons();
 
@@ -312,15 +552,186 @@
                 }).then(response => {
                     if (response.ok) {
                         console.log("Status updated to " + newStatus);
-                        // Opcional: Atualizar contadores ou barra de progresso via JS sem reload
-                        // Para simplificar, fazemos reload para atualizar tudo (barra, contadores)
+                        // Recarregar para atualizar contadores e progresso
                         location.reload(); 
                     } else {
                         alert("Erro ao mover tarefa.");
-                        location.reload(); // Reverter visualmente
+                        location.reload();
                     }
+                }).catch(error => {
+                    console.error("Error:", error);
+                    alert("Erro ao mover tarefa.");
+                    location.reload();
                 });
             }
+        }
+
+        // Criar User Story
+        document.getElementById('newUserStoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const assigneeId = document.getElementById('storyAssignee').value;
+            
+            const userStory = {
+                name: document.getElementById('storyName').value,
+                description: document.getElementById('storyDescription').value,
+                priority: document.getElementById('storyPriority').value,
+                storyPoints: parseInt(document.getElementById('storyPoints').value),
+                sprint: { id: sprintId },
+                assignee: assigneeId ? { id: parseInt(assigneeId) } : null,
+                status: 'TODO'
+            };
+
+            fetch('/api/stories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userStory)
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao criar User Story');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao criar User Story');
+            });
+        });
+
+        // Editar User Story (duplo clique)
+        function editStory(element) {
+            const storyId = element.getAttribute('data-id');
+            const storyName = element.getAttribute('data-name');
+            const storyDescription = element.getAttribute('data-description');
+            const storyPriority = element.getAttribute('data-priority');
+            const storyPoints = element.getAttribute('data-points');
+            const storyAssignee = element.getAttribute('data-assignee');
+
+            // Preencher o modal
+            document.getElementById('editStoryId').value = storyId;
+            document.getElementById('editStoryName').value = storyName;
+            document.getElementById('editStoryDescription').value = storyDescription || '';
+            document.getElementById('editStoryPriority').value = storyPriority;
+            document.getElementById('editStoryPoints').value = storyPoints;
+            document.getElementById('editStoryAssignee').value = storyAssignee || '';
+
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById('editUserStoryModal'));
+            modal.show();
+        }
+
+        // Guardar alterações da User Story
+        document.getElementById('editUserStoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const storyId = document.getElementById('editStoryId').value;
+            const assigneeId = document.getElementById('editStoryAssignee').value;
+            
+            const userStory = {
+                name: document.getElementById('editStoryName').value,
+                description: document.getElementById('editStoryDescription').value,
+                priority: document.getElementById('editStoryPriority').value,
+                storyPoints: parseInt(document.getElementById('editStoryPoints').value),
+                assignee: assigneeId ? { id: parseInt(assigneeId) } : null
+            };
+
+            fetch(`/api/stories/${storyId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userStory)
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao atualizar User Story');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar User Story');
+            });
+        });
+
+        // Eliminar User Story
+        function deleteStory() {
+            const storyId = document.getElementById('editStoryId').value;
+            
+            if (!confirm('Tem certeza que deseja eliminar esta User Story?')) {
+                return;
+            }
+
+            fetch(`/api/stories/${storyId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao eliminar User Story');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao eliminar User Story');
+            });
+        }
+
+        // Completar Sprint
+        function confirmCompleteSprint() {
+            fetch(`/sprints/${sprintId}/complete`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    return response.json().then(data => {
+                        console.error(data.message || 'Não é possível completar a sprint.');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function confirmReopenSprint() {
+            fetch(`/sprints/${sprintId}/reopen`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    console.error('Erro ao reabrir sprint.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function confirmDeleteSprint() {
+            fetch(`/sprints/${sprintId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.history.back();
+                } else {
+                    console.error('Erro ao eliminar sprint.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
 
         // Ativar Dark Mode se estiver salvo
