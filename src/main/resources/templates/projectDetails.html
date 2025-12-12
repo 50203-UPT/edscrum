@@ -159,6 +159,10 @@
                 </div>
             </div>
         </div>
+        <!-- Hidden inputs with project dates and last sprint end for JS validation -->
+        <input type="hidden" id="projectStartDateHidden" th:value="${project.startDate}" />
+        <input type="hidden" id="projectEndDateHidden" th:value="${project.endDate}" />
+        <input type="hidden" id="lastSprintEndHidden" th:if="${!#lists.isEmpty(project.sprints)}" th:value="${project.sprints[#lists.size(project.sprints) - 1].endDate}" />
 
         <div class="tabs-container shadow-sm rounded-3">
             <button class="tab-btn active" onclick="openTab('sprints', this)">
@@ -265,7 +269,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/sprints/create}" method="POST">
+                    <form id="newSprintForm" th:action="@{/sprints/create}" method="POST">
                         <input type="hidden" name="projectId" th:value="${project.id}">
                         <input type="hidden" name="userId" th:value="${teacher.id}">
 
@@ -282,11 +286,11 @@
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold small">Data Início</label>
-                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                                <input id="sprintStartDate" type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                             <div class="col-6">
                                 <label class="form-label fw-bold small">Data Fim</label>
-                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                                <input id="sprintEndDate" type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                         </div>
 
@@ -459,7 +463,152 @@
             const nextNumber = currentCount + 1;
             const label = document.getElementById('nextSprintLabel');
             if (label) label.textContent = 'SPRINT ' + nextNumber;
+            // When opening the modal, set date constraints based on project and last sprint
+            setSprintDateConstraints();
         }
+
+        // Date helpers (re-usable)
+        function formatDateToYMD(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        function addDaysYMD(ymd, days) {
+            const date = new Date(ymd + 'T00:00:00');
+            date.setDate(date.getDate() + days);
+            return formatDateToYMD(date);
+        }
+
+        function setSprintDateConstraints() {
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            if (!startInput) return;
+
+            // Base constraints
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const minToday = formatDateToYMD(tomorrow);
+
+            const projectStartHidden = document.getElementById('projectStartDateHidden');
+            const projectEndHidden = document.getElementById('projectEndDateHidden');
+            const lastSprintEndHidden = document.getElementById('lastSprintEndHidden');
+
+            const projectStart = projectStartHidden ? projectStartHidden.value : null;
+            const projectEnd = projectEndHidden ? projectEndHidden.value : null;
+            const lastSprintEnd = lastSprintEndHidden ? lastSprintEndHidden.value : null;
+
+            // candidates for start min: tomorrow, projectStart, lastSprintEnd+1
+            const candidates = [minToday];
+            if (projectStart) candidates.push(projectStart);
+            if (lastSprintEnd) candidates.push(addDaysYMD(lastSprintEnd, 1));
+
+            // find latest date string (YYYY-MM-DD) lexicographically
+            let minStart = candidates.reduce((a,b) => a > b ? a : b);
+            startInput.min = minStart;
+
+            // end date max is project end if present
+            if (projectEnd && endInput) {
+                endInput.max = projectEnd;
+            }
+
+            // end date min depends on start value
+            if (endInput) {
+                const startVal = startInput.value || minStart;
+                endInput.min = addDaysYMD(startVal, 1);
+            }
+
+            // If minStart is after project end, set a custom validity so user cannot submit a sprint
+            if (projectEnd && minStart > projectEnd) {
+                startInput.setCustomValidity('Não há espaço para um novo sprint dentro do prazo do projeto.');
+            } else {
+                startInput.setCustomValidity('');
+            }
+
+            // If no value set, default start to minStart to help user
+            if (!startInput.value) startInput.value = minStart;
+            if (endInput && !endInput.value) endInput.value = endInput.min;
+        }
+
+        function updateSprintEndMinFromStart() {
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            if (!startInput || !endInput) return;
+            if (startInput.value) {
+                endInput.min = addDaysYMD(startInput.value, 1);
+                // If end < min, clear it
+                if (endInput.value && endInput.value < endInput.min) endInput.value = endInput.min;
+            }
+            startInput.setCustomValidity('');
+            endInput.setCustomValidity('');
+        }
+
+        // Hook validations on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            const newSprintForm = document.getElementById('newSprintForm');
+
+            if (startInput) startInput.addEventListener('input', updateSprintEndMinFromStart);
+            if (endInput) endInput.addEventListener('input', function() { this.setCustomValidity(''); });
+
+            if (!newSprintForm) return;
+            newSprintForm.addEventListener('submit', function(event) {
+                if (startInput) startInput.setCustomValidity('');
+                if (endInput) endInput.setCustomValidity('');
+
+                const today = new Date(); today.setHours(0,0,0,0);
+                const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+                const minToday = formatDateToYMD(tomorrow);
+
+                const projectStart = document.getElementById('projectStartDateHidden') ? document.getElementById('projectStartDateHidden').value : null;
+                const projectEnd = document.getElementById('projectEndDateHidden') ? document.getElementById('projectEndDateHidden').value : null;
+                const lastSprintEnd = document.getElementById('lastSprintEndHidden') ? document.getElementById('lastSprintEndHidden').value : null;
+
+                const sVal = startInput ? startInput.value : '';
+                const eVal = endInput ? endInput.value : '';
+                let ok = true;
+
+                if (!sVal) {
+                    if (startInput) startInput.setCustomValidity('Introduza a data de início.');
+                    ok = false;
+                } else {
+                    if (sVal < minToday) {
+                        startInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
+                        ok = false;
+                    }
+                    if (projectStart && sVal < projectStart) {
+                        startInput.setCustomValidity('A data de início do sprint não pode ser anterior ao início do projeto.');
+                        ok = false;
+                    }
+                    if (lastSprintEnd && sVal <= lastSprintEnd) {
+                        startInput.setCustomValidity('A data de início deve ser posterior ao fim do último sprint.');
+                        ok = false;
+                    }
+                }
+
+                if (!eVal) {
+                    if (endInput) endInput.setCustomValidity('Introduza a data de fim.');
+                    ok = false;
+                } else {
+                    if (projectEnd && eVal > projectEnd) {
+                        endInput.setCustomValidity('A data de fim do sprint deve ser antes do fim do projeto.');
+                        ok = false;
+                    }
+                    if (sVal && eVal <= sVal) {
+                        endInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
+                        ok = false;
+                    }
+                }
+
+                if (!ok || !newSprintForm.checkValidity()) {
+                    newSprintForm.reportValidity();
+                    event.preventDefault();
+                }
+            });
+        });
 
         function updateOptions() {
         const allSelects = document.querySelectorAll('.member-select');
