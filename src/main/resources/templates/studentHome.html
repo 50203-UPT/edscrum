@@ -698,15 +698,21 @@
                         </div>
                         
                         <hr class="my-4 text-muted opacity-25">
-                        <h6 class="fw-bold small mb-3">Segurança</h6>
+                        <h6 class="fw-bold small mb-3">Segurança (opcional)</h6>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-danger">Password Atual (Obrigatório)</label>
-                            <input type="password" name="currentPassword" class="form-control bg-light border-0 py-2" placeholder="Confirma a tua password para guardar" required>
+                            <label class="form-label fw-bold small">Password Atual</label>
+                            <input type="password" id="currentPassword" name="currentPassword" class="form-control bg-light border-0 py-2" placeholder="Insira a password atual">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small">Nova Password (Opcional)</label>
-                            <input type="password" name="newPassword" class="form-control bg-light border-0 py-2" placeholder="Deixa em branco para manter a atual">
+                            <label class="form-label fw-bold small">Nova Password</label>
+                            <input type="password" id="newPassword" name="newPassword" class="form-control bg-light border-0 py-2" placeholder="Deixa em branco para manter a atual">
+                            <div id="newPasswordError" class="text-danger small mt-1" style="display: none;"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Confirmar nova password</label>
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control bg-light border-0 py-2" placeholder="Confirme a nova password">
+                            <p id="confirmNewPasswordError" class="text-danger small mt-1" style="display: none;"></p>
                         </div>
                         
                         <div class="modal-footer border-0 pt-4 px-0 pb-0">
@@ -821,6 +827,46 @@
     <script>
         let previewImg = null;
         let hasExistingImage = false;
+
+        // Password validation for edit profile form
+        document.addEventListener('DOMContentLoaded', function() {
+            const editProfileForm = document.getElementById('editProfileForm');
+            if (editProfileForm) {
+                editProfileForm.addEventListener('submit', function(event) {
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmNewPassword').value;
+                    const newPasswordError = document.getElementById('newPasswordError');
+                    const confirmPasswordError = document.getElementById('confirmNewPasswordError');
+
+                    let isValid = true;
+
+                    // Reset errors
+                    newPasswordError.style.display = 'none';
+                    confirmPasswordError.style.display = 'none';
+
+                    // Validate new password if provided
+                    if (newPassword) {
+                        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+                        if (!passwordRegex.test(newPassword)) {
+                            newPasswordError.textContent = 'A password deve ter pelo menos 8 caracteres, incluindo maiúscula, minúscula e número.';
+                            newPasswordError.style.display = 'block';
+                            isValid = false;
+                        }
+                    }
+
+                    // Validate confirm password if new password is provided
+                    if (newPassword && confirmPassword !== newPassword) {
+                        confirmPasswordError.textContent = 'As passwords não coincidem.';
+                        confirmPasswordError.style.display = 'block';
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        event.preventDefault();
+                    }
+                });
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             const imageInput = document.getElementById('imageUploadStudent');

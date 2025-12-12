@@ -505,8 +505,9 @@ public class WebController {
             @RequestParam Long teacherId,
             @RequestParam String name,
             @RequestParam String email,
+            @RequestParam(required = false) String currentPassword,
             @RequestParam(required = false) String newPassword,
-            @RequestParam String currentPassword,
+            @RequestParam(required = false) String confirmNewPassword,
             @RequestParam(required = false) MultipartFile imageFile,
             @RequestParam(required = false) String removeImage,
             RedirectAttributes redirectAttributes) {
@@ -514,29 +515,35 @@ public class WebController {
         try {
             User teacher = userService.getUserById(teacherId);
 
-            if (teacher == null || !teacher.getPassword().equals(currentPassword)) {
-                throw new Exception("A password atual está incorreta.");
+            if (teacher != null) {
+                // Only check current password if changing password
+                if (newPassword != null && !newPassword.isEmpty()) {
+                    if (currentPassword == null || !teacher.getPassword().equals(currentPassword)) {
+                        throw new Exception("A password atual está incorreta.");
+                    }
+                    if (confirmNewPassword == null || !newPassword.equals(confirmNewPassword)) {
+                        throw new Exception("Nova password e confirmação não coincidem.");
+                    }
+                    teacher.setPassword(newPassword);
+                }
+
+                teacher.setName(name);
+                teacher.setEmail(email);
+
+                // Se o utilizador marcar para remover a imagem
+                if ("true".equals(removeImage)) {
+                    teacher.setProfileImage(null);
+                } else if (imageFile != null && !imageFile.isEmpty()) {
+                    // Se houver nova imagem, guardar
+                    String fileName = fileStorageService.saveFile(imageFile);
+                    teacher.setProfileImage(fileName);
+                }
+
+                userService.updateUser(teacherId, teacher);
+                redirectAttributes.addFlashAttribute("successMessage", "Perfil atualizado com sucesso!");
+            } else {
+                throw new Exception("Professor não encontrado.");
             }
-
-            teacher.setName(name);
-            teacher.setEmail(email);
-
-            if (newPassword != null && !newPassword.isEmpty()) {
-                teacher.setPassword(newPassword);
-            }
-
-            // Se o utilizador marcar para remover a imagem
-            if ("true".equals(removeImage)) {
-                teacher.setProfileImage(null);
-            } else if (imageFile != null && !imageFile.isEmpty()) {
-                // Se houver nova imagem, guardar
-                String fileName = fileStorageService.saveFile(imageFile);
-                teacher.setProfileImage(fileName);
-            }
-
-            userService.updateUser(teacherId, teacher);
-            redirectAttributes.addFlashAttribute("successMessage", "Perfil atualizado com sucesso!");
-
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar perfil: " + e.getMessage());
         }
@@ -727,8 +734,9 @@ public class WebController {
     public String updateStudentProfile(@RequestParam Long id,
             @RequestParam String name,
             @RequestParam String email,
-            @RequestParam String currentPassword,
+            @RequestParam(required = false) String currentPassword,
             @RequestParam(required = false) String newPassword,
+            @RequestParam(required = false) String confirmNewPassword,
             @RequestParam(required = false) MultipartFile imageFile,
             @RequestParam(required = false) String removeImage,
             RedirectAttributes redirectAttributes) {
@@ -736,13 +744,20 @@ public class WebController {
         try {
             User student = userService.getUserById(id);
 
-            if (student != null && student.getPassword().equals(currentPassword)) {
-                student.setName(name);
-                student.setEmail(email);
-
+            if (student != null) {
+                // Only check current password if changing password
                 if (newPassword != null && !newPassword.isEmpty()) {
+                    if (currentPassword == null || !student.getPassword().equals(currentPassword)) {
+                        throw new Exception("Password atual incorreta.");
+                    }
+                    if (confirmNewPassword == null || !newPassword.equals(confirmNewPassword)) {
+                        throw new Exception("Nova password e confirmação não coincidem.");
+                    }
                     student.setPassword(newPassword);
                 }
+
+                student.setName(name);
+                student.setEmail(email);
 
                 // Se o utilizador marcar para remover a imagem
                 if ("true".equals(removeImage)) {
@@ -756,7 +771,7 @@ public class WebController {
                 userService.updateUser(id, student);
                 redirectAttributes.addFlashAttribute("successMessage", "Perfil atualizado com sucesso!");
             } else {
-                throw new Exception("Password atual incorreta.");
+                throw new Exception("Estudante não encontrado.");
             }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
