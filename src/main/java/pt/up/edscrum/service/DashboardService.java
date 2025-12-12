@@ -14,6 +14,7 @@ import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
 import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO; // Importar Enum
 import pt.up.edscrum.enums.SprintStatus;
+import pt.up.edscrum.model.Award;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Project;
@@ -43,9 +44,15 @@ public class DashboardService {
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
     private final EnrollmentRepository enrollmentRepo;
+<<<<<<< HEAD
     private final SprintService sprintService;
 
     public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, SprintService sprintService) {
+=======
+    private final AwardService awardService;
+
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService) {
+>>>>>>> 8a1e95a786e99e79afaa040cca965c8a32afd549
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
@@ -54,7 +61,11 @@ public class DashboardService {
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
         this.enrollmentRepo = enrollmentRepo;
+<<<<<<< HEAD
         this.sprintService = sprintService;
+=======
+        this.awardService = awardService;
+>>>>>>> 8a1e95a786e99e79afaa040cca965c8a32afd549
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
@@ -121,6 +132,17 @@ public class DashboardService {
         dto.setTotalPoints(myScore);
 
         dto.setEarnedAwards(studentAwardRepo.findFullAwardsForStudent(studentId));
+
+        // Calculate unearned awards
+        List<StudentDashboardDTO.AwardDisplayDTO> earnedAwards = dto.getEarnedAwards();
+        Set<String> earnedAwardNames = earnedAwards.stream().map(a -> a.name).collect(Collectors.toSet());
+        List<Award> allAwards = awardService.getAllAwards();
+        List<StudentDashboardDTO.AwardDisplayDTO> unearnedAwards = allAwards.stream()
+                .filter(award -> !earnedAwardNames.contains(award.getName()))
+                .map(award -> new StudentDashboardDTO.AwardDisplayDTO(award.getName(), award.getPoints(), award.getDescription(), award.getType()))
+                .collect(Collectors.toList());
+        dto.setUnearnedAwards(unearnedAwards);
+
         dto.setPointHistory(scoreRepo.getPointHistory(studentId));
 
         // 2. Separar Cursos

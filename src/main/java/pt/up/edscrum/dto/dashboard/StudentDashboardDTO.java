@@ -40,6 +40,7 @@ public class StudentDashboardDTO {
 
     // Listas de Dados
     private List<AwardDisplayDTO> earnedAwards;
+    private List<AwardDisplayDTO> unearnedAwards;
     private List<PointHistoryDTO> pointHistory;
     private List<RankingDTO> topStudents; // Top 5 para a tabela
 
@@ -230,6 +231,14 @@ public class StudentDashboardDTO {
 
     public void setEarnedAwards(List<AwardDisplayDTO> earnedAwards) {
         this.earnedAwards = earnedAwards;
+    }
+
+    public List<AwardDisplayDTO> getUnearnedAwards() {
+        return unearnedAwards;
+    }
+
+    public void setUnearnedAwards(List<AwardDisplayDTO> unearnedAwards) {
+        this.unearnedAwards = unearnedAwards;
     }
 
     public List<PointHistoryDTO> getPointHistory() {

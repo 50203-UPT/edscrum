@@ -525,6 +525,39 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Prémios que podem ser obtidos -->
+            <div class="mt-4">
+                <h5 class="fw-bold mb-3">Prémios que podem ser obtidos</h5>
+                <div class="row g-3">
+                    <div class="col-md-4" th:each="award : ${student.unearnedAwards}">
+                        <div class="content-card h-100 p-4 border hover-shadow transition" style="opacity: 0.6; filter: grayscale(100%);">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex gap-3">
+                                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #f8f9fa;">
+                                        <i data-lucide="lock" class="text-muted" style="width: 24px; height: 24px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-muted mb-1" th:text="${award.name}">Nome</h5>
+                                        <p class="text-muted small mb-0" th:text="${award.description}">Desc</p>
+                                    </div>
+                                </div>
+                                <span class="badge bg-light text-muted border fw-bold" th:text="${award.type}">Manual</span>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top border-light">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-muted border fw-bold px-3 py-1 rounded-pill" th:text="'+' + ${award.points} + ' pontos'">+150 pontos</span>
+                                </div>
+                                <small class="text-muted fst-italic">Não desbloqueado</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(student.unearnedAwards)}" class="col-12 text-center text-muted py-2">
+                        Nenhum prémio disponível no momento.
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div id="projects" class="tab-content">
