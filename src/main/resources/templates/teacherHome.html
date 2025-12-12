@@ -422,7 +422,32 @@
                                 <small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small>
                             </div>
                             
-                            <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <!-- New buttons for awarding -->
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#assignAwardToTeamModal"
+                                        th:data-team-id="${team.id}"
+                                        th:data-team-name="${team.name}"
+                                        onclick="prepareAssignAwardToTeamModal(this)"
+                                        title="Atribuir Prémio à Equipa">
+                                    <i data-lucide="award" class="w-4 h-4 inline me-1"></i> Equipa
+                                </button>
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#assignAwardToStudentInTeamModal"
+                                        th:data-team-id="${team.id}"
+                                        th:data-team-name="${team.name}"
+                                        th:data-sm-id="${team.scrumMaster != null ? team.scrumMaster.id : ''}"
+                                        th:data-sm-name="${team.scrumMaster != null ? team.scrumMaster.name : ''}"
+                                        th:data-po-id="${team.productOwner != null ? team.productOwner.id : ''}"
+                                        th:data-po-name="${team.productOwner != null ? team.productOwner.name : ''}"
+                                        th:data-devs="${team.developers.![id + ':' + name]}"
+                                        onclick="prepareAssignAwardToStudentInTeamModal(this)"
+                                        title="Atribuir Prémio a Aluno da Equipa">
+                                    <i data-lucide="user-plus" class="w-4 h-4 inline me-1"></i> Aluno
+                                </button>
+
                                 <button class="btn-delete-team shadow-sm"
                                    data-bs-toggle="modal" 
                                    data-bs-target="#deleteTeamModal"
@@ -494,9 +519,9 @@
                     <h3 class="fw-bold mb-1">Rankings e Estatísticas</h3>
                     <p class="text-muted mb-0">Visualize o desempenho dos estudantes e equipas</p>
                 </div>
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                <a th:href="@{'/export/rankings/csv/' + ${teacher.id}}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
                     <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
-                </button>
+                </a>
             </div>
 
             <div class="row g-3 mb-4">
@@ -1652,6 +1677,142 @@
                 }, 3000);
             }
         });
+    </script>
+
+    <!-- Modal para Atribuir Prémio à Equipa -->
+    <div class="modal fade" id="assignAwardToTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Atribuir Prémio à Equipa</h4>
+                        <p class="text-muted small mb-0">Selecione um prémio para a equipa <span class="fw-bold" id="assignAwardToTeamName"></span>.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/action/assign-award-to-team}" method="POST">
+                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                        <input type="hidden" name="teamId" id="assignAwardToTeamId">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Prémio</label>
+                            <select name="awardId" class="form-select bg-light border-0 py-2" required>
+                                <option value="">Selecione um prémio...</option>
+                                <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                            </select>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Atribuir Prémio a Aluno da Equipa -->
+    <div class="modal fade" id="assignAwardToStudentInTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Atribuir Prémio a Aluno da Equipa</h4>
+                        <p class="text-muted small mb-0">Selecione um aluno da equipa <span class="fw-bold" id="assignAwardToStudentInTeamName"></span> e um prémio.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/action/assign-award-to-student-in-team}" method="POST">
+                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                        <input type="hidden" name="teamId" id="assignAwardToStudentInTeamTeamId">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Aluno</label>
+                            <select name="studentId" id="assignAwardToStudentInTeamStudentSelect" class="form-select bg-light border-0 py-2" required>
+                                <option value="">Selecione um aluno...</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Prémio</label>
+                            <select name="awardId" class="form-select bg-light border-0 py-2" required>
+                                <option value="">Selecione um prémio...</option>
+                                <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                            </select>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // ... (existing JavaScript code) ...
+
+        function prepareAssignAwardToTeamModal(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const teamName = button.getAttribute('data-team-name');
+
+            document.getElementById('assignAwardToTeamId').value = teamId;
+            document.getElementById('assignAwardToTeamName').textContent = teamName;
+        }
+
+        function prepareAssignAwardToStudentInTeamModal(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const teamName = button.getAttribute('data-team-name');
+            const smId = button.getAttribute('data-sm-id');
+            const smName = button.getAttribute('data-sm-name');
+            const poId = button.getAttribute('data-po-id');
+            const poName = button.getAttribute('data-po-name');
+            const devsRaw = button.getAttribute('data-devs'); // Format: "id:name,id:name"
+
+            document.getElementById('assignAwardToStudentInTeamTeamId').value = teamId;
+            document.getElementById('assignAwardToStudentInTeamName').textContent = teamName;
+
+            const studentSelect = document.getElementById('assignAwardToStudentInTeamStudentSelect');
+            studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>'; // Clear previous options
+
+            // Add Scrum Master
+            if (smId && smName) {
+                const option = document.createElement('option');
+                option.value = smId;
+                option.textContent = smName + ' (Scrum Master)';
+                studentSelect.appendChild(option);
+            }
+
+            // Add Product Owner
+            if (poId && poName) {
+                const option = document.createElement('option');
+                option.value = poId;
+                option.textContent = poName + ' (Product Owner)';
+                studentSelect.appendChild(option);
+            }
+
+            // Add Developers
+            if (devsRaw) {
+                const devs = devsRaw.split(',').filter(s => s.trim() !== '');
+                devs.forEach(dev => {
+                    const parts = dev.split(':');
+                    if (parts.length === 2) {
+                        const devId = parts[0];
+                        const devName = parts[1];
+                        const option = document.createElement('option');
+                        option.value = devId;
+                        option.textContent = devName + ' (Developer)';
+                        studentSelect.appendChild(option);
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html>

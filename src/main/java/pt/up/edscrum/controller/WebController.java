@@ -1,8 +1,13 @@
 package pt.up.edscrum.controller;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional; // For Optional<User> from userService.getUserByEmail
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -582,6 +587,36 @@ public class WebController {
             System.err.println("Erro: " + e.getMessage());
         }
         return "redirect:/view/teacher/course/" + courseId;
+    }
+
+    // NOVO: Atribuir prémio a uma equipa
+    @PostMapping("/action/assign-award-to-team")
+    public String assignAwardToTeamAction(@RequestParam Long teamId,
+                                          @RequestParam Long awardId,
+                                          @RequestParam Long teacherId, // Para redirecionamento
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            awardService.assignAwardToTeam(awardId, teamId);
+            redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído à equipa com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio à equipa: " + e.getMessage());
+        }
+        return "redirect:/view/teacher/home/" + teacherId;
+    }
+
+    // NOVO: Atribuir prémio a um aluno específico de uma equipa
+    @PostMapping("/action/assign-award-to-student-in-team")
+    public String assignAwardToStudentInTeamAction(@RequestParam Long studentId,
+                                                   @RequestParam Long awardId,
+                                                   @RequestParam Long teacherId, // Para redirecionamento
+                                                   RedirectAttributes redirectAttributes) {
+        try {
+            awardService.assignAwardToStudent(awardId, studentId); // Reutiliza o método existente
+            redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído ao aluno com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio ao aluno: " + e.getMessage());
+        }
+        return "redirect:/view/teacher/home/" + teacherId;
     }
 
     // Método Atualizado: Agora recebe userId para carregar a Navbar correta
