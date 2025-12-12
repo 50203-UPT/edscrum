@@ -106,6 +106,7 @@ public class DashboardService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setProfileImage(user.getProfileImage());
+        dto.setStudentTag(user.getStudentTag());
 
         // CORREÇÃO: Preencher campos do modal para evitar erro no Thymeleaf
         dto.setNotificationAwards(user.isNotificationAwards());

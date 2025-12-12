@@ -19,6 +19,7 @@ public class User {
     private String email;
     private String password;
     private String role; // TEACHER ou STUDENT
+   
 
     // Novas colunas para configurações
     private boolean notificationAwards = true;
@@ -109,6 +110,13 @@ public class User {
 
     public void setResetCodeExpiry(LocalDateTime resetCodeExpiry) {
         this.resetCodeExpiry = resetCodeExpiry;
+    }
+
+   public String getStudentTag() {
+        if (this.id != null) {
+            return this.id + "-UPT";
+        }
+        return "Novo"; // Mostra "Novo" enquanto o ID ainda não foi gerado
     }
 
     @Override

@@ -324,10 +324,30 @@
                                 <input type="hidden" name="courseId" th:value="${project.courseId}">
                                 <input type="hidden" name="teacherId" th:value="${teacher.id}">
                                 <div class="mb-3"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0" required></div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6"><label class="form-label small">SM</label><select name="scrumMasterId" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Escolher...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
-                                    <div class="col-6"><label class="form-label small">PO</label><select name="productOwnerId" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Escolher...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
+                             <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Product Owner</label>
+                                    <select name="productOwnerId" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
+                                        <option value="">Escolher...</option>
+                                        <option th:each="s : ${students}" 
+                                                th:value="${s.id}" 
+                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
+                                        </option>
+                                    </select>
                                 </div>
+
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Scrum Master</label>
+                                    <select name="scrumMasterId" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
+                                        <option value="">Escolher...</option>
+                                        <option th:each="s : ${students}" 
+                                                th:if="${s.role == 'STUDENT'}"
+                                                th:value="${s.id}" 
+                                                th:text="${s.studentTag} + ' - ' + ${s.name}">
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
                                 <div class="mb-3"><label class="form-label small d-flex justify-content-between">Developers <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperFieldProject()">+ Adicionar</button></label>
                                     <div id="developers-container-project"><div class="input-group mb-2 developer-row"><select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()"><option value="">Selecionar Developer...</option><option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select></div></div>
                                 </div>

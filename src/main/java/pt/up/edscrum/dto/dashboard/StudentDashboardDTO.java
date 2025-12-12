@@ -13,6 +13,7 @@ public class StudentDashboardDTO {
     private String profileImage;
     private boolean notificationAwards;
     private boolean notificationRankings;
+    private String studentTag;
 
     // Dados do Curso Principal (onde o aluno está inscrito)
     private Long courseId;
@@ -149,9 +150,22 @@ public class StudentDashboardDTO {
     public boolean isNotificationAwards() { return notificationAwards; }
     public void setNotificationAwards(boolean notificationAwards) { this.notificationAwards = notificationAwards; }
 
-    public boolean isNotificationRankings() { return notificationRankings; }
-    public void setNotificationRankings(boolean notificationRankings) { this.notificationRankings = notificationRankings; }
+    public boolean isNotificationRankings() {
+         return notificationRankings; 
+    }
 
+    public void setNotificationRankings(boolean notificationRankings) {
+         this.notificationRankings = notificationRankings; 
+    }
+
+    public String getStudentTag() {
+        return studentTag;
+    }
+
+    public void setStudentTag(String studentTag) {
+        this.studentTag = studentTag;
+    }
+    
     // Getters/Setters Estatísticas
     public int getCurrentRank() {
         return currentRank;

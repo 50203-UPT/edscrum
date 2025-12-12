@@ -13,48 +13,56 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    // Construtor manual (injeção de dependência)
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    // Listar todos os usuários
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // Listar apenas estudantes
     public List<User> getAllStudents() {
         return userRepository.findByRole("STUDENT");
     }
 
-    // Buscar usuário por ID
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User não encontrado"));
     }
 
-    // Buscar usuário por Email
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    // Criar novo usuário
+    // --- ATUALIZADO: Criação simples, o ID é gerado ao salvar ---
     public User createUser(User user) {
+        // Não é necessária lógica extra. O 'getStudentTag()' na classe User
+        // usará automaticamente o ID assim que o utilizador for guardado.
         return userRepository.save(user);
     }
 
-    // Atualizar usuário existente
     public User updateUser(Long id, User userDetails) {
         User user = getUserById(id);
+
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
-        user.setPassword(userDetails.getPassword());
+        
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(userDetails.getPassword());
+        }
+        
         user.setRole(userDetails.getRole());
+
+        user.setNotificationAwards(userDetails.isNotificationAwards());
+        user.setNotificationRankings(userDetails.isNotificationRankings());
+        
+        if (userDetails.getProfileImage() != null) {
+            user.setProfileImage(userDetails.getProfileImage());
+        }
+
         return userRepository.save(user);
     }
 
-    // Apagar usuário
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
