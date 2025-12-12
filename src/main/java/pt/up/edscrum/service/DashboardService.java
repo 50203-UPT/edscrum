@@ -175,6 +175,38 @@ public class DashboardService {
         return dto;
     }
 
+    // ===================== NOVO MÉTODO: INSCRIÇÃO COM CÓDIGO =====================
+    @Transactional
+    public void enrollStudentInCourse(Long studentId, Long courseId, String accessCode) {
+        // 1. Buscar o Curso
+        Course course = courseRepo.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Curso não encontrado."));
+
+        // 2. VERIFICAÇÃO DO CÓDIGO (SEGURANÇA)
+        // Se o curso tiver código definido, o input tem de ser igual.
+        if (course.getCode() != null && !course.getCode().trim().isEmpty()) {
+            if (accessCode == null || !course.getCode().equals(accessCode.trim())) {
+                throw new IllegalArgumentException("O código de acesso está incorreto.");
+            }
+        }
+
+        // 3. Buscar o Aluno
+        User student = userRepo.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado."));
+
+        // 4. Verificar se já está inscrito (Defesa extra)
+        // Nota: Certifica-te que atualizaste o EnrollmentRepository como pedido no Passo 1
+        if (enrollmentRepo.existsByStudentIdAndCourseId(studentId, courseId)) {
+            throw new IllegalArgumentException("Já estás inscrito neste curso.");
+        }
+
+        // 5. Criar e Salvar Inscrição
+        Enrollment enrollment = new Enrollment();
+        enrollment.setCourse(course);
+        enrollment.setStudent(student);
+        enrollmentRepo.save(enrollment);
+    }
+
     @Transactional(readOnly = true)
     public ProjectDetailsDTO getProjectDetails(Long projectId) {
         Project project = projectRepo.findById(projectId)

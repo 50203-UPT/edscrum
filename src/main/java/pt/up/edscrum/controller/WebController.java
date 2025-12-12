@@ -780,17 +780,27 @@ public class WebController {
         return "redirect:/view/student/home/" + id;
     }
 
-    @PostMapping("/api/student/enroll")
-    public String enrollStudent(@RequestParam Long studentId,
+   @PostMapping("/api/student/enroll")
+    public String enrollStudent(
+            @RequestParam Long studentId,
             @RequestParam Long courseId,
+            @RequestParam(required = false) String accessCode,
             RedirectAttributes redirectAttributes) {
+        
         try {
-            courseService.enrollStudent(courseId, studentId);
-            redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso!");
+            // Chama o serviço do Dashboard (onde pusemos a lógica)
+            dashboardService.enrollStudentInCourse(studentId, courseId, accessCode);
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso! Bem-vindo ao curso.");
+        } catch (IllegalArgumentException e) {
+            // Erros de código errado ou curso não encontrado
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao inscrever: " + e.getMessage());
+            // Outros erros genéricos
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao inscrever: " + e.getMessage());
         }
-        return "redirect:/view/student/home/" + studentId;
+        
+        return "redirect:/view/student/home/" + studentId + "?tab=all-courses";
     }
 
     @GetMapping("/view/rankings/{courseId}")
