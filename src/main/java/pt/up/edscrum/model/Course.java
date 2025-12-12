@@ -19,12 +19,15 @@ public class Course {
     private Long id;
 
     private String name;
-    private String code;        // Novo: Código (ex: "QS-2025")
+    
+    private String tag;         // NOVO: Identificador Visual (ex: "#QS")
+    
+    private String code;        // Senha de Acesso (Privada)
+    
     private String description;
-    private Integer semester;   // Novo: 1 ou 2
-    private Integer year;       // Novo: Ano (ex: 2025)
+    private Integer semester;
+    private Integer year;
 
-    // NOVO: Associação ao Professor
     @ManyToOne
     @JoinColumn(name = "teacher_id")
     private User teacher;
@@ -35,88 +38,40 @@ public class Course {
     @OneToMany(mappedBy = "course")
     private List<Enrollment> enrollments;
 
-    // Adiciona esta relação para sabermos as equipas do curso
     @OneToMany(mappedBy = "course")
     private List<Team> teams;
 
     // Getters e Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getTag() { return tag; } 
+    public void setTag(String tag) { this.tag = tag; } 
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    public String getCode() {
-        return code;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    public Integer getSemester() { return semester; }
+    public void setSemester(Integer semester) { this.semester = semester; }
 
-    public String getDescription() {
-        return description;
-    }
+    public Integer getYear() { return year; }
+    public void setYear(Integer year) { this.year = year; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public List<Project> getProjects() { return projects; }
+    public void setProjects(List<Project> projects) { this.projects = projects; }
 
-    public Integer getSemester() {
-        return semester;
-    }
+    public List<Enrollment> getEnrollments() { return enrollments; }
+    public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
 
-    public void setSemester(Integer semester) {
-        this.semester = semester;
-    }
+    public User getTeacher() { return teacher; }
+    public void setTeacher(User teacher) { this.teacher = teacher; }
 
-    public Integer getYear() {
-        return year;
-    }
-
-    public void setYear(Integer year) {
-        this.year = year;
-    }
-
-    public List<Project> getProjects() {
-        return projects;
-    }
-
-    public void setProjects(List<Project> projects) {
-        this.projects = projects;
-    }
-
-    public List<Enrollment> getEnrollments() {
-        return enrollments;
-    }
-
-    public void setEnrollments(List<Enrollment> enrollments) {
-        this.enrollments = enrollments;
-    }
-
-    public User getTeacher() {
-        return teacher;
-    }
-
-    public void setTeacher(User teacher) {
-        this.teacher = teacher;
-    }
-
-    public List<Team> getTeams() {
-        return teams;
-    }
-
-    public void setTeams(List<Team> teams) {
-        this.teams = teams;
-    }
+    public List<Team> getTeams() { return teams; }
+    public void setTeams(List<Team> teams) { this.teams = teams; }
 }

@@ -344,10 +344,10 @@
             <div th:each="course : ${courses}" class="course-card-detailed">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <h5 class="fw-bold text-dark mb-0" style="font-size: 1.1rem;" th:text="${course.name}">Nome</h5>
-                            <span class="badge badge-purple rounded-pill" th:text="${course.code}">CODE</span>
-                        </div>
+                       <div class="d-flex align-items-center gap-2 mb-1">
+                         <h5 class="fw-bold text-dark mb-0" style="font-size: 1.1rem;" th:text="${course.name}">Nome</h5>
+                        <span class="badge badge-purple rounded-pill" th:text="${course.tag}">TAG</span>
+                    </div>
                         <p class="text-muted small mb-2" th:text="${course.description}">Descrição</p>
                         <div class="d-flex gap-3 text-muted small">
                             <span class="d-flex align-items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> <span th:text="${#lists.size(course.teams)} + ' equipas'">0 equipas</span></span>
@@ -609,21 +609,62 @@
     </div>
 
     <div class="modal fade" id="newCourseModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Criar Novo Curso</h4><p class="text-muted small mb-0">Adicione um novo curso.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form th:action="@{/courses/create}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
-                        <div class="row g-3 mb-3"><div class="col-md-8"><label class="form-label fw-bold small">Nome</label><input type="text" name="name" class="form-control bg-light border-0 py-2" required></div><div class="col-md-4"><label class="form-label fw-bold small">Código</label><input type="text" name="code" class="form-control bg-light border-0 py-2" required></div></div>
-                        <div class="mb-3"><label class="form-label fw-bold small">Descrição</label><textarea name="description" class="form-control bg-light border-0" rows="3"></textarea></div>
-                        <div class="row g-3"><div class="col-md-6"><label class="form-label fw-bold small">Semestre</label><select name="semester" class="form-select bg-light border-0 py-2" required><option value="1">1º</option><option value="2">2º</option></select></div><div class="col-md-6"><label class="form-label fw-bold small">Ano</label><input type="number" name="year" class="form-control bg-light border-0 py-2" value="2025" required></div></div>
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0"><button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Curso</button></div>
-                    </form>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Criar Novo Curso</h4>
+                    <p class="text-muted small mb-0">Adicione um novo curso.</p>
                 </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/courses/create}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Nome</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="Ex: Qualidade de Software" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">Tag</label>
+                            <input type="text" name="tag" class="form-control bg-light border-0 py-2" placeholder="Ex: QS-25" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-primary">Código (Senha)</label>
+                            <input type="text" name="code" class="form-control bg-light border-0 py-2" placeholder="Senha acesso" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descrição</label>
+                        <textarea name="description" class="form-control bg-light border-0" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Semestre</label>
+                            <select name="semester" class="form-select bg-light border-0 py-2" required>
+                                <option value="1">1º</option>
+                                <option value="2">2º</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Ano</label>
+                            <input type="number" name="year" class="form-control bg-light border-0 py-2" value="2025" required>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Curso</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
     <div class="modal fade" id="newTeamModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
