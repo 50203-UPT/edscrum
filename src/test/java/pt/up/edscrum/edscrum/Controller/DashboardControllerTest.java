@@ -9,7 +9,6 @@ import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Score;
-import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
@@ -40,7 +39,7 @@ public class DashboardControllerTest {
 
     @Autowired
     private ScoreRepository scoreRepository;
-    
+
     @Autowired
     private TeamRepository teamRepository;
 

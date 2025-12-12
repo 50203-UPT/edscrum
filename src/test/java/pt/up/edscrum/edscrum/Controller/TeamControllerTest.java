@@ -12,8 +12,6 @@ import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -127,7 +125,7 @@ class TeamControllerTest {
         teamRepository.delete(team);
 
         // Assert
-         }
+    }
 
     @Test
     void testGetTeamById_WhenNotExists() {

@@ -260,380 +260,380 @@
 </head>
 <body class="teacher-bg">
 
-    <nav class="navbar-teacher d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top" style="z-index: 1000;">
-        <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white p-2 rounded-3 shadow-sm">
-                <i data-lucide="user-cog" style="width: 24px; height: 24px;"></i>
-            </div>
-            <div>
-                <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5>
-                <small class="text-muted">Área do Professor</small>
-            </div>
+<nav class="navbar-teacher d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top" style="z-index: 1000;">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-primary text-white p-2 rounded-3 shadow-sm">
+            <i data-lucide="user-cog" style="width: 24px; height: 24px;"></i>
         </div>
+        <div>
+            <h5 class="mb-0 fw-bold" style="color: #2c3e50;">EduScrum</h5>
+            <small class="text-muted">Área do Professor</small>
+        </div>
+    </div>
 
-        <div class="d-flex align-items-center gap-4">
-            <div id="notificationBellContainer" class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light" onclick="toggleNotificationSidebar()">
-                <i id="notificationBellIcon" data-lucide="bell" class="text-secondary"></i>
-                <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
-            </div>
-            <div class="vr text-muted opacity-25" style="height: 30px;"></div>
-            <div class="dropdown">
-                <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="text-end d-none d-md-block">
-                        <div class="profile-name fw-bold text-dark" th:text="${teacher.name}">Prof. Maria Silva</div>
-                        <div class="profile-email small text-muted" th:text="${teacher.email}">maria@upt.pt</div>
-                    </div>
-                    <img th:if="${teacher.profileImage != null}" th:src="@{'/uploads/profile-images/' + ${teacher.profileImage}}" class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
-                    <div th:unless="${teacher.profileImage != null}" class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; font-size: 1.2rem;" th:text="${#strings.substring(teacher.name,0,1)}">M</div>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
-                    <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
-                    <li>
-                        <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
-                            <i data-lucide="settings" class="w-4 h-4 inline me-2 opacity-50"></i> Configurações
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider my-2"></li>
-                    <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i data-lucide="log-out" class="w-4 h-4 inline me-2 opacity-50"></i> Sair</a></li>
-                </ul>
-            </div>
+    <div class="d-flex align-items-center gap-4">
+        <div id="notificationBellContainer" class="position-relative cursor-pointer p-2 rounded-circle hover-bg-light" onclick="toggleNotificationSidebar()">
+            <i id="notificationBellIcon" data-lucide="bell" class="text-secondary"></i>
+            <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
         </div>
-    </nav>
-
-    <!-- Notification Sidebar -->
-    <div id="notificationSidebar" class="notification-sidebar">
-        <div class="notification-sidebar-header">
-            <h5 class="fw-bold mb-0" onclick="toggleNotificationSidebar()">Notificações</h5>
-            <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
-        </div>
-        <div class="notification-sidebar-body">
-            <div id="notificationsContainer">
-                <!-- Notification items will be loaded here -->
-                <div class="text-center text-muted mt-4" id="noNotifications" style="display: none;">
-                    <i data-lucide="bell-off" class="w-8 h-8 mb-2"></i>
-                    <p>Nenhuma notificação nova.</p>
+        <div class="vr text-muted opacity-25" style="height: 30px;"></div>
+        <div class="dropdown">
+            <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="text-end d-none d-md-block">
+                    <div class="profile-name fw-bold text-dark" th:text="${teacher.name}">Prof. Maria Silva</div>
+                    <div class="profile-email small text-muted" th:text="${teacher.email}">maria@upt.pt</div>
                 </div>
+                <img th:if="${teacher.profileImage != null}" th:src="@{'/uploads/profile-images/' + ${teacher.profileImage}}" class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
+                <div th:unless="${teacher.profileImage != null}" class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 42px; height: 42px; font-size: 1.2rem;" th:text="${#strings.substring(teacher.name,0,1)}">M</div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
+                <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i data-lucide="user" class="w-4 h-4 inline me-2 opacity-50"></i> Editar Perfil</a></li>
+                <li>
+                    <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                        <i data-lucide="settings" class="w-4 h-4 inline me-2 opacity-50"></i> Configurações
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider my-2"></li>
+                <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i data-lucide="log-out" class="w-4 h-4 inline me-2 opacity-50"></i> Sair</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Notification Sidebar -->
+<div id="notificationSidebar" class="notification-sidebar">
+    <div class="notification-sidebar-header">
+        <h5 class="fw-bold mb-0" onclick="toggleNotificationSidebar()">Notificações</h5>
+        <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
+    </div>
+    <div class="notification-sidebar-body">
+        <div id="notificationsContainer">
+            <!-- Notification items will be loaded here -->
+            <div class="text-center text-muted mt-4" id="noNotifications" style="display: none;">
+                <i data-lucide="bell-off" class="w-8 h-8 mb-2"></i>
+                <p>Nenhuma notificação nova.</p>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="container mt-3" style="max-width: 1200px;">
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #d1e7dd; color: #0f5132;">
-            <i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span th:text="${successMessage}">Sucesso!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #f8d7da; color: #842029;">
-            <i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i><span th:text="${errorMessage}">Erro!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+<div class="container mt-3" style="max-width: 1200px;">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #d1e7dd; color: #0f5132;">
+        <i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span th:text="${successMessage}">Sucesso!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-
-    <div class="tabs-container shadow-sm">
-        <button class="tab-btn active" onclick="openTab('courses', this)"><i data-lucide="book-open" class="inline-block w-4 h-4 me-2"></i>Cursos</button>
-        <button class="tab-btn" onclick="openTab('teams', this)"><i data-lucide="users" class="inline-block w-4 h-4 me-2"></i>Equipas</button>
-        <button class="tab-btn" onclick="openTab('awards', this)"><i data-lucide="award" class="inline-block w-4 h-4 me-2"></i>Prémios</button>
-        <button class="tab-btn" onclick="openTab('rankings', this)"><i data-lucide="bar-chart-2" class="inline-block w-4 h-4 me-2"></i>Rankings</button>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #f8d7da; color: #842029;">
+        <i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i><span th:text="${errorMessage}">Erro!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+</div>
 
-    <div class="container pb-5" style="max-width: 1200px;">
+<div class="tabs-container shadow-sm">
+    <button class="tab-btn active" onclick="openTab('courses', this)"><i data-lucide="book-open" class="inline-block w-4 h-4 me-2"></i>Cursos</button>
+    <button class="tab-btn" onclick="openTab('teams', this)"><i data-lucide="users" class="inline-block w-4 h-4 me-2"></i>Equipas</button>
+    <button class="tab-btn" onclick="openTab('awards', this)"><i data-lucide="award" class="inline-block w-4 h-4 me-2"></i>Prémios</button>
+    <button class="tab-btn" onclick="openTab('rankings', this)"><i data-lucide="bar-chart-2" class="inline-block w-4 h-4 me-2"></i>Rankings</button>
+</div>
 
-        <div id="courses" class="tab-content active">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div><h3 class="fw-bold mb-1">Cursos e Projetos</h3><p class="text-muted">Gerir cursos e acompanhar projetos Scrum</p></div>
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newCourseModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Novo Curso</button>
-            </div>
+<div class="container pb-5" style="max-width: 1200px;">
 
-            <div th:each="course : ${courses}" class="course-card-detailed">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                       <div class="d-flex align-items-center gap-2 mb-1">
-                         <h5 class="fw-bold text-dark mb-0" style="font-size: 1.1rem;" th:text="${course.name}">Nome</h5>
+    <div id="courses" class="tab-content active">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div><h3 class="fw-bold mb-1">Cursos e Projetos</h3><p class="text-muted">Gerir cursos e acompanhar projetos Scrum</p></div>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newCourseModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Novo Curso</button>
+        </div>
+
+        <div th:each="course : ${courses}" class="course-card-detailed">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.1rem;" th:text="${course.name}">Nome</h5>
                         <span class="badge badge-purple rounded-pill" th:text="${course.tag}">TAG</span>
                     </div>
-                        <p class="text-muted small mb-2" th:text="${course.description}">Descrição</p>
-                        <div class="d-flex gap-3 text-muted small">
-                            <span class="d-flex align-items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> <span th:text="${#lists.size(course.teams)} + ' equipas'">0 equipas</span></span>
-                            <span class="d-flex align-items-center gap-1"><i data-lucide="folder-kanban" class="w-4 h-4"></i> <span th:text="${#lists.size(course.projects)} + ' projetos'">0 projetos</span></span>
+                    <p class="text-muted small mb-2" th:text="${course.description}">Descrição</p>
+                    <div class="d-flex gap-3 text-muted small">
+                        <span class="d-flex align-items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> <span th:text="${#lists.size(course.teams)} + ' equipas'">0 equipas</span></span>
+                        <span class="d-flex align-items-center gap-1"><i data-lucide="folder-kanban" class="w-4 h-4"></i> <span th:text="${#lists.size(course.projects)} + ' projetos'">0 projetos</span></span>
+                    </div>
+                </div>
+                <span class="badge badge-blue-sem rounded-pill"><span th:text="${course.semester} + 'º Semestre'">Sem</span> - <span th:text="${course.year}">Ano</span></span>
+            </div>
+
+            <div class="mt-4 pt-3 border-top border-light">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-muted small fw-bold mb-0">Projetos Ativos</h6>
+                    <button class="btn-new-project d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newProjectModal" th:data-course-id="${course.id}" onclick="prepareProjectModal(this)">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo Projeto
+                    </button>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <div th:each="project : ${course.projects}" class="project-list-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle" style="width: 8px; height: 8px;" th:classappend="${project.sprints != null and #lists.size(project.sprints) > 0} ? 'bg-primary' : 'bg-success'"></div>
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;" th:text="${project.name}">Nome</h6>
+                                    <small class="text-muted">
+                                        <span th:if="${project.teams != null and not #lists.isEmpty(project.teams)}" th:text="${project.teams[0].name}">Team</span>
+                                        <span th:if="${project.teams == null or #lists.isEmpty(project.teams)}">Sem Equipa</span> • <span th:text="${project.sprints != null ? #lists.size(project.sprints) : 0} + ' sprints'">0 sprints</span>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="text-end">
+                                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">Score: 0%</div>
+                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
+                                </div>
+
+                                <a th:href="@{'/view/project/' + ${project.id} + '/user/' + ${teacher.id}}"
+                                   class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                                   style="width: 32px; height: 32px;">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <span class="badge badge-blue-sem rounded-pill"><span th:text="${course.semester} + 'º Semestre'">Sem</span> - <span th:text="${course.year}">Ano</span></span>
-                </div>
-
-                <div class="mt-4 pt-3 border-top border-light">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="text-muted small fw-bold mb-0">Projetos Ativos</h6>
-                        <button class="btn-new-project d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newProjectModal" th:data-course-id="${course.id}" onclick="prepareProjectModal(this)">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Novo Projeto
-                        </button>
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                        <div th:each="project : ${course.projects}" class="project-list-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="rounded-circle" style="width: 8px; height: 8px;" th:classappend="${project.sprints != null and #lists.size(project.sprints) > 0} ? 'bg-primary' : 'bg-success'"></div>
-                                    <div>
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;" th:text="${project.name}">Nome</h6>
-                                        <small class="text-muted">
-                                            <span th:if="${project.teams != null and not #lists.isEmpty(project.teams)}" th:text="${project.teams[0].name}">Team</span>
-                                            <span th:if="${project.teams == null or #lists.isEmpty(project.teams)}">Sem Equipa</span> • <span th:text="${project.sprints != null ? #lists.size(project.sprints) : 0} + ' sprints'">0 sprints</span>
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center gap-4">
-                                    <div class="text-end">
-                                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">Score: 0%</div>
-                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
-                                        </div>
-    
-                                        <a th:href="@{'/view/project/' + ${project.id} + '/user/' + ${teacher.id}}" 
-                                            class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px;">
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        <div th:if="${#lists.isEmpty(course.projects)}" class="text-center py-3 border border-dashed rounded bg-light"><small class="text-muted">Nenhum projeto criado.</small></div>
-                    </div>
+                    <div th:if="${#lists.isEmpty(course.projects)}" class="text-center py-3 border border-dashed rounded bg-light"><small class="text-muted">Nenhum projeto criado.</small></div>
                 </div>
             </div>
-            <div th:if="${#lists.isEmpty(courses)}" class="alert alert-info">Ainda não criou nenhum curso.</div>
+        </div>
+        <div th:if="${#lists.isEmpty(courses)}" class="alert alert-info">Ainda não criou nenhum curso.</div>
+    </div>
+
+    <div id="teams" class="tab-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Equipas Scrum</h3>
+                <p class="text-muted">Visão geral de todas as equipas</p>
+            </div>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTeamModal">
+                <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Equipa
+            </button>
         </div>
 
-        <div id="teams" class="tab-content">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h3 class="fw-bold mb-1">Equipas Scrum</h3>
-                    <p class="text-muted">Visão geral de todas as equipas</p>
-                </div>
-                <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTeamModal">
-                    <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Equipa
-                </button>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-6" th:each="team : ${teams}">
-                    <div class="content-card h-100 position-relative">
-                        
-                        <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
-                            <div>
-                                <h5 class="fw-bold mb-0 text-dark">
-                                    <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
-                                    <span th:text="${team.name}">Nome Equipa</span>
-                                </h5>
-                                <small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small>
-                            </div>
-                            
-                            <div class="d-flex align-items-center gap-2">
-                                <!-- New buttons for awarding -->
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#assignAwardToTeamModal"
-                                        th:data-team-id="${team.id}"
-                                        th:data-team-name="${team.name}"
-                                        onclick="prepareAssignAwardToTeamModal(this)"
-                                        title="Atribuir Prémio à Equipa">
-                                    <i data-lucide="award" class="w-4 h-4 inline me-1"></i> Equipa
-                                </button>
-                                <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#assignAwardToStudentInTeamModal"
-                                        th:data-team-id="${team.id}"
-                                        th:data-team-name="${team.name}"
-                                        th:data-sm-id="${team.scrumMaster != null ? team.scrumMaster.id : ''}"
-                                        th:data-sm-name="${team.scrumMaster != null ? team.scrumMaster.name : ''}"
-                                        th:data-po-id="${team.productOwner != null ? team.productOwner.id : ''}"
-                                        th:data-po-name="${team.productOwner != null ? team.productOwner.name : ''}"
-                                        th:data-devs="${team.developers.![id + ':' + name]}"
-                                        onclick="prepareAssignAwardToStudentInTeamModal(this)"
-                                        title="Atribuir Prémio a Aluno da Equipa">
-                                    <i data-lucide="user-plus" class="w-4 h-4 inline me-1"></i> Aluno
-                                </button>
+        <div class="row g-4">
+            <div class="col-md-6" th:each="team : ${teams}">
+                <div class="content-card h-100 position-relative">
 
-                                <button class="btn-delete-team shadow-sm"
-                                   data-bs-toggle="modal" 
-                                   data-bs-target="#deleteTeamModal"
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
+                                <span th:text="${team.name}">Nome Equipa</span>
+                            </h5>
+                            <small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- New buttons for awarding -->
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#assignAwardToTeamModal"
+                                    th:data-team-id="${team.id}"
+                                    th:data-team-name="${team.name}"
+                                    onclick="prepareAssignAwardToTeamModal(this)"
+                                    title="Atribuir Prémio à Equipa">
+                                <i data-lucide="award" class="w-4 h-4 inline me-1"></i> Equipa
+                            </button>
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#assignAwardToStudentInTeamModal"
+                                    th:data-team-id="${team.id}"
+                                    th:data-team-name="${team.name}"
+                                    th:data-sm-id="${team.scrumMaster != null ? team.scrumMaster.id : ''}"
+                                    th:data-sm-name="${team.scrumMaster != null ? team.scrumMaster.name : ''}"
+                                    th:data-po-id="${team.productOwner != null ? team.productOwner.id : ''}"
+                                    th:data-po-name="${team.productOwner != null ? team.productOwner.name : ''}"
+                                    th:data-devs="${#strings.listJoin(team.developers.![id + ':' + name], ',')}"
+                                    onclick="prepareAssignAwardToStudentInTeamModal(this)"
+                                    title="Atribuir Prémio a Aluno da Equipa">
+                                <i data-lucide="user-plus" class="w-4 h-4 inline me-1"></i> Aluno
+                            </button>
+
+                            <button class="btn-delete-team shadow-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteTeamModal"
                                     th:data-team-id="${team.id}"
                                     onclick="prepareDeleteTeamModal(this)"
                                     title="Eliminar Equipa">
-                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                                </button>
-                            </div>
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="d-flex flex-column gap-2">
-                            <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-warning text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">SM</div>
-                                    <span th:text="${team.scrumMaster.name}" class="small fw-bold text-dark">Nome</span>
-                                </div>
-                                <span class="badge-role role-sm">Scrum Master</span>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-warning text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">SM</div>
+                                <span th:text="${team.scrumMaster.name}" class="small fw-bold text-dark">Nome</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-info text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">PO</div>
-                                    <span th:text="${team.productOwner.name}" class="small fw-bold text-dark">Nome</span>
-                                </div>
-                                <span class="badge-role role-po">Product Owner</span>
+                            <span class="badge-role role-sm">Scrum Master</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-info text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">PO</div>
+                                <span th:text="${team.productOwner.name}" class="small fw-bold text-dark">Nome</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">D</div>
-                                    <span th:text="${dev.name}" class="small fw-bold text-dark">Nome Dev</span>
-                                </div>
-                                <span class="badge-role role-dev">Developer</span>
+                            <span class="badge-role role-po">Product Owner</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">D</div>
+                                <span th:text="${dev.name}" class="small fw-bold text-dark">Nome Dev</span>
                             </div>
+                            <span class="badge-role role-dev">Developer</span>
                         </div>
                     </div>
                 </div>
-                
-                <div th:if="${#lists.isEmpty(teams)}" class="col-12">
-                     <div class="alert alert-warning">Não existem equipas criadas.</div>
-                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(teams)}" class="col-12">
+                <div class="alert alert-warning">Não existem equipas criadas.</div>
             </div>
         </div>
+    </div>
 
-        <div id="awards" class="tab-content">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div><h3 class="fw-bold mb-1">Sistema de Prémios</h3><p class="text-muted">Catálogo de prémios disponíveis</p></div>
-                <div class="d-flex gap-2"><button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#newAwardModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Novo Prémio</button></div>
-            </div>
-            <div class="d-flex gap-2 mb-4">
-                <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold transition" onclick="filterAwards('all', this)">Todos (<span th:text="${#lists.size(awards)}">0</span>)</button>
-                <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('MANUAL', this)">Manuais</button>
-                <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('AUTOMATIC', this)">Automáticos</button>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-4 award-item" th:each="award : ${awards}" th:data-type="${award.type}">
-                    <div class="content-card h-100 position-relative" th:classappend="${award.type == 'MANUAL'} ? 'award-manual' : 'award-auto'">
-                        <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex gap-2 align-items-center"><i th:if="${award.type == 'MANUAL'}" data-lucide="star" class="w-5 h-5 text-warning"></i><i th:if="${award.type == 'AUTOMATIC'}" data-lucide="cpu" class="w-5 h-5 text-primary"></i><h6 class="fw-bold mb-0 text-dark" th:text="${award.name}">Nome</h6></div><div class="fw-bold text-dark bg-light px-2 py-1 rounded" th:text="${award.points} + ' pts'"></div></div>
-                        <p class="small text-muted mb-3" th:text="${award.description}">Desc</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-light"><span class="badge rounded-pill" th:classappend="${award.type == 'MANUAL'} ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-25 text-primary'" th:text="${award.type}">Tipo</span></div>
-                    </div>
-                </div>
-            </div>
+    <div id="awards" class="tab-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div><h3 class="fw-bold mb-1">Sistema de Prémios</h3><p class="text-muted">Catálogo de prémios disponíveis</p></div>
+            <div class="d-flex gap-2"><button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#newAwardModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Novo Prémio</button></div>
         </div>
-
-        <div id="rankings" class="tab-content">
-
-            <div class="d-flex justify-content-between align-items-end mb-4">
-                <div>
-                    <h3 class="fw-bold mb-1">Rankings e Estatísticas</h3>
-                    <p class="text-muted mb-0">Visualize o desempenho dos estudantes e equipas</p>
-                </div>
-                <a th:href="@{'/export/rankings/csv/' + ${teacher.id}}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
-                </a>
-            </div>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <span class="text-muted small fw-bold">Total de Estudantes</span>
-                            <i data-lucide="users" class="text-muted opacity-50" style="width: 20px;"></i>
-                        </div>
-                        <div class="mt-2">
-                            <h2 class="fw-bold mb-0 text-dark" th:text="${totalStudents}">0</h2>
-                            <small class="text-muted" th:text="${activeTeamsCount} + ' equipas ativas'">0 equipas</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <span class="text-muted small fw-bold">Pontuação Média</span>
-                            <i data-lucide="bar-chart-2" class="text-muted opacity-50" style="width: 20px;"></i>
-                        </div>
-                        <div class="mt-2">
-                            <h2 class="fw-bold mb-0 text-dark" th:text="${averageScore}">0</h2>
-                            <small class="text-muted">pontos por estudante</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <span class="text-muted small fw-bold">Top Performer</span>
-                            <i data-lucide="trophy" class="text-warning opacity-75" style="width: 20px;"></i>
-                        </div>
-                        <div class="mt-2">
-                            <h2 class="fw-bold mb-0 text-dark" th:text="${topPerformerScore}">0</h2>
-                            <small class="text-muted text-truncate d-block" style="max-width: 100%;" th:text="${topPerformerName}">-</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <span class="text-muted small fw-bold">Variação</span>
-                            <i data-lucide="activity" class="text-muted opacity-50" style="width: 20px;"></i>
-                        </div>
-                        <div class="mt-2">
-                            <h2 class="fw-bold mb-0 text-dark" th:text="${scoreVariation}">0</h2>
-                            <small class="text-muted">maior - menor pontuação</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-card p-0 overflow-hidden">
-                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1 fw-bold">Ranking de Estudantes</h5>
-                        <p class="mb-0 small text-muted">Classificação geral por pontuação</p>
-                    </div>
-                    <select class="form-select form-select-sm w-auto bg-light border-0 fw-bold text-muted rounded-pill px-3">
-                        <option>Todos os cursos</option>
-                        <option th:each="c : ${courses}" th:text="${c.name}"></option>
-                    </select>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 ranking-table align-middle">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Posição</th>
-                                <th>Estudante</th>
-                                <th class="text-end pe-4">Total XP</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="studentRank, iter : ${studentRankings}" th:classappend="${iter.index == 0 ? 'bg-warning bg-opacity-10' : ''}">
-                                <td class="ps-4" style="width: 80px;">
-                                    <div th:if="${iter.index == 0}" class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px;">1</div>
-                                    <div th:if="${iter.index == 1}" class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #9ca3af !important;">2</div>
-                                    <div th:if="${iter.index == 2}" class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #d97706 !important;">3</div>
-                                    <span th:if="${iter.index > 2}" class="fw-bold text-muted ps-3" th:text="${iter.index + 1}">4</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width: 40px; height: 40px;" th:styleappend="${iter.index == 0 ? 'background-color: #f59e0b' : 'background-color: #e5e7eb; color: #6b7280 !important'}">
-                                            <span th:if="${iter.index == 0}"><i data-lucide="trophy" style="width: 18px;"></i></span>
-                                            <span th:if="${iter.index > 0}" th:text="${#strings.substring(studentRank.name,0,1)}">A</span>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold text-dark" th:text="${studentRank.name}">Nome</h6>
-                                            <small class="text-muted" th:text="'ID: ' + ${studentRank.id}">ID</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <h5 class="mb-0 fw-bold text-dark" th:text="${studentRank.totalPoints}">0</h5>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(studentRankings)}">
-                                <td colspan="3" class="text-center py-5 text-muted">Sem dados de ranking para exibir.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <div class="d-flex gap-2 mb-4">
+            <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold transition" onclick="filterAwards('all', this)">Todos (<span th:text="${#lists.size(awards)}">0</span>)</button>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('MANUAL', this)">Manuais</button>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('AUTOMATIC', this)">Automáticos</button>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 award-item" th:each="award : ${awards}" th:data-type="${award.type}">
+                <div class="content-card h-100 position-relative" th:classappend="${award.type == 'MANUAL'} ? 'award-manual' : 'award-auto'">
+                    <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex gap-2 align-items-center"><i th:if="${award.type == 'MANUAL'}" data-lucide="star" class="w-5 h-5 text-warning"></i><i th:if="${award.type == 'AUTOMATIC'}" data-lucide="cpu" class="w-5 h-5 text-primary"></i><h6 class="fw-bold mb-0 text-dark" th:text="${award.name}">Nome</h6></div><div class="fw-bold text-dark bg-light px-2 py-1 rounded" th:text="${award.points} + ' pts'"></div></div>
+                    <p class="small text-muted mb-3" th:text="${award.description}">Desc</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-light"><span class="badge rounded-pill" th:classappend="${award.type == 'MANUAL'} ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-25 text-primary'" th:text="${award.type}">Tipo</span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="newCourseModal" tabindex="-1" aria-hidden="true">
+    <div id="rankings" class="tab-content">
+
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Rankings e Estatísticas</h3>
+                <p class="text-muted mb-0">Visualize o desempenho dos estudantes e equipas</p>
+            </div>
+            <a th:href="@{'/export/rankings/csv/' + ${teacher.id}}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
+            </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="text-muted small fw-bold">Total de Estudantes</span>
+                        <i data-lucide="users" class="text-muted opacity-50" style="width: 20px;"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${totalStudents}">0</h2>
+                        <small class="text-muted" th:text="${activeTeamsCount} + ' equipas ativas'">0 equipas</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="text-muted small fw-bold">Pontuação Média</span>
+                        <i data-lucide="bar-chart-2" class="text-muted opacity-50" style="width: 20px;"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${averageScore}">0</h2>
+                        <small class="text-muted">pontos por estudante</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="text-muted small fw-bold">Top Performer</span>
+                        <i data-lucide="trophy" class="text-warning opacity-75" style="width: 20px;"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${topPerformerScore}">0</h2>
+                        <small class="text-muted text-truncate d-block" style="max-width: 100%;" th:text="${topPerformerName}">-</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="content-card p-4 mb-0 h-100 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="text-muted small fw-bold">Variação</span>
+                        <i data-lucide="activity" class="text-muted opacity-50" style="width: 20px;"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${scoreVariation}">0</h2>
+                        <small class="text-muted">maior - menor pontuação</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card p-0 overflow-hidden">
+            <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1 fw-bold">Ranking de Estudantes</h5>
+                    <p class="mb-0 small text-muted">Classificação geral por pontuação</p>
+                </div>
+                <select class="form-select form-select-sm w-auto bg-light border-0 fw-bold text-muted rounded-pill px-3">
+                    <option>Todos os cursos</option>
+                    <option th:each="c : ${courses}" th:text="${c.name}"></option>
+                </select>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 ranking-table align-middle">
+                    <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Posição</th>
+                        <th>Estudante</th>
+                        <th class="text-end pe-4">Total XP</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="studentRank, iter : ${studentRankings}" th:classappend="${iter.index == 0 ? 'bg-warning bg-opacity-10' : ''}">
+                        <td class="ps-4" style="width: 80px;">
+                            <div th:if="${iter.index == 0}" class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px;">1</div>
+                            <div th:if="${iter.index == 1}" class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #9ca3af !important;">2</div>
+                            <div th:if="${iter.index == 2}" class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #d97706 !important;">3</div>
+                            <span th:if="${iter.index > 2}" class="fw-bold text-muted ps-3" th:text="${iter.index + 1}">4</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width: 40px; height: 40px;" th:styleappend="${iter.index == 0 ? 'background-color: #f59e0b' : 'background-color: #e5e7eb; color: #6b7280 !important'}">
+                                    <span th:if="${iter.index == 0}"><i data-lucide="trophy" style="width: 18px;"></i></span>
+                                    <span th:if="${iter.index > 0}" th:text="${#strings.substring(studentRank.name,0,1)}">A</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" th:text="${studentRank.name}">Nome</h6>
+                                    <small class="text-muted" th:text="'ID: ' + ${studentRank.id}">ID</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <h5 class="mb-0 fw-bold text-dark" th:text="${studentRank.totalPoints}">0</h5>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(studentRankings)}">
+                        <td colspan="3" class="text-center py-5 text-muted">Sem dados de ranking para exibir.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newCourseModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
             <div class="modal-header border-0 pb-0">
@@ -646,7 +646,7 @@
             <div class="modal-body">
                 <form th:action="@{/courses/create}" method="POST">
                     <input type="hidden" name="teacherId" th:value="${teacher.id}" />
-                    
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Nome</label>
@@ -666,7 +666,7 @@
                         <label class="form-label fw-bold small">Descrição</label>
                         <textarea name="description" class="form-control bg-light border-0" rows="3"></textarea>
                     </div>
-                    
+
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Semestre</label>
@@ -680,7 +680,7 @@
                             <input type="number" name="year" class="form-control bg-light border-0 py-2" value="2025" required>
                         </div>
                     </div>
-                    
+
                     <div class="modal-footer border-0 pt-4 px-0 pb-0">
                         <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Curso</button>
@@ -691,12 +691,12 @@
     </div>
 </div>
 
-    <div class="modal fade" id="newTeamModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Criar Nova Equipa</h4><p class="text-muted small mb-0">Defina o nome e atribua os papéis.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-                <div class="modal-body">
-                 <form th:action="@{/teams/create}" method="POST">
+<div class="modal fade" id="newTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0"><div><h4 class="modal-title fw-bold">Criar Nova Equipa</h4><p class="text-muted small mb-0">Defina o nome e atribua os papéis.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body">
+                <form th:action="@{/teams/create}" method="POST">
                     <input type="hidden" name="teacherId" th:value="${teacher.id}">
 
                     <div class="mb-3">
@@ -717,16 +717,16 @@
                             <label class="form-label small text-muted">Product Owner</label>
                             <select name="productOwnerId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
                                 <option value="">Escolher...</option>
-                                
-                                <option th:each="s : ${students}" 
+
+                                <option th:each="s : ${students}"
                                         th:if="${s.role == 'TEACHER'}"
-                                        th:value="${s.id}" 
+                                        th:value="${s.id}"
                                         th:text="${s.name}">
                                 </option>
 
-                                <option th:each="s : ${students}" 
+                                <option th:each="s : ${students}"
                                         th:if="${s.role == 'STUDENT'}"
-                                        th:value="${s.id}" 
+                                        th:value="${s.id}"
                                         th:text="${s.studentTag} + ' - ' + ${s.name}"
                                         th:data-student-id="${s.id}">
                                 </option>
@@ -737,9 +737,9 @@
                             <label class="form-label small text-muted">Scrum Master</label>
                             <select name="scrumMasterId" class="form-select bg-light border-0 py-2 member-select" onchange="updateOptions()">
                                 <option value="">Escolher...</option>
-                                <option th:each="s : ${students}" 
+                                <option th:each="s : ${students}"
                                         th:if="${s.role == 'STUDENT'}"
-                                        th:value="${s.id}" 
+                                        th:value="${s.id}"
                                         th:text="${s.studentTag} + ' - ' + ${s.name}"
                                         th:data-student-id="${s.id}">
                                 </option>
@@ -748,16 +748,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers 
+                        <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers
                             <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperField()">+ Adicionar outro</button>
                         </label>
                         <div id="developers-container">
                             <div class="input-group mb-2 developer-row">
                                 <select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
                                     <option value="">Selecionar Developer...</option>
-                                    <option th:each="s : ${students}" 
+                                    <option th:each="s : ${students}"
                                             th:if="${s.role == 'STUDENT'}"
-                                            th:value="${s.id}" 
+                                            th:value="${s.id}"
                                             th:text="${s.studentTag} + ' - ' + ${s.name}"
                                             th:data-student-id="${s.id}">
                                     </option>
@@ -771,1000 +771,1000 @@
                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Equipa</button>
                     </div>
                 </form>
-                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold text-danger">Eliminar Equipa</h4>
-                        <p class="text-muted small mb-0">Esta ação é irreversível.</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-danger">Eliminar Equipa</h4>
+                    <p class="text-muted small mb-0">Esta ação é irreversível.</p>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-0 text-dark">Tem a certeza que deseja eliminar esta equipa? <br>Os membros ficarão sem equipa atribuída.</p>
-                </div>
-                <div class="modal-footer border-0 pt-2 px-0 pb-0">
-                    <form th:action="@{/teams/delete}" method="POST" class="w-100 d-flex gap-2">
-                        <input type="hidden" name="teamId" id="deleteTeamIdField">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
-                        
-                        <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
-                    </form>
-                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Tem a certeza que deseja eliminar esta equipa? <br>Os membros ficarão sem equipa atribuída.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <form th:action="@{/teams/delete}" method="POST" class="w-100 d-flex gap-2">
+                    <input type="hidden" name="teamId" id="deleteTeamIdField">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="newProjectModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Novo Projeto</h4>
-                        <p class="text-muted small mb-0">Definir detalhes e cronograma.</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="newProjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Novo Projeto</h4>
+                    <p class="text-muted small mb-0">Definir detalhes e cronograma.</p>
                 </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
-                <div class="modal-body">
-                    <form id="newProjectForm" th:action="@{/projects/create}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
-                        <input type="hidden" id="modalCourseId" name="courseId" />
+            <div class="modal-body">
+                <form id="newProjectForm" th:action="@{/projects/create}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+                    <input type="hidden" id="modalCourseId" name="courseId" />
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Nome do Projeto</label>
-                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Sistema de Gestão" required>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome do Projeto</label>
+                        <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Sistema de Gestão" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descrição / Objetivos</label>
+                        <textarea name="sprintGoals" class="form-control bg-light border-0" rows="3" placeholder="Objetivos principais do projeto..."></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Data de Início</label>
+                            <input id="projectStartDate" type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Descrição / Objetivos</label>
-                            <textarea name="sprintGoals" class="form-control bg-light border-0" rows="3" placeholder="Objetivos principais do projeto..."></textarea>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Data de Fim</label>
+                            <input id="projectEndDate" type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
                         </div>
+                    </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">Data de Início</label>
-                                <input id="projectStartDate" type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">Data de Fim</label>
-                                <input id="projectEndDate" type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Associar Equipa</label>
-                            <select name="teamId" id="projectTeamSelect" class="form-select bg-light border-0 py-2">
-                                <option value="" selected>Sem equipa (apenas planeamento)</option>
-                                <option th:each="team : ${availableTeams}" 
-                                    th:value="${team.id}" 
-                                    th:text="${team.name}" 
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Associar Equipa</label>
+                        <select name="teamId" id="projectTeamSelect" class="form-select bg-light border-0 py-2">
+                            <option value="" selected>Sem equipa (apenas planeamento)</option>
+                            <option th:each="team : ${availableTeams}"
+                                    th:value="${team.id}"
+                                    th:text="${team.name}"
                                     th:data-course-id="${team.course != null ? team.course.id : ''}">
-                                </option>
+                            </option>
+                        </select>
+                        <small class="text-muted" style="font-size: 0.7rem;">Apenas equipas deste curso são mostradas.</small>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Projeto</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newAwardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Criar Novo Prémio</h4>
+                    <p class="text-muted small mb-0">Defina um novo prémio para atribuir aos estudantes</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/awards/create}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome do Prémio</label>
+                        <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Innovation Hero" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descrição</label>
+                        <textarea name="description" class="form-control bg-light border-0" rows="2" placeholder="Descrição do prémio..."></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Pontos</label>
+                            <input type="number" name="points" class="form-control bg-light border-0 py-2" placeholder="100" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tipo</label>
+                            <select name="type" class="form-select bg-light border-0 py-2">
+                                <option value="MANUAL">Manual</option>
+                                <option value="AUTOMATIC">Automático</option>
                             </select>
-                            <small class="text-muted" style="font-size: 0.7rem;">Apenas equipas deste curso são mostradas.</small>
                         </div>
+                    </div>
 
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Projeto</button>
-                        </div>
-                    </form>
-                </div>
-
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Prémio</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="newAwardModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Criar Novo Prémio</h4>
-                        <p class="text-muted small mb-0">Defina um novo prémio para atribuir aos estudantes</p>
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Configurações</h4>
+                    <p class="text-muted small mb-0">Personalize a sua experiência.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/api/teacher/settings}" method="POST">
+                    <input type="hidden" name="email" th:value="${teacher.email}">
+
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input cursor-pointer" type="checkbox" id="theme-switcher">
+                            <label class="form-check-label cursor-pointer" for="theme-switcher">Modo Noturno</label>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form th:action="@{/awards/create}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Nome do Prémio</label>
-                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Innovation Hero" required>
+                    <div class="p-3 bg-light rounded-3 mb-4 border">
+                        <h6 class="fw-bold small mb-3 text-dark">Notificações</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input cursor-pointer" type="checkbox" id="notifAwards" name="notificationAwards"
+                                   th:checked="${teacher.notificationAwards}">
+                            <label class="form-check-label cursor-pointer" for="notifAwards">Prémios atribuídos</label>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Descrição</label>
-                            <textarea name="description" class="form-control bg-light border-0" rows="2" placeholder="Descrição do prémio..."></textarea>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input cursor-pointer" type="checkbox" id="notifRankings" name="notificationRankings"
+                                   th:checked="${teacher.notificationRankings}">
+                            <label class="form-check-label cursor-pointer" for="notifRankings">Alterações no Ranking</label>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">Pontos</label>
-                                <input type="number" name="points" class="form-control bg-light border-0 py-2" placeholder="100" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small">Tipo</label>
-                                <select name="type" class="form-select bg-light border-0 py-2">
-                                    <option value="MANUAL">Manual</option>
-                                    <option value="AUTOMATIC">Automático</option>
-                                </select>
-                            </div>
-                        </div>
+                    </div>
 
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Prémio</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome de Exibição</label>
+                        <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0 px-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Preferências</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Configurações</h4>
-                        <p class="text-muted small mb-0">Personalize a sua experiência.</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Editar Perfil</h4>
+                    <p class="text-muted small mb-0">Atualize os seus dados pessoais e foto.</p>
                 </div>
-                <div class="modal-body">
-                    <form th:action="@{/api/teacher/settings}" method="POST">
-                        <input type="hidden" name="email" th:value="${teacher.email}">
-
-                        <div class="p-3 bg-light rounded-3 mb-3 border">
-                            <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input cursor-pointer" type="checkbox" id="theme-switcher">
-                                <label class="form-check-label cursor-pointer" for="theme-switcher">Modo Noturno</label>
-                            </div>
-                        </div>
-
-                        <div class="p-3 bg-light rounded-3 mb-4 border">
-                            <h6 class="fw-bold small mb-3 text-dark">Notificações</h6>
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input cursor-pointer" type="checkbox" id="notifAwards" name="notificationAwards"
-                                       th:checked="${teacher.notificationAwards}">
-                                <label class="form-check-label cursor-pointer" for="notifAwards">Prémios atribuídos</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input cursor-pointer" type="checkbox" id="notifRankings" name="notificationRankings"
-                                       th:checked="${teacher.notificationRankings}">
-                                <label class="form-check-label cursor-pointer" for="notifRankings">Alterações no Ranking</label>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Nome de Exibição</label>
-                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
-                        </div>
-
-                        <div class="modal-footer border-0 pt-0 px-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Preferências</button>
-                        </div>
-                    </form>
-                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-    </div>
+            <div class="modal-body">
+                <form id="editProfileForm" th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}" />
 
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Editar Perfil</h4>
-                        <p class="text-muted small mb-0">Atualize os seus dados pessoais e foto.</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editProfileForm" th:action="@{/teacher/profile/update}" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+                    <div class="mb-4 text-center">
+                        <div class="position-relative d-inline-block" style="width: fit-content;">
+                            <div class="position-relative" style="width: 100px; height: 100px; margin: 0 auto;">
+                                <img id="teacherProfileImagePreview"
+                                     th:src="@{${teacher.profileImage != null} ? '/uploads/profile-images/' + ${teacher.profileImage} : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E'}"
+                                     class="rounded-circle border shadow-sm position-absolute"
+                                     th:style="${teacher.profileImage != null} ? 'width: 100%; height: 100%; object-fit: cover; display: block; top: 0; left: 0; z-index: 10;' : 'width: 100%; height: 100%; object-fit: cover; display: none; top: 0; left: 0; z-index: 10;'"
+                                     style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;" onerror="this.style.display='none';">
 
-                        <div class="mb-4 text-center">
-                            <div class="position-relative d-inline-block" style="width: fit-content;">
-                                <div class="position-relative" style="width: 100px; height: 100px; margin: 0 auto;">
-                                    <img id="teacherProfileImagePreview"
-                                         th:src="@{${teacher.profileImage != null} ? '/uploads/profile-images/' + ${teacher.profileImage} : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E'}"
-                                         class="rounded-circle border shadow-sm position-absolute"
-                                         th:style="${teacher.profileImage != null} ? 'width: 100%; height: 100%; object-fit: cover; display: block; top: 0; left: 0; z-index: 10;' : 'width: 100%; height: 100%; object-fit: cover; display: none; top: 0; left: 0; z-index: 10;'"
-                                         style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;" onerror="this.style.display='none';">
-
-                                    <div id="teacherProfileImagePlaceholder"
-                                         th:style="${teacher.profileImage != null} ? 'width: 100%; height: 100%; background: #f8f9fa; display: none; position: absolute; top: 0; left: 0; z-index: 1;' : 'width: 100%; height: 100%; background: #f8f9fa; display: flex; position: absolute; top: 0; left: 0; z-index: 1;'"
-                                         class="bg-light rounded-circle border d-flex justify-content-center align-items-center"
-                                         style="transition: display 0.3s ease;">
-                                        <i data-lucide="user" class="w-12 h-12 text-muted opacity-50"></i>
-                                    </div>
-
-                                    <label for="imageUploadTeacher" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2 shadow-sm cursor-pointer hover-scale" style="width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; z-index: 20; border: 2px solid white;" title="Clique para alterar foto">
-                                        <i data-lucide="camera" class="w-4 h-4"></i>
-                                        <input type="file" id="imageUploadTeacher" name="imageFile" accept="image/*" class="d-none">
-                                    </label>
-
-                                    <button type="button" id="removeImageBtnTeacher"
-                                            class="position-absolute top-0 end-0 bg-danger text-white rounded-circle shadow-sm"
-                                            th:style="${teacher.profileImage != null} ? 'width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 2px solid white; padding: 0; z-index: 20;' : 'width: 36px; height: 36px; display: none; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 2px solid white; padding: 0; z-index: 20;'"
-                                            title="Remover foto" onclick="removeTeacherProfileImage(event)">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
+                                <div id="teacherProfileImagePlaceholder"
+                                     th:style="${teacher.profileImage != null} ? 'width: 100%; height: 100%; background: #f8f9fa; display: none; position: absolute; top: 0; left: 0; z-index: 1;' : 'width: 100%; height: 100%; background: #f8f9fa; display: flex; position: absolute; top: 0; left: 0; z-index: 1;'"
+                                     class="bg-light rounded-circle border d-flex justify-content-center align-items-center"
+                                     style="transition: display 0.3s ease;">
+                                    <i data-lucide="user" class="w-12 h-12 text-muted opacity-50"></i>
                                 </div>
+
+                                <label for="imageUploadTeacher" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2 shadow-sm cursor-pointer hover-scale" style="width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; z-index: 20; border: 2px solid white;" title="Clique para alterar foto">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <input type="file" id="imageUploadTeacher" name="imageFile" accept="image/*" class="d-none">
+                                </label>
+
+                                <button type="button" id="removeImageBtnTeacher"
+                                        class="position-absolute top-0 end-0 bg-danger text-white rounded-circle shadow-sm"
+                                        th:style="${teacher.profileImage != null} ? 'width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 2px solid white; padding: 0; z-index: 20;' : 'width: 36px; height: 36px; display: none; justify-content: center; align-items: center; transform: translate(6px, -6px); border: 2px solid white; padding: 0; z-index: 20;'"
+                                        title="Remover foto" onclick="removeTeacherProfileImage(event)">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
                             </div>
-                            <div class="mt-4 p-3 bg-blue-50 rounded-3 border border-blue-200" style="background-color: #f0f7ff; border-color: #dbeafe;">
-                                <p class="text-muted small mb-1"><strong>Clique na câmara para alterar a foto</strong></p>
-                            </div>
-                            <input type="hidden" id="removeImage" name="removeImage" value="false">
                         </div>
+                        <div class="mt-4 p-3 bg-blue-50 rounded-3 border border-blue-200" style="background-color: #f0f7ff; border-color: #dbeafe;">
+                            <p class="text-muted small mb-1"><strong>Clique na câmara para alterar a foto</strong></p>
+                        </div>
+                        <input type="hidden" id="removeImage" name="removeImage" value="false">
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Nome Completo</label>
-                            <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Email</label>
-                            <input type="email" name="email" class="form-control bg-light border-0 py-2" th:value="${teacher.email}" required>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome Completo</label>
+                        <input type="text" name="name" class="form-control bg-light border-0 py-2" th:value="${teacher.name}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Email</label>
+                        <input type="email" name="email" class="form-control bg-light border-0 py-2" th:value="${teacher.email}" required>
+                    </div>
 
-                        <hr class="my-4 text-muted opacity-25">
-                        <h6 class="fw-bold small mb-3">Segurança (opcional)</h6>
+                    <hr class="my-4 text-muted opacity-25">
+                    <h6 class="fw-bold small mb-3">Segurança (opcional)</h6>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Password Atual</label>
-                            <input type="password" name="currentPassword" class="form-control bg-light border-0 py-2" placeholder="Necessária apenas para alterar a password">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Nova Password</label>
-                            <input type="password" id="newPasswordTeacher" name="newPassword" class="form-control bg-light border-0 py-2" placeholder="Deixe em branco para manter a atual">
-                            <div id="newPasswordErrorTeacher" class="text-danger small mt-1" style="display: none;"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Confirmar nova password</label>
-                            <input type="password" id="confirmNewPasswordTeacher" name="confirmNewPassword" class="form-control bg-light border-0 py-2" placeholder="Confirme a nova password">
-                            <div id="confirmPasswordErrorTeacher" class="text-danger small mt-1" style="display: none;"></div>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Password Atual</label>
+                        <input type="password" name="currentPassword" class="form-control bg-light border-0 py-2" placeholder="Necessária apenas para alterar a password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nova Password</label>
+                        <input type="password" id="newPasswordTeacher" name="newPassword" class="form-control bg-light border-0 py-2" placeholder="Deixe em branco para manter a atual">
+                        <div id="newPasswordErrorTeacher" class="text-danger small mt-1" style="display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Confirmar nova password</label>
+                        <input type="password" id="confirmNewPasswordTeacher" name="confirmNewPassword" class="form-control bg-light border-0 py-2" placeholder="Confirme a nova password">
+                        <div id="confirmPasswordErrorTeacher" class="text-danger small mt-1" style="display: none;"></div>
+                    </div>
 
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Alterações</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Alterações</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-  <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    <script th:inline="javascript">
-        let previewImg = null;
-        let hasExistingImage = false;
+<script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+<script th:inline="javascript">
+    let previewImg = null;
+    let hasExistingImage = false;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const imageInput = document.getElementById('imageUploadTeacher');
-            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
-            const existingPreview = document.getElementById('teacherProfileImagePreview');
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('imageUploadTeacher');
+        const placeholder = document.getElementById('teacherProfileImagePlaceholder');
+        const existingPreview = document.getElementById('teacherProfileImagePreview');
 
-            if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
-                previewImg = existingPreview;
-                hasExistingImage = true;
-                existingPreview.style.display = 'block';
-                if (placeholder) {
-                    placeholder.style.display = 'none';
-                }
-            } else {
-                if (existingPreview) {
-                    existingPreview.style.display = 'none';
-                }
-                if (placeholder) {
-                    placeholder.style.display = 'flex';
-                }
+        if (existingPreview && existingPreview.src && existingPreview.src.includes('/uploads/')) {
+            previewImg = existingPreview;
+            hasExistingImage = true;
+            existingPreview.style.display = 'block';
+            if (placeholder) {
+                placeholder.style.display = 'none';
             }
-
-            if (imageInput) {
-                imageInput.addEventListener('change', function(event) {
-                    const file = event.target.files[0];
-
-                    if (file) {
-                        const reader = new FileReader();
-
-                        reader.onload = function(e) {
-                            if (!previewImg) {
-                                const newImg = document.createElement('img');
-                                newImg.id = 'teacherProfileImagePreview';
-                                newImg.className = 'rounded-circle border shadow-sm position-absolute';
-                                newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;';
-                                newImg.src = e.target.result;
-
-                                const container = document.querySelector('.position-relative[style*="width: 100px"]');
-                                if (container) {
-                                    container.appendChild(newImg);
-                                }
-                                previewImg = newImg;
-                            } else {
-                                previewImg.src = e.target.result;
-                            }
-
-                            previewImg.style.display = 'block';
-                            if (placeholder) {
-                                placeholder.style.display = 'none';
-                            }
-
-                            const removeBtn = document.getElementById('removeImageBtnTeacher');
-                            if (removeBtn) {
-                                removeBtn.style.display = 'flex';
-                            }
-
-                            document.getElementById('removeImage').value = 'false';
-                        };
-
-                        reader.readAsDataURL(file);
-                    }
-                });
+        } else {
+            if (existingPreview) {
+                existingPreview.style.display = 'none';
             }
-        });
-
-        function removeTeacherProfileImage(event) {
-            event.preventDefault();
-
-            document.getElementById('removeImage').value = 'true';
-
-            const placeholder = document.getElementById('teacherProfileImagePlaceholder');
-            const removeBtn = document.getElementById('removeImageBtnTeacher');
-
-            if (previewImg) {
-                previewImg.style.display = 'none';
-            }
-
             if (placeholder) {
                 placeholder.style.display = 'flex';
             }
-
-            if (removeBtn) {
-                removeBtn.style.display = 'none';
-            }
-
-            const imageInput = document.getElementById('imageUploadTeacher');
-            if (imageInput) {
-                imageInput.value = '';
-            }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const editModal = document.getElementById('editProfileModal');
-            if (editModal) {
-                editModal.addEventListener('hide.bs.modal', function() {
-                    const form = document.getElementById('editProfileForm');
-                    if (form) {
-                        form.reset();
-                    }
+        if (imageInput) {
+            imageInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
 
-                    const imageInput = document.getElementById('imageUploadTeacher');
-                    if (imageInput) {
-                        imageInput.value = '';
-                    }
+                if (file) {
+                    const reader = new FileReader();
 
-                    const removeImageFlag = document.getElementById('removeImage');
-                    if (removeImageFlag) {
-                        removeImageFlag.value = 'false';
-                    }
+                    reader.onload = function(e) {
+                        if (!previewImg) {
+                            const newImg = document.createElement('img');
+                            newImg.id = 'teacherProfileImagePreview';
+                            newImg.className = 'rounded-circle border shadow-sm position-absolute';
+                            newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 10;';
+                            newImg.src = e.target.result;
 
-                    location.reload();
-                });
-            }
-
-            // Password validation for teacher
-            const editProfileForm = document.getElementById('editProfileForm');
-            if (editProfileForm) {
-                editProfileForm.addEventListener('submit', function(event) {
-                    const newPassword = document.getElementById('newPasswordTeacher').value;
-                    const confirmPassword = document.getElementById('confirmNewPasswordTeacher').value;
-                    const newPasswordError = document.getElementById('newPasswordErrorTeacher');
-                    const confirmPasswordError = document.getElementById('confirmPasswordErrorTeacher');
-
-                    let isValid = true;
-
-                    // Reset errors
-                    newPasswordError.style.display = 'none';
-                    confirmPasswordError.style.display = 'none';
-
-                    // Validate new password if provided
-                    if (newPassword) {
-                        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-                        if (!passwordRegex.test(newPassword)) {
-                            newPasswordError.textContent = 'A password deve ter pelo menos 8 caracteres, incluindo maiúscula, minúscula e número.';
-                            newPasswordError.style.display = 'block';
-                            isValid = false;
+                            const container = document.querySelector('.position-relative[style*="width: 100px"]');
+                            if (container) {
+                                container.appendChild(newImg);
+                            }
+                            previewImg = newImg;
+                        } else {
+                            previewImg.src = e.target.result;
                         }
-                    }
 
-                    // Validate confirm password if new password is provided
-                    if (newPassword && confirmPassword !== newPassword) {
-                        confirmPasswordError.textContent = 'As passwords não coincidem.';
-                        confirmPasswordError.style.display = 'block';
+                        previewImg.style.display = 'block';
+                        if (placeholder) {
+                            placeholder.style.display = 'none';
+                        }
+
+                        const removeBtn = document.getElementById('removeImageBtnTeacher');
+                        if (removeBtn) {
+                            removeBtn.style.display = 'flex';
+                        }
+
+                        document.getElementById('removeImage').value = 'false';
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+
+    function removeTeacherProfileImage(event) {
+        event.preventDefault();
+
+        document.getElementById('removeImage').value = 'true';
+
+        const placeholder = document.getElementById('teacherProfileImagePlaceholder');
+        const removeBtn = document.getElementById('removeImageBtnTeacher');
+
+        if (previewImg) {
+            previewImg.style.display = 'none';
+        }
+
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+
+        if (removeBtn) {
+            removeBtn.style.display = 'none';
+        }
+
+        const imageInput = document.getElementById('imageUploadTeacher');
+        if (imageInput) {
+            imageInput.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const editModal = document.getElementById('editProfileModal');
+        if (editModal) {
+            editModal.addEventListener('hide.bs.modal', function() {
+                const form = document.getElementById('editProfileForm');
+                if (form) {
+                    form.reset();
+                }
+
+                const imageInput = document.getElementById('imageUploadTeacher');
+                if (imageInput) {
+                    imageInput.value = '';
+                }
+
+                const removeImageFlag = document.getElementById('removeImage');
+                if (removeImageFlag) {
+                    removeImageFlag.value = 'false';
+                }
+
+                location.reload();
+            });
+        }
+
+        // Password validation for teacher
+        const editProfileForm = document.getElementById('editProfileForm');
+        if (editProfileForm) {
+            editProfileForm.addEventListener('submit', function(event) {
+                const newPassword = document.getElementById('newPasswordTeacher').value;
+                const confirmPassword = document.getElementById('confirmNewPasswordTeacher').value;
+                const newPasswordError = document.getElementById('newPasswordErrorTeacher');
+                const confirmPasswordError = document.getElementById('confirmPasswordErrorTeacher');
+
+                let isValid = true;
+
+                // Reset errors
+                newPasswordError.style.display = 'none';
+                confirmPasswordError.style.display = 'none';
+
+                // Validate new password if provided
+                if (newPassword) {
+                    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+                    if (!passwordRegex.test(newPassword)) {
+                        newPasswordError.textContent = 'A password deve ter pelo menos 8 caracteres, incluindo maiúscula, minúscula e número.';
+                        newPasswordError.style.display = 'block';
                         isValid = false;
                     }
+                }
 
-                    if (!isValid) {
-                        event.preventDefault();
-                    }
-                });
-            }
+                // Validate confirm password if new password is provided
+                if (newPassword && confirmPassword !== newPassword) {
+                    confirmPasswordError.textContent = 'As passwords não coincidem.';
+                    confirmPasswordError.style.display = 'block';
+                    isValid = false;
+                }
 
-            const themeSwitcher = document.getElementById('theme-switcher');
-            const htmlElement = document.documentElement;
-            const body = document.body;
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        }
 
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'dark') {
-                htmlElement.classList.add('dark-theme');
-                body.classList.add('dark-theme');
-                if(themeSwitcher) themeSwitcher.checked = true;
-            }
+        const themeSwitcher = document.getElementById('theme-switcher');
+        const htmlElement = document.documentElement;
+        const body = document.body;
 
-            if(themeSwitcher) {
-                themeSwitcher.addEventListener('change', () => {
-                    if (themeSwitcher.checked) {
-                        htmlElement.classList.add('dark-theme');
-                        body.classList.add('dark-theme');
-                        localStorage.setItem('theme', 'dark');
-                    } else {
-                        htmlElement.classList.remove('dark-theme');
-                        body.classList.remove('dark-theme');
-                        localStorage.setItem('theme', 'light');
-                    }
-                });
-            }
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            htmlElement.classList.add('dark-theme');
+            body.classList.add('dark-theme');
+            if(themeSwitcher) themeSwitcher.checked = true;
+        }
 
-            fetchNotifications();
+        if(themeSwitcher) {
+            themeSwitcher.addEventListener('change', () => {
+                if (themeSwitcher.checked) {
+                    htmlElement.classList.add('dark-theme');
+                    body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.classList.remove('dark-theme');
+                    body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+
+        fetchNotifications();
+    });
+</script>
+<script>
+    lucide.createIcons();
+    let unreadNotificationCount = 0; // Global variable to store unread count
+
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('active');
+    }
+    function prepareProjectModal(button) {
+        const courseId = button.getAttribute('data-course-id');
+        document.getElementById('modalCourseId').value = courseId;
+        const select = document.getElementById('projectTeamSelect');
+        const options = select.querySelectorAll('option');
+        select.value = "";
+        options.forEach(opt => {
+            if (opt.value === "") return;
+            if (opt.getAttribute('data-course-id') === courseId) opt.style.display = 'block';
+            else opt.style.display = 'none';
         });
-    </script>
-    <script>
+        // Ensure date constraints are updated when modal opens
+        setProjectDateMinToTomorrow();
+    }
+
+    // Date helpers and validation for project form
+    function formatDateToYMD(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addDaysYMD(ymd, days) {
+        const date = new Date(ymd + 'T00:00:00');
+        date.setDate(date.getDate() + days);
+        return formatDateToYMD(date);
+    }
+
+    function setProjectDateMinToTomorrow() {
+        const startInput = document.getElementById('projectStartDate');
+        const endInput = document.getElementById('projectEndDate');
+        if (!startInput) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const minStart = formatDateToYMD(tomorrow);
+        startInput.min = minStart;
+
+        if (endInput) {
+            const startVal = startInput.value || minStart;
+            endInput.min = addDaysYMD(startVal, 1);
+        }
+    }
+
+    function updateEndDateMinFromStart() {
+        const startInput = document.getElementById('projectStartDate');
+        const endInput = document.getElementById('projectEndDate');
+        if (!startInput || !endInput) return;
+        if (startInput.value) {
+            endInput.min = addDaysYMD(startInput.value, 1);
+        }
+        // Clear previous messages when editing
+        startInput.setCustomValidity('');
+        endInput.setCustomValidity('');
+    }
+
+    // Hook the validation to the form submit using native constraint validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const startInput = document.getElementById('projectStartDate');
+        const endInput = document.getElementById('projectEndDate');
+        const projectForm = document.getElementById('newProjectForm');
+
+        if (startInput) {
+            startInput.addEventListener('input', updateEndDateMinFromStart);
+        }
+        if (endInput) {
+            endInput.addEventListener('input', function() { this.setCustomValidity(''); });
+        }
+
+        if (projectForm) {
+            projectForm.addEventListener('submit', function(event) {
+                // Clear previous custom validity messages
+                if (startInput) startInput.setCustomValidity('');
+                if (endInput) endInput.setCustomValidity('');
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                // Convert to Date objects (use timezone-neutral parse)
+                const startVal = startInput ? startInput.value : '';
+                const endVal = endInput ? endInput.value : '';
+                let isValid = true;
+
+                if (startVal) {
+                    const sDate = new Date(startVal + 'T00:00:00');
+                    if (sDate.getTime() <= today.getTime()) {
+                        startInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
+                        isValid = false;
+                    }
+                }
+
+                if (startVal && endVal) {
+                    const sDate = new Date(startVal + 'T00:00:00');
+                    const eDate = new Date(endVal + 'T00:00:00');
+                    if (sDate.getTime() >= eDate.getTime()) {
+                        startInput.setCustomValidity('A data de início deve ser anterior à data de fim.');
+                        endInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid || !projectForm.checkValidity()) {
+                    // Show browser validation UI
+                    projectForm.reportValidity();
+                    event.preventDefault();
+                }
+            });
+        }
+    });
+
+    function filterAwards(type, btnElement) {
+        const buttons = btnElement.parentElement.querySelectorAll('button');
+        buttons.forEach(btn => { btn.classList.remove('btn-primary', 'text-white'); btn.classList.add('btn-white', 'border', 'text-muted'); });
+        btnElement.classList.remove('btn-white', 'border', 'text-muted'); btnElement.classList.add('btn-primary', 'text-white');
+        const items = document.querySelectorAll('.award-item');
+        items.forEach(item => { if (type === 'all' || item.getAttribute('data-type') === type) item.style.display = 'block'; else item.style.display = 'none'; });
+    }
+
+    // FUNÇÕES PARA EQUIPA
+
+    /*<![CDATA[*/
+    // Recebe o mapa do backend: { courseId: [studentId1, studentId2], ... }
+    const takenMap = /*[[${takenMap}]]*/ {};
+    /*]]>*/
+
+    function updateTakenStatus() {
+        const courseSelect = document.getElementById('teamCourseSelect');
+        const courseId = courseSelect.value;
+
+        // Lista de IDs ocupados para o curso selecionado
+        const takenIds = (courseId && takenMap[courseId]) ? takenMap[courseId] : [];
+
+        // Percorre todos os selects de membros
+        const allSelects = document.querySelectorAll('.member-select');
+
+        allSelects.forEach(select => {
+            const options = select.querySelectorAll('option');
+            options.forEach(opt => {
+                // Se for professor (sem data-student-id), ignora e mantém ativo
+                if (!opt.getAttribute('data-student-id')) return;
+
+                const sId = parseInt(opt.getAttribute('data-student-id'));
+
+                // Se o ID estiver na lista de ocupados deste curso
+                if (takenIds.includes(sId)) {
+                    opt.setAttribute('data-taken', 'true');
+                    opt.disabled = true; // Fica cinzento nativamente
+
+                    // Se estava selecionado, limpa a seleção
+                    if (select.value == sId) {
+                        select.value = "";
+                    }
+                } else {
+                    opt.setAttribute('data-taken', 'false');
+                    // O updateOptions() reativará se não estiver duplicado localmente
+                }
+            });
+        });
+
+        // Chama a função de atualização visual local
+        updateOptions();
+    }
+
+    function updateOptions() {
+        const allSelects = document.querySelectorAll('.member-select');
+        const selectedValues = new Set();
+
+        // 1. Recolhe valores selecionados localmente
+        allSelects.forEach(select => {
+            if (select.value && select.value !== "") selectedValues.add(select.value);
+        });
+
+        // 2. Aplica bloqueios
+        allSelects.forEach(select => {
+            const myValue = select.value;
+            const options = select.querySelectorAll('option');
+
+            options.forEach(opt => {
+                if (!opt.value) return;
+
+                // A. Bloqueio por Curso (Server-side) - Prioritário
+                if (opt.getAttribute('data-taken') === 'true') {
+                    opt.disabled = true;
+                    return;
+                }
+
+                // B. Bloqueio Local (Já escolhido noutro campo)
+                if (selectedValues.has(opt.value) && opt.value !== myValue) {
+                    opt.disabled = true;
+                } else {
+                    opt.disabled = false;
+                }
+            });
+        });
+    }
+
+    function addDeveloperField() {
+        const container = document.getElementById('developers-container');
+        const firstRow = container.querySelector('.developer-row');
+        const newRow = firstRow.cloneNode(true);
+        const select = newRow.querySelector('select');
+        select.value = "";
+
+        // Remove qualquer estado de "taken" residual do clone
+        const options = select.querySelectorAll('option');
+        options.forEach(opt => {
+            // Se o curso selecionado bloquear este aluno, mantém taken=true
+            // Caso contrário, limpa
+            // O updateTakenStatus correria aqui idealmente, mas o updateOptions vai corrigir o disable
+        });
+
+        if (!newRow.querySelector('.btn-remove')) {
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-light border-0 text-danger ms-2 btn-remove';
+            removeBtn.innerHTML = '<i data-lucide="trash-2" style="width:16px;"></i>';
+            removeBtn.onclick = function() { this.parentElement.remove(); updateOptions(); };
+            newRow.appendChild(removeBtn);
+        }
+        container.appendChild(newRow);
         lucide.createIcons();
-        let unreadNotificationCount = 0; // Global variable to store unread count
 
-        function openTab(tabId, btnElement) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btnElement.classList.add('active');
+        // Garante que o estado visual (disabled) está correto para o novo campo
+        // baseando-se no curso atual selecionado
+        updateTakenStatus();
+    }
+
+    function prepareDeleteTeamModal(button) {
+        const teamId = button.getAttribute('data-team-id');
+        document.getElementById('deleteTeamIdField').value = teamId;
+    }
+
+    // Notification Sidebar JavaScript
+    function toggleNotificationSidebar() {
+        const sidebar = document.getElementById('notificationSidebar');
+        sidebar.classList.toggle('open'); // Always toggle the sidebar open/closed
+        if (sidebar.classList.contains('open')) {
+            fetchNotifications(); // Re-fetch notifications when opening
         }
-        function prepareProjectModal(button) {
-            const courseId = button.getAttribute('data-course-id');
-            document.getElementById('modalCourseId').value = courseId;
-            const select = document.getElementById('projectTeamSelect');
-            const options = select.querySelectorAll('option');
-            select.value = "";
-            options.forEach(opt => {
-                if (opt.value === "") return;
-                if (opt.getAttribute('data-course-id') === courseId) opt.style.display = 'block';
-                else opt.style.display = 'none';
-            });
-            // Ensure date constraints are updated when modal opens
-            setProjectDateMinToTomorrow();
-        }
+    }
 
-        // Date helpers and validation for project form
-        function formatDateToYMD(date) {
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
+    async function fetchNotifications() {
+        const notificationsContainer = document.getElementById('notificationsContainer');
+        const notificationCountBadge = document.getElementById('notificationCount');
+        const notificationBellIcon = document.getElementById('notificationBellIcon');
+        const noNotificationsMessage = document.getElementById('noNotifications');
 
-        function addDaysYMD(ymd, days) {
-            const date = new Date(ymd + 'T00:00:00');
-            date.setDate(date.getDate() + days);
-            return formatDateToYMD(date);
-        }
+        // Show loading state
+        notificationsContainer.innerHTML = '<div class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">A carregar notificações...</p></div>';
+        notificationCountBadge.style.display = 'none';
+        notificationBellIcon.classList.remove('text-danger');
+        notificationBellIcon.classList.add('text-secondary');
 
-        function setProjectDateMinToTomorrow() {
-            const startInput = document.getElementById('projectStartDate');
-            const endInput = document.getElementById('projectEndDate');
-            if (!startInput) return;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            const minStart = formatDateToYMD(tomorrow);
-            startInput.min = minStart;
-
-            if (endInput) {
-                const startVal = startInput.value || minStart;
-                endInput.min = addDaysYMD(startVal, 1);
+        // Try to fetch from the real API first
+        let notifications = [];
+        try {
+            const response = await fetch('/api/notifications/teacher');
+            if (response.ok) {
+                notifications = await response.json();
+            } else {
+                console.log('API returned ' + response.status + ', using empty list');
             }
+        } catch (apiError) {
+            console.log('API error:', apiError, '- using empty list');
         }
 
-        function updateEndDateMinFromStart() {
-            const startInput = document.getElementById('projectStartDate');
-            const endInput = document.getElementById('projectEndDate');
-            if (!startInput || !endInput) return;
-            if (startInput.value) {
-                endInput.min = addDaysYMD(startInput.value, 1);
-            }
-            // Clear previous messages when editing
-            startInput.setCustomValidity('');
-            endInput.setCustomValidity('');
-        }
+        // Display the notifications
+        notificationsContainer.innerHTML = '';
 
-        // Hook the validation to the form submit using native constraint validation
-        document.addEventListener('DOMContentLoaded', function() {
-            const startInput = document.getElementById('projectStartDate');
-            const endInput = document.getElementById('projectEndDate');
-            const projectForm = document.getElementById('newProjectForm');
-
-            if (startInput) {
-                startInput.addEventListener('input', updateEndDateMinFromStart);
-            }
-            if (endInput) {
-                endInput.addEventListener('input', function() { this.setCustomValidity(''); });
-            }
-
-            if (projectForm) {
-                projectForm.addEventListener('submit', function(event) {
-                    // Clear previous custom validity messages
-                    if (startInput) startInput.setCustomValidity('');
-                    if (endInput) endInput.setCustomValidity('');
-
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-
-                    // Convert to Date objects (use timezone-neutral parse)
-                    const startVal = startInput ? startInput.value : '';
-                    const endVal = endInput ? endInput.value : '';
-                    let isValid = true;
-
-                    if (startVal) {
-                        const sDate = new Date(startVal + 'T00:00:00');
-                        if (sDate.getTime() <= today.getTime()) {
-                            startInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
-                            isValid = false;
-                        }
-                    }
-
-                    if (startVal && endVal) {
-                        const sDate = new Date(startVal + 'T00:00:00');
-                        const eDate = new Date(endVal + 'T00:00:00');
-                        if (sDate.getTime() >= eDate.getTime()) {
-                            startInput.setCustomValidity('A data de início deve ser anterior à data de fim.');
-                            endInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
-                            isValid = false;
-                        }
-                    }
-
-                    if (!isValid || !projectForm.checkValidity()) {
-                        // Show browser validation UI
-                        projectForm.reportValidity();
-                        event.preventDefault();
-                    }
-                });
-            }
-        });
-
-        function filterAwards(type, btnElement) {
-            const buttons = btnElement.parentElement.querySelectorAll('button');
-            buttons.forEach(btn => { btn.classList.remove('btn-primary', 'text-white'); btn.classList.add('btn-white', 'border', 'text-muted'); });
-            btnElement.classList.remove('btn-white', 'border', 'text-muted'); btnElement.classList.add('btn-primary', 'text-white');
-            const items = document.querySelectorAll('.award-item');
-            items.forEach(item => { if (type === 'all' || item.getAttribute('data-type') === type) item.style.display = 'block'; else item.style.display = 'none'; });
-        }
-
-        // FUNÇÕES PARA EQUIPA
-        
-        /*<![CDATA[*/
-        // Recebe o mapa do backend: { courseId: [studentId1, studentId2], ... }
-        const takenMap = /*[[${takenMap}]]*/ {}; 
-        /*]]>*/
-
-        function updateTakenStatus() {
-            const courseSelect = document.getElementById('teamCourseSelect');
-            const courseId = courseSelect.value;
-            
-            // Lista de IDs ocupados para o curso selecionado
-            const takenIds = (courseId && takenMap[courseId]) ? takenMap[courseId] : [];
-
-            // Percorre todos os selects de membros
-            const allSelects = document.querySelectorAll('.member-select');
-            
-            allSelects.forEach(select => {
-                const options = select.querySelectorAll('option');
-                options.forEach(opt => {
-                    // Se for professor (sem data-student-id), ignora e mantém ativo
-                    if (!opt.getAttribute('data-student-id')) return;
-
-                    const sId = parseInt(opt.getAttribute('data-student-id'));
-
-                    // Se o ID estiver na lista de ocupados deste curso
-                    if (takenIds.includes(sId)) {
-                        opt.setAttribute('data-taken', 'true');
-                        opt.disabled = true; // Fica cinzento nativamente
-                        
-                        // Se estava selecionado, limpa a seleção
-                        if (select.value == sId) {
-                            select.value = ""; 
-                        }
-                    } else {
-                        opt.setAttribute('data-taken', 'false');
-                        // O updateOptions() reativará se não estiver duplicado localmente
-                    }
-                });
-            });
-
-            // Chama a função de atualização visual local
-            updateOptions();
-        }
-
-        function updateOptions() {
-            const allSelects = document.querySelectorAll('.member-select');
-            const selectedValues = new Set();
-            
-            // 1. Recolhe valores selecionados localmente
-            allSelects.forEach(select => { 
-                if (select.value && select.value !== "") selectedValues.add(select.value); 
-            });
-
-            // 2. Aplica bloqueios
-            allSelects.forEach(select => {
-                const myValue = select.value;
-                const options = select.querySelectorAll('option');
-                
-                options.forEach(opt => {
-                    if (!opt.value) return;
-
-                    // A. Bloqueio por Curso (Server-side) - Prioritário
-                    if (opt.getAttribute('data-taken') === 'true') {
-                        opt.disabled = true;
-                        return; 
-                    }
-
-                    // B. Bloqueio Local (Já escolhido noutro campo)
-                    if (selectedValues.has(opt.value) && opt.value !== myValue) {
-                        opt.disabled = true;
-                    } else {
-                        opt.disabled = false;
-                    }
-                });
+        if (notifications.length === 0) {
+            noNotificationsMessage.style.display = 'block';
+            notificationsContainer.appendChild(noNotificationsMessage);
+        } else {
+            noNotificationsMessage.style.display = 'none';
+            notifications.forEach(notification => {
+                const notificationElement = createNotificationElement(notification);
+                notificationsContainer.appendChild(notificationElement);
             });
         }
 
-        function addDeveloperField() {
-            const container = document.getElementById('developers-container');
-            const firstRow = container.querySelector('.developer-row');
-            const newRow = firstRow.cloneNode(true);
-            const select = newRow.querySelector('select');
-            select.value = "";
-            
-            // Remove qualquer estado de "taken" residual do clone
-            const options = select.querySelectorAll('option');
-            options.forEach(opt => {
-                // Se o curso selecionado bloquear este aluno, mantém taken=true
-                // Caso contrário, limpa
-                // O updateTakenStatus correria aqui idealmente, mas o updateOptions vai corrigir o disable
-            });
-
-            if (!newRow.querySelector('.btn-remove')) {
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'btn btn-light border-0 text-danger ms-2 btn-remove';
-                removeBtn.innerHTML = '<i data-lucide="trash-2" style="width:16px;"></i>';
-                removeBtn.onclick = function() { this.parentElement.remove(); updateOptions(); };
-                newRow.appendChild(removeBtn);
-            }
-            container.appendChild(newRow);
-            lucide.createIcons();
-            
-            // Garante que o estado visual (disabled) está correto para o novo campo
-            // baseando-se no curso atual selecionado
-            updateTakenStatus(); 
-        }
-
-        function prepareDeleteTeamModal(button) {
-            const teamId = button.getAttribute('data-team-id');
-            document.getElementById('deleteTeamIdField').value = teamId;
-        }
-
-        // Notification Sidebar JavaScript
-        function toggleNotificationSidebar() {
-            const sidebar = document.getElementById('notificationSidebar');
-            sidebar.classList.toggle('open'); // Always toggle the sidebar open/closed
-            if (sidebar.classList.contains('open')) {
-                fetchNotifications(); // Re-fetch notifications when opening
-            }
-        }
-
-        async function fetchNotifications() {
-            const notificationsContainer = document.getElementById('notificationsContainer');
-            const notificationCountBadge = document.getElementById('notificationCount');
-            const notificationBellIcon = document.getElementById('notificationBellIcon');
-            const noNotificationsMessage = document.getElementById('noNotifications');
-
-            // Show loading state
-            notificationsContainer.innerHTML = '<div class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">A carregar notificações...</p></div>';
+        // Update the unread count
+        const unreadCount = notifications.filter(n => !n.read).length;
+        if (unreadCount > 0) {
+            notificationCountBadge.textContent = unreadCount;
+            notificationCountBadge.style.display = 'block';
+            notificationBellIcon.classList.remove('text-secondary');
+            notificationBellIcon.classList.add('text-danger');
+        } else {
             notificationCountBadge.style.display = 'none';
             notificationBellIcon.classList.remove('text-danger');
             notificationBellIcon.classList.add('text-secondary');
+        }
 
-            // Try to fetch from the real API first
-            let notifications = [];
-            try {
-                const response = await fetch('/api/notifications/teacher');
-                if (response.ok) {
-                    notifications = await response.json();
-                } else {
-                    console.log('API returned ' + response.status + ', using empty list');
+        // Re-initialize Lucide icons for any new elements
+        lucide.createIcons();
+    }
+
+    function createNotificationElement(notification) {
+        const item = document.createElement('div');
+        item.classList.add('notification-item');
+        if (!notification.read) {
+            item.classList.add('unread');
+        }
+
+        let iconHtml = '';
+        let iconBgClass = 'bg-primary'; // Default icon background
+        switch (notification.type) {
+            case 'AWARD':
+                iconHtml = '<i data-lucide="award" class="w-5 h-5"></i>';
+                iconBgClass = 'bg-primary';
+                break;
+            case 'TEAM_CREATED':
+                iconHtml = '<i data-lucide="users" class="w-5 h-5"></i>';
+                iconBgClass = 'bg-warning';
+                break;
+            case 'PROJECT_COMPLETED':
+                iconHtml = '<i data-lucide="check-circle" class="w-5 h-5"></i>';
+                iconBgClass = 'bg-success';
+                break;
+            case 'REMINDER':
+                iconHtml = '<i data-lucide="info" class="w-5 h-5"></i>';
+                iconBgClass = 'bg-info';
+                break;
+            default:
+                iconHtml = '<i data-lucide="bell" class="w-5 h-5"></i>';
+                iconBgClass = 'bg-secondary';
+        }
+
+        item.innerHTML = `
+            <div class="notification-icon ${iconBgClass}">${iconHtml}</div>
+            <div class="notification-content">
+                <h6>${notification.title}</h6>
+                <p>${notification.message}</p>
+                <div class="notification-actions">
+                    ${notification.link ? `<button class="btn btn-sm btn-outline-primary" onclick="window.location.href='${notification.link}'">Ver Detalhes</button>` : ''}
+                    ${!notification.read ? `<button class="btn btn-sm btn-outline-secondary" onclick="markNotificationAsRead('${notification.id}')">Marcar como lida</button>` : ''}
+                </div>
+            </div>
+            <span class="notification-time">${timeAgo(notification.timestamp)}</span>
+        `;
+        return item;
+    }
+
+    async function markNotificationAsRead(notificationId) {
+        try {
+            const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            } catch (apiError) {
-                console.log('API error:', apiError, '- using empty list');
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            // Display the notifications
-            notificationsContainer.innerHTML = '';
-
-            if (notifications.length === 0) {
-                noNotificationsMessage.style.display = 'block';
-                notificationsContainer.appendChild(noNotificationsMessage);
-            } else {
-                noNotificationsMessage.style.display = 'none';
-                notifications.forEach(notification => {
-                    const notificationElement = createNotificationElement(notification);
-                    notificationsContainer.appendChild(notificationElement);
-                });
-            }
-
-            // Update the unread count
-            const unreadCount = notifications.filter(n => !n.read).length;
-            if (unreadCount > 0) {
-                notificationCountBadge.textContent = unreadCount;
-                notificationCountBadge.style.display = 'block';
-                notificationBellIcon.classList.remove('text-secondary');
-                notificationBellIcon.classList.add('text-danger');
-            } else {
-                notificationCountBadge.style.display = 'none';
-                notificationBellIcon.classList.remove('text-danger');
-                notificationBellIcon.classList.add('text-secondary');
-            }
-
-            // Re-initialize Lucide icons for any new elements
-            lucide.createIcons();
+            fetchNotifications(); // Reload notifications to update UI
+        } catch (error) {
+            console.error('Erro ao marcar notificação como lida:', error);
         }
+    }
 
-        function createNotificationElement(notification) {
-            const item = document.createElement('div');
-            item.classList.add('notification-item');
-            if (!notification.read) {
-                item.classList.add('unread');
-            }
+    function timeAgo(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const seconds = Math.floor((now - date) / 1000);
 
-            let iconHtml = '';
-            let iconBgClass = 'bg-primary'; // Default icon background
-            switch (notification.type) {
-                case 'AWARD':
-                    iconHtml = '<i data-lucide="award" class="w-5 h-5"></i>';
-                    iconBgClass = 'bg-primary';
-                    break;
-                case 'TEAM_CREATED':
-                    iconHtml = '<i data-lucide="users" class="w-5 h-5"></i>';
-                    iconBgClass = 'bg-warning';
-                    break;
-                case 'PROJECT_COMPLETED':
-                    iconHtml = '<i data-lucide="check-circle" class="w-5 h-5"></i>';
-                    iconBgClass = 'bg-success';
-                    break;
-                case 'REMINDER':
-                    iconHtml = '<i data-lucide="info" class="w-5 h-5"></i>';
-                    iconBgClass = 'bg-info';
-                    break;
-                default:
-                    iconHtml = '<i data-lucide="bell" class="w-5 h-5"></i>';
-                    iconBgClass = 'bg-secondary';
-            }
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " anos atrás";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " meses atrás";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " dias atrás";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " horas atrás";
+        return Math.floor(seconds / 60) + " minutos atrás";
+    }
 
-            item.innerHTML = `
-                <div class="notification-icon ${iconBgClass}">${iconHtml}</div>
-                <div class="notification-content">
-                    <h6>${notification.title}</h6>
-                    <p>${notification.message}</p>
-                    <div class="notification-actions">
-                        ${notification.link ? `<button class="btn btn-sm btn-outline-primary" onclick="window.location.href='${notification.link}'">Ver Detalhes</button>` : ''}
-                        ${!notification.read ? `<button class="btn btn-sm btn-outline-secondary" onclick="markNotificationAsRead('${notification.id}')">Marcar como lida</button>` : ''}
+    // Auto-dismiss success alerts after 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const successAlert = document.querySelector('.alert-success');
+        if (successAlert) {
+            setTimeout(function() {
+                const bsAlert = new bootstrap.Alert(successAlert);
+                bsAlert.close();
+            }, 3000);
+        }
+    });
+</script>
+
+<!-- Modal para Atribuir Prémio à Equipa -->
+<div class="modal fade" id="assignAwardToTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Atribuir Prémio à Equipa</h4>
+                    <p class="text-muted small mb-0">Selecione um prémio para a equipa <span class="fw-bold" id="assignAwardToTeamName"></span>.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/action/assign-award-to-team}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                    <input type="hidden" name="teamId" id="assignAwardToTeamId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Prémio</label>
+                        <select name="awardId" class="form-select bg-light border-0 py-2" required>
+                            <option value="">Selecione um prémio...</option>
+                            <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                        </select>
                     </div>
-                </div>
-                <span class="notification-time">${timeAgo(notification.timestamp)}</span>
-            `;
-            return item;
-        }
 
-        async function markNotificationAsRead(notificationId) {
-            try {
-                const response = await fetch(`/api/notifications/${notificationId}/read`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                fetchNotifications(); // Reload notifications to update UI
-            } catch (error) {
-                console.error('Erro ao marcar notificação como lida:', error);
-            }
-        }
-
-        function timeAgo(dateString) {
-            const now = new Date();
-            const date = new Date(dateString);
-            const seconds = Math.floor((now - date) / 1000);
-
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + " anos atrás";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + " meses atrás";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + " dias atrás";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + " horas atrás";
-            return Math.floor(seconds / 60) + " minutos atrás";
-        }
-
-        // Auto-dismiss success alerts after 3 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const successAlert = document.querySelector('.alert-success');
-            if (successAlert) {
-                setTimeout(function() {
-                    const bsAlert = new bootstrap.Alert(successAlert);
-                    bsAlert.close();
-                }, 3000);
-            }
-        });
-    </script>
-
-    <!-- Modal para Atribuir Prémio à Equipa -->
-    <div class="modal fade" id="assignAwardToTeamModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Atribuir Prémio à Equipa</h4>
-                        <p class="text-muted small mb-0">Selecione um prémio para a equipa <span class="fw-bold" id="assignAwardToTeamName"></span>.</p>
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form th:action="@{/action/assign-award-to-team}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
-                        <input type="hidden" name="teamId" id="assignAwardToTeamId">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Prémio</label>
-                            <select name="awardId" class="form-select bg-light border-0 py-2" required>
-                                <option value="">Selecione um prémio...</option>
-                                <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
-                            </select>
-                        </div>
-
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
-                        </div>
-                    </form>
-                </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal para Atribuir Prémio a Aluno da Equipa -->
-    <div class="modal fade" id="assignAwardToStudentInTeamModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold">Atribuir Prémio a Aluno da Equipa</h4>
-                        <p class="text-muted small mb-0">Selecione um aluno da equipa <span class="fw-bold" id="assignAwardToStudentInTeamName"></span> e um prémio.</p>
+<!-- Modal para Atribuir Prémio a Aluno da Equipa -->
+<div class="modal fade" id="assignAwardToStudentInTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Atribuir Prémio a Aluno da Equipa</h4>
+                    <p class="text-muted small mb-0">Selecione um aluno da equipa <span class="fw-bold" id="assignAwardToStudentInTeamName"></span> e um prémio.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/action/assign-award-to-student-in-team}" method="POST">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+                    <input type="hidden" name="teamId" id="assignAwardToStudentInTeamTeamId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Aluno</label>
+                        <select name="studentId" id="assignAwardToStudentInTeamStudentSelect" class="form-select bg-light border-0 py-2" required>
+                            <option value="">Selecione um aluno...</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form th:action="@{/action/assign-award-to-student-in-team}" method="POST">
-                        <input type="hidden" name="teacherId" th:value="${teacher.id}">
-                        <input type="hidden" name="teamId" id="assignAwardToStudentInTeamTeamId">
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Aluno</label>
-                            <select name="studentId" id="assignAwardToStudentInTeamStudentSelect" class="form-select bg-light border-0 py-2" required>
-                                <option value="">Selecione um aluno...</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Prémio</label>
+                        <select name="awardId" class="form-select bg-light border-0 py-2" required>
+                            <option value="">Selecione um prémio...</option>
+                            <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                        </select>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Prémio</label>
-                            <select name="awardId" class="form-select bg-light border-0 py-2" required>
-                                <option value="">Selecione um prémio...</option>
-                                <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
-                            </select>
-                        </div>
-
-                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Atribuir Prémio</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <script th:inline="javascript">
-        // ... (existing JavaScript code) ...
+<script th:inline="javascript">
+    // ... (existing JavaScript code) ...
 
-        function prepareAssignAwardToTeamModal(button) {
-            const teamId = button.getAttribute('data-team-id');
-            const teamName = button.getAttribute('data-team-name');
+    function prepareAssignAwardToTeamModal(button) {
+        const teamId = button.getAttribute('data-team-id');
+        const teamName = button.getAttribute('data-team-name');
 
-            document.getElementById('assignAwardToTeamId').value = teamId;
-            document.getElementById('assignAwardToTeamName').textContent = teamName;
+        document.getElementById('assignAwardToTeamId').value = teamId;
+        document.getElementById('assignAwardToTeamName').textContent = teamName;
+    }
+
+    function prepareAssignAwardToStudentInTeamModal(button) {
+        const teamId = button.getAttribute('data-team-id');
+        const teamName = button.getAttribute('data-team-name');
+        const smId = button.getAttribute('data-sm-id');
+        const smName = button.getAttribute('data-sm-name');
+        const poId = button.getAttribute('data-po-id');
+        const poName = button.getAttribute('data-po-name');
+        const devsRaw = button.getAttribute('data-devs'); // Format: "id:name,id:name"
+
+        document.getElementById('assignAwardToStudentInTeamTeamId').value = teamId;
+        document.getElementById('assignAwardToStudentInTeamName').textContent = teamName;
+
+        const studentSelect = document.getElementById('assignAwardToStudentInTeamStudentSelect');
+        studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>'; // Clear previous options
+
+        // Add Scrum Master
+        if (smId && smName) {
+            const option = document.createElement('option');
+            option.value = smId;
+            option.textContent = smName + ' (Scrum Master)';
+            studentSelect.appendChild(option);
         }
 
-        function prepareAssignAwardToStudentInTeamModal(button) {
-            const teamId = button.getAttribute('data-team-id');
-            const teamName = button.getAttribute('data-team-name');
-            const smId = button.getAttribute('data-sm-id');
-            const smName = button.getAttribute('data-sm-name');
-            const poId = button.getAttribute('data-po-id');
-            const poName = button.getAttribute('data-po-name');
-            const devsRaw = button.getAttribute('data-devs'); // Format: "id:name,id:name"
-
-            document.getElementById('assignAwardToStudentInTeamTeamId').value = teamId;
-            document.getElementById('assignAwardToStudentInTeamName').textContent = teamName;
-
-            const studentSelect = document.getElementById('assignAwardToStudentInTeamStudentSelect');
-            studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>'; // Clear previous options
-
-            // Add Scrum Master
-            if (smId && smName) {
-                const option = document.createElement('option');
-                option.value = smId;
-                option.textContent = smName + ' (Scrum Master)';
-                studentSelect.appendChild(option);
-            }
-
-            // Add Product Owner
-            if (poId && poName) {
-                const option = document.createElement('option');
-                option.value = poId;
-                option.textContent = poName + ' (Product Owner)';
-                studentSelect.appendChild(option);
-            }
-
-            // Add Developers
-            if (devsRaw) {
-                const devs = devsRaw.split(',').filter(s => s.trim() !== '');
-                devs.forEach(dev => {
-                    const parts = dev.split(':');
-                    if (parts.length === 2) {
-                        const devId = parts[0];
-                        const devName = parts[1];
-                        const option = document.createElement('option');
-                        option.value = devId;
-                        option.textContent = devName + ' (Developer)';
-                        studentSelect.appendChild(option);
-                    }
-                });
-            }
+        // Add Product Owner
+        if (poId && poName) {
+            const option = document.createElement('option');
+            option.value = poId;
+            option.textContent = poName + ' (Product Owner)';
+            studentSelect.appendChild(option);
         }
-    </script>
+
+        // Add Developers
+        if (devsRaw) {
+            const devs = devsRaw.split(',').filter(s => s.trim() !== '');
+            devs.forEach(dev => {
+                const parts = dev.split(':');
+                if (parts.length === 2) {
+                    const devId = parts[0];
+                    const devName = parts[1];
+                    const option = document.createElement('option');
+                    option.value = devId;
+                    option.textContent = devName + ' (Developer)';
+                    studentSelect.appendChild(option);
+                }
+            });
+        }
+    }
+</script>
 </body>
 </html>
