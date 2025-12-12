@@ -38,7 +38,7 @@ public class AwardService {
         this.teamRepo = teamRepo;
     }
 
-    // --- MÉTODOS CRUD (Que estavam em falta) ---
+    // --- MÉTODOS CRUD ---
     public List<Award> getAllAwards() {
         return awardRepo.findAll();
     }
@@ -92,7 +92,7 @@ public class AwardService {
         // Atualizar score da equipa
         updateTeamScore(team);
 
-        // Opcional: Atualizar score individual dos membros (se quiseres que conte para o aluno)
+        // Opcional: Atualizar score individual dos membros
         if (team.getScrumMaster() != null) {
             updateUserScore(team.getScrumMaster());
         }
@@ -109,12 +109,16 @@ public class AwardService {
         int individualPoints = studentAwardRepo.findAllByStudentId(studentId).stream()
                 .mapToInt(StudentAward::getPointsEarned).sum();
 
-        // 2. Pontos vindos da Equipa (se o aluno pertencer a uma)
+        // 2. Pontos vindos da Equipa (CORRIGIDO PARA SUPORTAR MÚLTIPLAS EQUIPAS)
         int teamPoints = 0;
-        Team team = teamRepo.findTeamByUserId(studentId); // Certifica-te que este método existe no TeamRepository
-        if (team != null) {
-            teamPoints = teamAwardRepo.findByTeamId(team.getId()).stream()
-                    .mapToInt(TeamAward::getPointsEarned).sum();
+        List<Team> teams = teamRepo.findTeamByUserId(studentId); // Agora retorna Lista
+        
+        if (teams != null && !teams.isEmpty()) {
+            // Itera sobre todas as equipas do aluno e soma os pontos
+            for (Team team : teams) {
+                teamPoints += teamAwardRepo.findByTeamId(team.getId()).stream()
+                        .mapToInt(TeamAward::getPointsEarned).sum();
+            }
         }
 
         return individualPoints + teamPoints;
@@ -128,10 +132,13 @@ public class AwardService {
         if (score == null) {
             score = new Score();
             score.setUser(user);
-            // Tenta associar equipa se existir
-            Team team = teamRepo.findTeamByUserId(user.getId());
-            if (team != null) {
-                score.setTeam(team);
+            
+            // Tenta associar equipa se existir (CORRIGIDO PARA LISTA)
+            List<Team> teams = teamRepo.findTeamByUserId(user.getId());
+            if (teams != null && !teams.isEmpty()) {
+                // Como é um score global do user, associamos à primeira equipa encontrada 
+                // apenas para preencher o campo, caso a BD obrigue.
+                score.setTeam(teams.get(0));
             }
         }
         score.setTotalPoints(total);

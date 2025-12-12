@@ -84,7 +84,7 @@ public class DashboardService {
             return pp;
         }).collect(Collectors.toList()));
 
-        // Stats de prémios (Pode retornar lista vazia se a query no repo estiver incorreta, mas não crasha)
+        // Stats de prémios
         try {
             dto.setAwardStats(studentAwardRepo.countAwardsByCourse(courseId));
         } catch (Exception e) {
@@ -94,7 +94,7 @@ public class DashboardService {
         return dto;
     }
 
-    // ===================== DASHBOARD ESTUDANTE =====================
+    // ===================== DASHBOARD ESTUDANTE (CORRIGIDO) =====================
     @Transactional(readOnly = true)
     public StudentDashboardDTO getStudentDashboard(Long studentId) {
 
@@ -108,7 +108,6 @@ public class DashboardService {
         dto.setProfileImage(user.getProfileImage());
         dto.setStudentTag(user.getStudentTag());
 
-        // CORREÇÃO: Preencher campos do modal para evitar erro no Thymeleaf
         dto.setNotificationAwards(user.isNotificationAwards());
         dto.setNotificationRankings(user.isNotificationRankings());
 
@@ -136,65 +135,42 @@ public class DashboardService {
         dto.setEnrolledCourses(enrolledList);
         dto.setAvailableCourses(availableList);
 
-        // 3. Estatísticas e Ranking
+        // 3. Lógica Multi-Curso para Projetos e Equipas
+        List<Project> allStudentProjects = new ArrayList<>();
+
         if (!enrollments.isEmpty()) {
+            // Assume o primeiro curso como o "Principal" para mostrar no Dashboard (Rankings, etc)
             Course mainCourse = enrollments.get(0).getCourse();
             dto.setCourseId(mainCourse.getId());
             dto.setCourseName(mainCourse.getName());
 
-            List<RankingDTO> allRankings = getStudentRanking(mainCourse.getId());
-
-            dto.setTotalClassStudents(allRankings.size());
-            dto.setTotalClassTeams((int) teamRepo.countByCourseId(mainCourse.getId()));
-
-            if (!allRankings.isEmpty()) {
-                RankingDTO top = allRankings.get(0);
-                dto.setTopPerformerName(top.getName());
-                dto.setTopPerformerScore(top.getTotalPoints().intValue());
-
-                RankingDTO bottom = allRankings.get(allRankings.size() - 1);
-                dto.setScoreVariation((int) (top.getTotalPoints() - bottom.getTotalPoints()));
-
-                double avg = allRankings.stream().mapToLong(RankingDTO::getTotalPoints).average().orElse(0.0);
-                dto.setClassAverage(avg);
-
-                int myRank = 0;
-                for (int i = 0; i < allRankings.size(); i++) {
-                    if (allRankings.get(i).getId().equals(studentId)) {
-                        myRank = i + 1;
-                        break;
-                    }
-                }
-                dto.setCurrentRank(myRank > 0 ? myRank : allRankings.size());
-                dto.setTopStudents(allRankings.stream().limit(5).collect(Collectors.toList()));
-            }
+            // Preenche estatísticas apenas para o curso principal
+            fillCourseStatistics(dto, mainCourse.getId(), studentId);
         } else {
-            dto.setTotalClassStudents(0);
-            dto.setTopPerformerName("-");
-            dto.setScoreVariation(0);
-            dto.setClassAverage(0);
-            dto.setCurrentRank(0);
-            dto.setTopStudents(new ArrayList<>());
+            clearCourseStatistics(dto);
         }
 
-        // 4. Equipa
-        Team team = teamRepo.findTeamByUserId(studentId);
-        List<Project> studentProjects = new ArrayList<>();
-        if (team != null) {
-            dto.setTeamName(team.getName());
-            if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
-                dto.setRoleInTeam("Scrum Master");
-            } else if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
-                dto.setRoleInTeam("Product Owner");
-            } else {
-                dto.setRoleInTeam("Developer");
-            }
-            if (team.getProject() != null) {
-                dto.setProjectId(team.getProject().getId());
-                studentProjects.add(team.getProject());
-            }
+        // 4. Procurar Equipas e Projetos em TODAS as inscrições
+        for (Enrollment enrollment : enrollments) {
+            Long currentCourseId = enrollment.getCourse().getId();
+
+            // Usa o novo método do repositório para buscar a equipa específica DESTE curso
+            teamRepo.findTeamByCourseAndUser(currentCourseId, studentId).ifPresent(team -> {
+                
+                // Se a equipa for do curso que estamos a mostrar como "Principal", preenche o cabeçalho
+                if (dto.getCourseId() != null && dto.getCourseId().equals(currentCourseId)) {
+                    dto.setTeamName(team.getName());
+                    dto.setRoleInTeam(getRoleInTeam(team, studentId));
+                }
+
+                // Se a equipa tiver projeto, adiciona à lista
+                if (team.getProject() != null) {
+                    allStudentProjects.add(team.getProject());
+                }
+            });
         }
-        dto.setProjects(studentProjects);
+        
+        dto.setProjects(allStudentProjects);
 
         return dto;
     }
@@ -281,5 +257,50 @@ public class DashboardService {
 
     public List<RankingDTO> getTeamRanking(Long courseId) {
         return scoreRepo.getTeamRanking(courseId);
+    }
+
+    // ===================== HELPER METHODS =====================
+    
+    private String getRoleInTeam(Team team, Long studentId) {
+        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) return "Scrum Master";
+        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) return "Product Owner";
+        return "Developer";
+    }
+
+    private void fillCourseStatistics(StudentDashboardDTO dto, Long courseId, Long studentId) {
+        List<RankingDTO> allRankings = getStudentRanking(courseId);
+        dto.setTotalClassStudents(allRankings.size());
+        dto.setTotalClassTeams((int) teamRepo.countByCourseId(courseId));
+
+        if (!allRankings.isEmpty()) {
+            RankingDTO top = allRankings.get(0);
+            dto.setTopPerformerName(top.getName());
+            dto.setTopPerformerScore(top.getTotalPoints().intValue());
+
+            RankingDTO bottom = allRankings.get(allRankings.size() - 1);
+            dto.setScoreVariation((int) (top.getTotalPoints() - bottom.getTotalPoints()));
+
+            double avg = allRankings.stream().mapToLong(RankingDTO::getTotalPoints).average().orElse(0.0);
+            dto.setClassAverage(avg);
+
+            int myRank = 0;
+            for (int i = 0; i < allRankings.size(); i++) {
+                if (allRankings.get(i).getId().equals(studentId)) {
+                    myRank = i + 1;
+                    break;
+                }
+            }
+            dto.setCurrentRank(myRank > 0 ? myRank : allRankings.size());
+            dto.setTopStudents(allRankings.stream().limit(5).collect(Collectors.toList()));
+        }
+    }
+
+    private void clearCourseStatistics(StudentDashboardDTO dto) {
+        dto.setTotalClassStudents(0);
+        dto.setTopPerformerName("-");
+        dto.setScoreVariation(0);
+        dto.setClassAverage(0);
+        dto.setCurrentRank(0);
+        dto.setTopStudents(new ArrayList<>());
     }
 }
