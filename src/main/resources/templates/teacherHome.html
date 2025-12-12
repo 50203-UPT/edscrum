@@ -749,7 +749,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form th:action="@{/projects/create}" method="POST">
+                    <form id="newProjectForm" th:action="@{/projects/create}" method="POST">
                         <input type="hidden" name="teacherId" th:value="${teacher.id}" />
                         <input type="hidden" id="modalCourseId" name="courseId" />
 
@@ -766,11 +766,11 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Data de Início</label>
-                                <input type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                                <input id="projectStartDate" type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Data de Fim</label>
-                                <input type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                                <input id="projectEndDate" type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
                             </div>
                         </div>
                         
@@ -1186,7 +1186,106 @@
                 if (opt.getAttribute('data-course-id') === courseId) opt.style.display = 'block';
                 else opt.style.display = 'none';
             });
+            // Ensure date constraints are updated when modal opens
+            setProjectDateMinToTomorrow();
         }
+
+        // Date helpers and validation for project form
+        function formatDateToYMD(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function addDaysYMD(ymd, days) {
+            const date = new Date(ymd + 'T00:00:00');
+            date.setDate(date.getDate() + days);
+            return formatDateToYMD(date);
+        }
+
+        function setProjectDateMinToTomorrow() {
+            const startInput = document.getElementById('projectStartDate');
+            const endInput = document.getElementById('projectEndDate');
+            if (!startInput) return;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const minStart = formatDateToYMD(tomorrow);
+            startInput.min = minStart;
+
+            if (endInput) {
+                const startVal = startInput.value || minStart;
+                endInput.min = addDaysYMD(startVal, 1);
+            }
+        }
+
+        function updateEndDateMinFromStart() {
+            const startInput = document.getElementById('projectStartDate');
+            const endInput = document.getElementById('projectEndDate');
+            if (!startInput || !endInput) return;
+            if (startInput.value) {
+                endInput.min = addDaysYMD(startInput.value, 1);
+            }
+            // Clear previous messages when editing
+            startInput.setCustomValidity('');
+            endInput.setCustomValidity('');
+        }
+
+        // Hook the validation to the form submit using native constraint validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const startInput = document.getElementById('projectStartDate');
+            const endInput = document.getElementById('projectEndDate');
+            const projectForm = document.getElementById('newProjectForm');
+
+            if (startInput) {
+                startInput.addEventListener('input', updateEndDateMinFromStart);
+            }
+            if (endInput) {
+                endInput.addEventListener('input', function() { this.setCustomValidity(''); });
+            }
+
+            if (projectForm) {
+                projectForm.addEventListener('submit', function(event) {
+                    // Clear previous custom validity messages
+                    if (startInput) startInput.setCustomValidity('');
+                    if (endInput) endInput.setCustomValidity('');
+
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+
+                    // Convert to Date objects (use timezone-neutral parse)
+                    const startVal = startInput ? startInput.value : '';
+                    const endVal = endInput ? endInput.value : '';
+                    let isValid = true;
+
+                    if (startVal) {
+                        const sDate = new Date(startVal + 'T00:00:00');
+                        if (sDate.getTime() <= today.getTime()) {
+                            startInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
+                            isValid = false;
+                        }
+                    }
+
+                    if (startVal && endVal) {
+                        const sDate = new Date(startVal + 'T00:00:00');
+                        const eDate = new Date(endVal + 'T00:00:00');
+                        if (sDate.getTime() >= eDate.getTime()) {
+                            startInput.setCustomValidity('A data de início deve ser anterior à data de fim.');
+                            endInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
+                            isValid = false;
+                        }
+                    }
+
+                    if (!isValid || !projectForm.checkValidity()) {
+                        // Show browser validation UI
+                        projectForm.reportValidity();
+                        event.preventDefault();
+                    }
+                });
+            }
+        });
 
         function filterAwards(type, btnElement) {
             const buttons = btnElement.parentElement.querySelectorAll('button');
