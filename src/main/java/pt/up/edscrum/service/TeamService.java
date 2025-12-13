@@ -14,9 +14,12 @@ import pt.up.edscrum.repository.TeamRepository;
 public class TeamService {
 
     private final TeamRepository teamRepository;
+    private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
 
-    public TeamService(TeamRepository teamRepository) {
+    public TeamService(TeamRepository teamRepository,
+                      pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository) {
         this.teamRepository = teamRepository;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     public List<Team> getAllTeams() {
@@ -57,6 +60,13 @@ public class TeamService {
     // Método auxiliar para validar duplicações no SAVE (Backend safety)
     private void validateStudentAvailability(User student, Long courseId) {
         if (student != null && "STUDENT".equals(student.getRole())) {
+            // NOVA VALIDAÇÃO: Verificar se o aluno está inscrito no curso
+            boolean isEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(student.getId(), courseId);
+            if (!isEnrolled) {
+                throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) não está inscrito neste curso!");
+            }
+            
+            // Validação existente: Verificar duplicações
             long count = teamRepository.countStudentTeamsInCourse(student.getId(), courseId);
             if (count > 0) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) já pertence a uma equipa neste curso!");

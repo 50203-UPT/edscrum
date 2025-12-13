@@ -84,4 +84,13 @@ public class CourseService {
 
         enrollmentRepository.save(enrollment);
     }
+
+    // --- NOVO: Obter lista de alunos inscritos num curso ---
+    public List<User> getEnrolledStudentsByCourse(Long courseId) {
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        return enrollments.stream()
+                .map(Enrollment::getStudent)
+                .filter(user -> "STUDENT".equals(user.getRole()))
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

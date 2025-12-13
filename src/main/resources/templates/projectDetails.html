@@ -393,7 +393,7 @@
                                         </option>
 
                                         <option th:each="s : ${students}" 
-                                                th:if="${s.role == 'STUDENT'}"
+                                                th:if="${s.role == 'STUDENT' and #sets.contains(enrolledStudentIds, s.id)}"
                                                 th:value="${s.id}" 
                                                 th:text="${s.studentTag} + ' - ' + ${s.name}"
                                                 th:disabled="${#sets.contains(takenStudentIds, s.id)}"
@@ -407,7 +407,7 @@
                                     <select name="scrumMasterId" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
                                         <option value="">Escolher...</option>
                                         <option th:each="s : ${students}" 
-                                                th:if="${s.role == 'STUDENT'}"
+                                                th:if="${s.role == 'STUDENT' and #sets.contains(enrolledStudentIds, s.id)}"
                                                 th:value="${s.id}" 
                                                 th:text="${s.studentTag} + ' - ' + ${s.name}"
                                                 th:disabled="${#sets.contains(takenStudentIds, s.id)}"
@@ -426,7 +426,7 @@
                                         <select name="developerIds" class="form-select bg-light border-0 member-select" onchange="updateOptions()">
                                             <option value="">Selecionar Developer...</option>
                                             <option th:each="s : ${students}" 
-                                                    th:if="${s.role == 'STUDENT'}"
+                                                    th:if="${s.role == 'STUDENT' and #sets.contains(enrolledStudentIds, s.id)}"
                                                     th:value="${s.id}" 
                                                     th:text="${s.studentTag} + ' - ' + ${s.name}"
                                                     th:disabled="${#sets.contains(takenStudentIds, s.id)}"

@@ -279,6 +279,30 @@ public class WebController {
         // Necessário para o bloqueio dinâmico no modal de criação
         model.addAttribute("takenMap", teamService.getTakenStudentsMap());
 
+        // NOVO: Criar mapa de alunos inscritos por curso (courseId -> List<User>)
+        java.util.Map<Long, List<User>> enrolledStudentsMap = new java.util.HashMap<>();
+        for (Course course : teacherCourses) {
+            List<User> enrolledStudents = courseService.getEnrolledStudentsByCourse(course.getId());
+            enrolledStudentsMap.put(course.getId(), enrolledStudents);
+        }
+        model.addAttribute("enrolledStudentsMap", enrolledStudentsMap);
+
+        // NOVO: Criar mapa invertido - studentId -> lista de courseIds onde está inscrito
+        java.util.Map<Long, String> studentCoursesMap = new java.util.HashMap<>();
+        for (java.util.Map.Entry<Long, List<User>> entry : enrolledStudentsMap.entrySet()) {
+            Long courseId = entry.getKey();
+            List<User> students = entry.getValue();
+            for (User student : students) {
+                String existingCourses = studentCoursesMap.getOrDefault(student.getId(), "");
+                if (existingCourses.isEmpty()) {
+                    studentCoursesMap.put(student.getId(), courseId.toString());
+                } else {
+                    studentCoursesMap.put(student.getId(), existingCourses + "," + courseId);
+                }
+            }
+        }
+        model.addAttribute("studentCoursesMap", studentCoursesMap);
+
         return "teacherHome";
     }
 
@@ -642,6 +666,13 @@ public class WebController {
             // O project.getCourseId() vem do DTO
             java.util.Set<Long> takenIds = teamService.getTakenStudentIdsByCourse(project.getCourseId());
             model.addAttribute("takenStudentIds", takenIds);
+
+            // --- NOVO: Lista de Alunos inscritos neste curso ---
+            List<User> enrolledStudents = courseService.getEnrolledStudentsByCourse(project.getCourseId());
+            java.util.Set<Long> enrolledStudentIds = enrolledStudents.stream()
+                    .map(User::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+            model.addAttribute("enrolledStudentIds", enrolledStudentIds);
 
             return "projectDetails";
 

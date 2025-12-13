@@ -352,6 +352,14 @@
                     <div class="d-flex gap-3 text-muted small">
                         <span class="d-flex align-items-center gap-1"><i data-lucide="users" class="w-4 h-4"></i> <span th:text="${#lists.size(course.teams)} + ' equipas'">0 equipas</span></span>
                         <span class="d-flex align-items-center gap-1"><i data-lucide="folder-kanban" class="w-4 h-4"></i> <span th:text="${#lists.size(course.projects)} + ' projetos'">0 projetos</span></span>
+                        <button class="btn btn-link btn-sm p-0 d-flex align-items-center gap-1 text-decoration-none" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#enrolledStudentsModal"
+                                th:data-course-id="${course.id}"
+                                th:data-course-name="${course.name}"
+                                onclick="showEnrolledStudents(this)">
+                            <i data-lucide="user-check" class="w-4 h-4"></i> <span>Ver alunos inscritos</span>
+                        </button>
                     </div>
                 </div>
                 <span class="badge badge-blue-sem rounded-pill"><span th:text="${course.semester} + 'º Semestre'">Sem</span> - <span th:text="${course.year}">Ano</span></span>
@@ -721,14 +729,16 @@
                                 <option th:each="s : ${students}"
                                         th:if="${s.role == 'TEACHER'}"
                                         th:value="${s.id}"
-                                        th:text="${s.name}">
+                                        th:text="${s.name}"
+                                        data-role="TEACHER">
                                 </option>
 
                                 <option th:each="s : ${students}"
                                         th:if="${s.role == 'STUDENT'}"
                                         th:value="${s.id}"
                                         th:text="${s.studentTag} + ' - ' + ${s.name}"
-                                        th:data-student-id="${s.id}">
+                                        th:data-student-id="${s.id}"
+                                        th:attr="data-courses=${studentCoursesMap.get(s.id)}">
                                 </option>
                             </select>
                         </div>
@@ -741,7 +751,8 @@
                                         th:if="${s.role == 'STUDENT'}"
                                         th:value="${s.id}"
                                         th:text="${s.studentTag} + ' - ' + ${s.name}"
-                                        th:data-student-id="${s.id}">
+                                        th:data-student-id="${s.id}"
+                                        th:attr="data-courses=${studentCoursesMap.get(s.id)}">
                                 </option>
                             </select>
                         </div>
@@ -759,7 +770,8 @@
                                             th:if="${s.role == 'STUDENT'}"
                                             th:value="${s.id}"
                                             th:text="${s.studentTag} + ' - ' + ${s.name}"
-                                            th:data-student-id="${s.id}">
+                                            th:data-student-id="${s.id}"
+                                            th:attr="data-courses=${studentCoursesMap.get(s.id)}">
                                     </option>
                                 </select>
                             </div>
@@ -1381,23 +1393,51 @@
         allSelects.forEach(select => {
             const options = select.querySelectorAll('option');
             options.forEach(opt => {
-                // Se for professor (sem data-student-id), ignora e mantém ativo
+                // Se for opção vazia, ignora
+                if (!opt.value) return;
+
+                // Se for professor (data-role='TEACHER'), mantém sempre visível e ativo
+                if (opt.getAttribute('data-role') === 'TEACHER') {
+                    opt.style.display = '';
+                    opt.disabled = false;
+                    return;
+                }
+
+                // Se não tiver data-student-id, ignora
                 if (!opt.getAttribute('data-student-id')) return;
 
                 const sId = parseInt(opt.getAttribute('data-student-id'));
 
-                // Se o ID estiver na lista de ocupados deste curso
-                if (takenIds.includes(sId)) {
-                    opt.setAttribute('data-taken', 'true');
-                    opt.disabled = true; // Fica cinzento nativamente
+                // NOVA VALIDAÇÃO: Verificar se o aluno está inscrito no curso selecionado
+                const studentCourses = opt.getAttribute('data-courses');
+                const isEnrolled = studentCourses && courseId && studentCourses.split(',').includes(courseId);
 
+                if (!courseId || !isEnrolled) {
+                    // Se não há curso selecionado ou aluno não está inscrito, oculta a opção
+                    opt.style.display = 'none';
+                    opt.disabled = true;
+                    
                     // Se estava selecionado, limpa a seleção
                     if (select.value == sId) {
                         select.value = "";
                     }
                 } else {
-                    opt.setAttribute('data-taken', 'false');
-                    // O updateOptions() reativará se não estiver duplicado localmente
+                    // Aluno está inscrito, mostra a opção
+                    opt.style.display = '';
+                    
+                    // Se o ID estiver na lista de ocupados deste curso
+                    if (takenIds.includes(sId)) {
+                        opt.setAttribute('data-taken', 'true');
+                        opt.disabled = true; // Fica cinzento nativamente
+
+                        // Se estava selecionado, limpa a seleção
+                        if (select.value == sId) {
+                            select.value = "";
+                        }
+                    } else {
+                        opt.setAttribute('data-taken', 'false');
+                        // O updateOptions() reativará se não estiver duplicado localmente
+                    }
                 }
             });
         });
@@ -1422,6 +1462,12 @@
 
             options.forEach(opt => {
                 if (!opt.value) return;
+
+                // Se a opção está oculta (não inscrito no curso), mantém oculta e desabilitada
+                if (opt.style.display === 'none') {
+                    opt.disabled = true;
+                    return;
+                }
 
                 // A. Bloqueio por Curso (Server-side) - Prioritário
                 if (opt.getAttribute('data-taken') === 'true') {
@@ -1765,6 +1811,75 @@
             });
         }
     }
+
+    // Função para mostrar alunos inscritos no curso
+    function showEnrolledStudents(button) {
+        const courseId = button.getAttribute('data-course-id');
+        const courseName = button.getAttribute('data-course-name');
+        
+        // Atualizar título do modal
+        document.getElementById('enrolledStudentsModalTitle').textContent = courseName;
+        
+        // Obter lista de alunos inscritos do mapa
+        /*<![CDATA[*/
+        const enrolledMap = /*[[${enrolledStudentsMap}]]*/ {};
+        /*]]>*/
+        
+        const enrolledStudents = enrolledMap[courseId] || [];
+        const studentsListContainer = document.getElementById('enrolledStudentsList');
+        
+        // Limpar lista anterior
+        studentsListContainer.innerHTML = '';
+        
+        if (enrolledStudents.length === 0) {
+            studentsListContainer.innerHTML = '<div class="text-center py-4 text-muted"><i data-lucide="user-x" class="w-12 h-12 mb-2"></i><p>Nenhum aluno inscrito neste curso.</p></div>';
+        } else {
+            enrolledStudents.forEach(student => {
+                const studentDiv = document.createElement('div');
+                studentDiv.className = 'd-flex justify-content-between align-items-center py-2 px-3 bg-light rounded mb-2';
+                studentDiv.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width:32px; height:32px; font-size:0.8rem;">
+                            ${student.name ? student.name.charAt(0).toUpperCase() : 'A'}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${student.name}</div>
+                            <small class="text-muted">${student.studentTag || student.email}</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-success rounded-pill">Inscrito</span>
+                `;
+                studentsListContainer.appendChild(studentDiv);
+            });
+        }
+        
+        // Reinicializar ícones do Lucide
+        lucide.createIcons();
+    }
 </script>
+
+<!-- Modal para Ver Alunos Inscritos no Curso -->
+<div class="modal fade" id="enrolledStudentsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Alunos Inscritos</h4>
+                    <p class="text-muted small mb-0">Curso: <span class="fw-bold" id="enrolledStudentsModalTitle"></span></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="enrolledStudentsList" class="d-flex flex-column">
+                    <!-- A lista será populada pelo JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
