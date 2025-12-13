@@ -29,41 +29,83 @@ public class ProjectController {
         this.dashboardService = dashboardService;
     }
 
+    /**
+     * Obtém todos os projetos.
+     *
+     * @return Lista de Project
+     */
     @GetMapping
     public List<Project> getAllProjects() {
         return projectService.getAllProjects();
     }
 
+    /**
+     * Obtém um projeto por ID.
+     *
+     * @param id ID do projeto
+     * @return ResponseEntity com o Project
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
         Project project = projectService.getProjectById(id);
         return ResponseEntity.ok(project);
     }
 
+    /**
+     * Obtém detalhes avançados do projeto (inclui sprints, equipa e métricas).
+     *
+     * @param id ID do projeto
+     * @return ResponseEntity com ProjectDetailsDTO
+     */
     @GetMapping("/{id}/details")
     public ResponseEntity<ProjectDetailsDTO> getProjectDetails(@PathVariable Long id) {
         ProjectDetailsDTO details = dashboardService.getProjectDetails(id);
         return ResponseEntity.ok(details);
     }
 
+    /**
+     * Cria um novo projeto.
+     *
+     * @param project Dados do projeto no corpo da requisição
+     * @return ResponseEntity com o Project criado (201)
+     */
     @PostMapping
     public ResponseEntity<Project> createProject(@RequestBody Project project) {
         Project created = projectService.createProject(project);
         return ResponseEntity.status(201).body(created);
     }
 
+    /**
+     * Atualiza um projeto existente.
+     *
+     * @param id ID do projeto
+     * @param projectDetails Dados atualizados do projeto
+     * @return ResponseEntity com o Project atualizado
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
         Project updated = projectService.updateProject(id, projectDetails);
         return ResponseEntity.ok(updated);
     }
 
+    /**
+     * Elimina um projeto por ID.
+     *
+     * @param id ID do projeto a eliminar
+     * @return ResponseEntity sem conteúdo (204)
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Marca um projeto como concluído.
+     *
+     * @param id ID do projeto
+     * @return ResponseEntity 200 OK se concluído ou erro apropriado
+     */
     @PutMapping("/{id}/complete")
     public ResponseEntity<?> completeProject(@PathVariable Long id) {
         try {
@@ -76,6 +118,12 @@ public class ProjectController {
         }
     }
 
+    /**
+     * Reabre um projeto que estava concluído.
+     *
+     * @param id ID do projeto
+     * @return ResponseEntity 200 OK se reaberto ou erro 500 em falha
+     */
     @PutMapping("/{id}/reopen")
     public ResponseEntity<?> reopenProject(@PathVariable Long id) {
         try {
@@ -86,6 +134,13 @@ public class ProjectController {
         }
     }
 
+    /**
+     * Remove a associação de uma equipa a um projeto.
+     *
+     * @param projectId ID do projeto
+     * @param teamId ID da equipa
+     * @return ResponseEntity 200 OK se removido ou 500 em caso de erro
+     */
     @PostMapping("/{projectId}/remove-team/{teamId}")
     public ResponseEntity<?> removeTeamFromProject(@PathVariable Long projectId, @PathVariable Long teamId) {
         try {

@@ -36,29 +36,59 @@ public class TeamController {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Obtém todas as equipas.
+     *
+     * @return Lista de Team
+     */
     @GetMapping
     public List<Team> getAllTeams() {
         return teamService.getAllTeams();
     }
 
+    /**
+     * Obtém uma equipa por ID.
+     *
+     * @param id ID da equipa
+     * @return ResponseEntity com o Team
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
         Team team = teamService.getTeamById(id);
         return ResponseEntity.ok(team);
     }
 
+    /**
+     * Cria uma nova equipa.
+     *
+     * @param team Dados da equipa no corpo da requisição
+     * @return ResponseEntity com o Team criado (201)
+     */
     @PostMapping
     public ResponseEntity<Team> createTeam(@RequestBody Team team) {
         Team created = teamService.createTeam(team);
         return ResponseEntity.status(201).body(created);
     }
 
+    /**
+     * Atualiza uma equipa existente.
+     *
+     * @param id ID da equipa a atualizar
+     * @param teamDetails Dados atualizados
+     * @return ResponseEntity com o Team atualizado
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Team> updateTeam(@PathVariable Long id, @RequestBody Team teamDetails) {
         Team updated = teamService.updateTeam(id, teamDetails);
         return ResponseEntity.ok(updated);
     }
 
+    /**
+     * Elimina uma equipa por ID.
+     *
+     * @param id ID da equipa a eliminar
+     * @return ResponseEntity sem conteúdo (204)
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
         teamService.deleteTeam(id);

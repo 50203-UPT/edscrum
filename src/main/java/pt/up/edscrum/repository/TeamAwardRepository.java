@@ -9,13 +9,40 @@ import pt.up.edscrum.model.TeamAward;
 
 public interface TeamAwardRepository extends JpaRepository<TeamAward, Long> {
 
+    /**
+     * Encontra todos os TeamAwards relacionados com uma equipa.
+     *
+     * @param teamId id da equipa
+     * @return lista de `TeamAward`
+     */
     List<TeamAward> findByTeamId(Long teamId);
-    
-    // Verificar se já existe prémio atribuído à equipa no projeto
+
+    /**
+     * Procura um `TeamAward` por equipa, prémio e projeto.
+     *
+     * @param teamId id da equipa
+     * @param awardId id do prémio
+     * @param projectId id do projeto
+     * @return Optional com o TeamAward se existir
+     */
     Optional<TeamAward> findByTeamIdAndAwardIdAndProjectId(Long teamId, Long awardId, Long projectId);
-    
+
+    /**
+     * Verifica se já existe uma atribuição de prémio para a equipa no projeto.
+     *
+     * @param teamId id da equipa
+     * @param awardId id do prémio
+     * @param projectId id do projeto
+     * @return true se existir, false caso contrário
+     */
     boolean existsByTeamIdAndAwardIdAndProjectId(Long teamId, Long awardId, Long projectId);
-    
-    // Obter todos os prémios atribuídos à equipa num projeto
+
+    /**
+     * Lista todas as atribuições de prémios de uma equipa num projeto.
+     *
+     * @param teamId id da equipa
+     * @param projectId id do projeto
+     * @return lista de `TeamAward`
+     */
     List<TeamAward> findByTeamIdAndProjectId(Long teamId, Long projectId);
 }

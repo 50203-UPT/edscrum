@@ -8,5 +8,11 @@ import pt.up.edscrum.model.UserStory;
 
 public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
 
+    /**
+     * Obtém as user stories associadas a um sprint.
+     *
+     * @param sprintId id do sprint
+     * @return lista de `UserStory` pertencentes ao sprint
+     */
     List<UserStory> findBySprintId(Long sprintId);
 }

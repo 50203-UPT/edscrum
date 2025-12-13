@@ -16,6 +16,12 @@ import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 
 @Service
+/**
+ * Serviço que gere operações relacionadas com `Team` (equipas): CRUD,
+ * validações de duplicações, obtenção de membros e listas de equipas
+ * disponíveis por curso. Também integra atribuição de prémios automáticos via
+ * `AwardService` durante eventos de criação de equipa.
+ */
 public class TeamService {
 
     private final TeamRepository teamRepository;
@@ -23,7 +29,7 @@ public class TeamService {
     private final ScoreRepository scoreRepository;
     private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
     private final pt.up.edscrum.service.AwardService awardService;
-    
+
     // Serviço de Notificações
     private final NotificationService notificationService;
 
@@ -41,15 +47,33 @@ public class TeamService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Retorna todas as equipas existentes.
+     *
+     * @return lista de `Team`
+     */
     public List<Team> getAllTeams() {
         return teamRepository.findAll();
     }
 
+    /**
+     * Obtém uma equipa pelo seu id.
+     *
+     * @param id id da equipa
+     * @return `Team` correspondente
+     */
     public Team getTeamById(Long id) {
         return teamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
     }
 
+    /**
+     * Retorna o conjunto de IDs de estudantes que já estão ocupados por uma
+     * equipa dentro de um dado curso (usado para evitar duplicações na UI).
+     *
+     * @param courseId id do curso
+     * @return conjunto de ids de estudantes ocupados
+     */
     public Set<Long> getTakenStudentIdsByCourse(Long courseId) {
         List<Team> teams = teamRepository.findByCourseId(courseId);
         Set<Long> takenIds = new HashSet<>();
@@ -72,13 +96,22 @@ public class TeamService {
         return takenIds;
     }
 
+    /**
+     * Valida se um estudante está inscrito no curso e não pertence já a outra
+     * equipa do mesmo curso. Lança `RuntimeException` em caso de violação.
+     *
+     * @param student objeto `User` do estudante (pode ser null)
+     * @param courseId id do curso
+     */
     private void validateStudentAvailability(User student, Long courseId) {
         if (student != null && "STUDENT".equals(student.getRole())) {
+            // Verificar se o aluno está inscrito no curso
             boolean isEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(student.getId(), courseId);
             if (!isEnrolled) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) não está inscrito neste curso!");
             }
 
+            // Verificar duplicações
             long count = teamRepository.countStudentTeamsInCourse(student.getId(), courseId);
             if (count > 0) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) já pertence a uma equipa neste curso!");
@@ -86,6 +119,14 @@ public class TeamService {
         }
     }
 
+    /**
+     * Cria uma nova equipa após validar a disponibilidade dos estudantes.
+     * Atribui um prémio automático por formação de equipa e, opcionalmente,
+     * outros prémios de participação.
+     *
+     * @param team o objeto `Team` a criar
+     * @return a equipa criada e persistida
+     */
     public Team createTeam(Team team) {
         Long courseId = team.getCourse().getId();
 
@@ -100,7 +141,7 @@ public class TeamService {
 
         // Calculate current member count
         int memberCount = team.getCurrentMemberCount();
-        
+
         // Auto-close team if it's full
         if (memberCount >= team.getMaxMembers()) {
             team.setClosed(true);
@@ -115,7 +156,6 @@ public class TeamService {
         try {
             awardService.assignAutomaticAwardToTeamByName("Equipa Formada", "A tua equipa foi formada.", 30, saved.getId(), null);
         } catch (Exception e) {
-            // Non-fatal
         }
 
         // Verificar participação em projetos
@@ -129,12 +169,11 @@ public class TeamService {
                 }
             }
         } catch (Exception e) {
-            // Non-fatal
         }
 
         return saved;
     }
-    
+
     // Helper para notificar todos os membros
     private void notifyTeamMembers(Team team, String title, String message) {
         if (team.getScrumMaster() != null) {
@@ -150,6 +189,13 @@ public class TeamService {
         }
     }
 
+    /**
+     * Atualiza os dados de uma equipa existente.
+     *
+     * @param id id da equipa a atualizar
+     * @param teamDetails objecto com os novos valores
+     * @return a equipa atualizada
+     */
     public Team updateTeam(Long id, Team teamDetails) {
         Team team = getTeamById(id);
         team.setName(teamDetails.getName());
@@ -160,6 +206,11 @@ public class TeamService {
         return teamRepository.save(team);
     }
 
+    /**
+     * Remove uma equipa por id.
+     *
+     * @param id id da equipa a eliminar
+     */
     public void deleteTeam(Long id) {
         // Opcional: Notificar membros que a equipa foi eliminada antes de apagar
         try {
@@ -182,14 +233,33 @@ public class TeamService {
         teamRepository.deleteById(id);
     }
 
+    /**
+     * Obtém as equipas disponíveis para um dado curso.
+     *
+     * @param courseId id do curso
+     * @return lista de equipas disponíveis
+     */
     public List<Team> getAvailableTeamsByCourse(Long courseId) {
         return teamRepository.findAvailableTeamsByCourse(courseId);
     }
 
+    /**
+     * Procura todas as equipas a que um utilizador pertence.
+     *
+     * @param userId id do utilizador
+     * @return lista de equipas do utilizador
+     */
     public List<Team> findTeamsByUserId(Long userId) {
         return teamRepository.findTeamByUserId(userId);
     }
 
+    /**
+     * Retorna a lista dos membros de uma equipa (Scrum Master, Product Owner e
+     * Developers).
+     *
+     * @param teamId id da equipa
+     * @return lista de `User` membros da equipa
+     */
     public List<User> getTeamMembers(Long teamId) {
         Team team = getTeamById(teamId);
         java.util.List<User> members = new java.util.ArrayList<>();
@@ -207,6 +277,12 @@ public class TeamService {
         return members;
     }
 
+    /**
+     * Constrói um mapa de curso -> conjunto de ids de estudantes ocupados por
+     * equipas nesse curso.
+     *
+     * @return mapa com chave cursoId e valor conjunto de studentIds
+     */
     public java.util.Map<Long, java.util.Set<Long>> getTakenStudentsMap() {
         java.util.Map<Long, java.util.Set<Long>> map = new java.util.HashMap<>();
         List<Team> allTeams = teamRepository.findAll();
@@ -299,10 +375,10 @@ public class TeamService {
      */
     public Team addStudentToTeamWithRole(Long teamId, Long studentId, User student, String role) {
         Team team = getTeamById(teamId);
-        
+
         // Validate student is not already in a team in this course
         validateStudentAvailability(student, team.getCourse().getId());
-        
+
         // Check if team can accept members
         if (!team.canAcceptMembers()) {
             throw new RuntimeException("A equipa está fechada ou completa");
@@ -334,7 +410,7 @@ public class TeamService {
         if (team.isFull()) {
             team.setClosed(true);
         }
-        
+
         return teamRepository.save(team);
     }
 }

@@ -1,18 +1,20 @@
 package pt.up.edscrum.edscrum.Controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.CourseRepository;
+import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
-import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.service.AuthService;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -79,4 +81,3 @@ public class AuthControllerTest {
         assertNull(loggedInUser);
     }
 }
-

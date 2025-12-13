@@ -1,6 +1,6 @@
 package pt.up.edscrum.model;
 
-import java.time.LocalDate; // IMPORTANTE
+import java.time.LocalDate;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -21,6 +21,10 @@ import pt.up.edscrum.enums.SprintStatus;
 @Entity
 public class Project {
 
+    /**
+     * Representa um projeto associado a um curso. Contém sprints, equipas e
+     * datas; fornece um helper `getProgress()` para calcular o progresso.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,7 +32,6 @@ public class Project {
     private String name;
     private String sprintGoals;
 
-    // NOVOS CAMPOS
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -73,7 +76,6 @@ public class Project {
         this.sprintGoals = sprintGoals;
     }
 
-    // GETTERS E SETTERS DAS DATAS
     public LocalDate getStartDate() {
         return startDate;
     }

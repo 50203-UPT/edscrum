@@ -1,16 +1,17 @@
 package pt.up.edscrum.controller;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.UserRepository;
 
-import java.util.Optional;
-
-@Controller // <--- Nota: @Controller e não @RestController, porque serve HTML
+@Controller // Nota: @Controller e não @RestController, porque serve HTML
 public class PasswordWebController {
 
     private final UserRepository userRepository;
@@ -19,35 +20,45 @@ public class PasswordWebController {
         this.userRepository = userRepository;
     }
 
-    // 1. MOSTRAR A PÁGINA DE RESET (Resolve o teu erro 404)
-    // Este método apanha o pedido GET /resetPassword?email=...
+    /**
+     * Mostra a página de redefinição de password e passa o email para o
+     * formulário.
+     *
+     * @param email Email presente na querystring
+     * @param model Modelo para a view
+     * @return Nome da view de resetPassword
+     */
     @GetMapping("/resetPassword")
     public String showResetPasswordPage(@RequestParam("email") String email, Model model) {
         // Passamos o email para o HTML para ele colocar no input hidden
         model.addAttribute("email", email);
-        
+
         // Retorna o nome do ficheiro HTML (sem .html) que está em resources/templates
-        return "resetPassword"; 
+        return "resetPassword";
     }
 
-    // 2. PROCESSAR O FORMULÁRIO DE NOVA PALAVRA-PASSE
-    // Este método apanha o POST do formulário
+    /**
+     * Processa o formulário de redefinição de password, atualiza a password do
+     * utilizador e limpa o código de reset.
+     *
+     * @param email Email do utilizador
+     * @param password Nova password a definir
+     * @param model Modelo (não utilizado aqui)
+     * @return Redirecionamento para a página inicial com indicador de sucesso
+     */
     @PostMapping("/resetPassword")
     public String processResetPassword(@RequestParam("email") String email,
-                                       @RequestParam("password") String password,
-                                       Model model) {
-        
+            @RequestParam("password") String password,
+            Model model) {
+
         Optional<User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
-            return "redirect:/error"; // Ou outra página de erro
+            return "redirect:/error";
         }
 
         User user = userOpt.get();
 
-        // --- ATUALIZAR A PASSWORD ---
-        // Se estiveres a usar BCryptPasswordEncoder, deves fazer: user.setPassword(encoder.encode(password));
-        // Como não vi config de segurança, vou guardar direto (texto simples):
         user.setPassword(password);
 
         // Limpar o código de recuperação para não ser usado novamente
@@ -57,6 +68,6 @@ public class PasswordWebController {
         userRepository.save(user);
 
         // Redireciona para o login (ou raiz) com um parâmetro de sucesso
-        return "redirect:/?resetSuccess"; 
+        return "redirect:/?resetSuccess";
     }
 }

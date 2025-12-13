@@ -8,5 +8,11 @@ import pt.up.edscrum.model.Award;
 
 public interface AwardRepository extends JpaRepository<Award, Long> {
 
+    /**
+     * Procura um prémio pelo seu nome.
+     *
+     * @param name nome do prémio
+     * @return Optional contendo o `Award` se existir
+     */
     Optional<Award> findByName(String name);
 }

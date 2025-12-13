@@ -2,11 +2,10 @@ package pt.up.edscrum.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import pt.up.edscrum.enums.NotificationType; // Importação adicionada
-import pt.up.edscrum.model.Award;
+import pt.up.edscrum.enums.NotificationType;
+import pt.up.edscrum.model.Award; // Importação adicionada
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.StudentAward;
@@ -23,6 +22,13 @@ import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
 
 @Service
+/**
+ * Serviço que gere prémios (Awards) automáticos e manuais, bem como os registos
+ * de prémios atribuídos a estudantes e equipas. Contém lógica para
+ * criação/consulta/atualização/eliminar prémios, atribuições automáticas
+ * baseadas em eventos (por exemplo criação de sprints) e atualizações dos
+ * scores de utilizadores e equipas.
+ */
 public class AwardService {
 
     private final AwardRepository awardRepo;
@@ -33,7 +39,7 @@ public class AwardService {
     private final TeamRepository teamRepo;
     private final ProjectRepository projectRepo;
     private final SprintRepository sprintRepo;
-    
+
     // Serviço de Notificações Injetado
     private final NotificationService notificationService;
 
@@ -52,7 +58,16 @@ public class AwardService {
         this.notificationService = notificationService;
     }
 
-    // --- HELPERS PARA PRÉMIOS AUTOMÁTICOS ---
+    /**
+     * Garantir que existe um prémio automático com o nome fornecido. Se não
+     * existir, cria-o com os atributos fornecidos.
+     *
+     * @param name nome do prémio
+     * @param description descrição do prémio
+     * @param points pontos associados ao prémio
+     * @param targetType tipo de alvo ("INDIVIDUAL" ou "TEAM")
+     * @return o `Award` existente ou recém-criado
+     */
     private Award ensureAutomaticAward(String name, String description, int points, String targetType) {
         return awardRepo.findByName(name).orElseGet(() -> {
             Award a = new Award();
@@ -65,6 +80,17 @@ public class AwardService {
         });
     }
 
+    /**
+     * Atribui um prémio automático a um estudante identificado por `studentId`.
+     * O prémio é criado automaticamente se não existir e evita duplicados para
+     * o mesmo estudante (e projeto, se fornecido).
+     *
+     * @param name nome do prémio automático
+     * @param description descrição do prémio
+     * @param points pontos do prémio
+     * @param studentId id do estudante
+     * @param projectId id do projeto (pode ser null)
+     */
     public void assignAutomaticAwardToStudentByName(String name, String description, int points, Long studentId, Long projectId) {
         Award award = ensureAutomaticAward(name, description, points, "INDIVIDUAL");
         // Verifica se já existe
@@ -85,18 +111,28 @@ public class AwardService {
         sa.setPointsEarned(award.getPoints());
         studentAwardRepo.save(sa);
 
-        // Atualiza score
         updateUserScore(sa.getStudent());
 
         // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
-            student, 
-            NotificationType.AWARD, 
-            "Novo Prémio Automático!", 
-            "Parabéns! Ganhaste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Automático!",
+                "Parabéns! Ganhaste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
         );
     }
 
+    /**
+     * Atribui um prémio automático a uma equipa identificado por `teamId`. O
+     * prémio é criado automaticamente se não existir e evita duplicados para a
+     * mesma equipa (e projeto, se fornecido).
+     *
+     * @param name nome do prémio automático
+     * @param description descrição do prémio
+     * @param points pontos do prémio
+     * @param teamId id da equipa
+     * @param projectId id do projeto (pode ser null)
+     */
     public void assignAutomaticAwardToTeamByName(String name, String description, int points, Long teamId, Long projectId) {
         Award award = ensureAutomaticAward(name, description, points, "TEAM");
 
@@ -119,7 +155,7 @@ public class AwardService {
 
         // Atualizar score da equipa e dos membros
         updateTeamScore(ta.getTeam());
-        
+
         // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, true);
     }
@@ -143,7 +179,14 @@ public class AwardService {
         }
     }
 
-    // Handle logic when a student creates a sprint: first sprint, 5/10 counts, marathon (3 in 7 days), record activity
+    /**
+     * Lógica invocada quando um estudante cria um sprint. Pode atribuir prémios
+     * automáticos consoante milestones (ex: primeiro sprint, 5º sprint, 10º
+     * sprint). Evita execução se `studentId` for null.
+     *
+     * @param studentId id do estudante que criou o sprint
+     * @param projectId id do projeto associado (pode ser null)
+     */
     public void handleSprintCreated(Long studentId, Long projectId) {
         if (studentId == null) {
             return;
@@ -167,7 +210,11 @@ public class AwardService {
         }
     }
 
-    // --- MÉTODOS CRUD ---
+    /**
+     * Retorna a lista de todos os prémios registados.
+     *
+     * @return lista de `Award`
+     */
     public List<Award> getAllAwards() {
         return awardRepo.findAll();
     }
@@ -177,10 +224,23 @@ public class AwardService {
                 .orElseThrow(() -> new RuntimeException("Award not found"));
     }
 
+    /**
+     * Cria um novo prémio.
+     *
+     * @param award o objeto `Award` a criar
+     * @return o prémio guardado
+     */
     public Award createAward(Award award) {
         return awardRepo.save(award);
     }
 
+    /**
+     * Atualiza os dados de um prémio existente.
+     *
+     * @param id id do prémio a atualizar
+     * @param awardDetails objecto com os novos valores
+     * @return o prémio atualizado
+     */
     public Award updateAward(Long id, Award awardDetails) {
         Award award = getAwardById(id);
         award.setName(awardDetails.getName());
@@ -190,10 +250,23 @@ public class AwardService {
         return awardRepo.save(award);
     }
 
+    /**
+     * Elimina um prémio por id.
+     *
+     * @param id id do prémio a eliminar
+     */
     public void deleteAward(Long id) {
         awardRepo.deleteById(id);
     }
 
+    /**
+     * Retorna os prémios disponíveis para atribuição a uma equipa num dado
+     * projeto, excluindo prémios já atribuídos a essa equipa nesse projeto.
+     *
+     * @param teamId id da equipa
+     * @param projectId id do projeto (pode ser null)
+     * @return lista de prémios do tipo TEAM disponíveis
+     */
     public List<Award> getAvailableAwardsForTeam(Long teamId, Long projectId) {
         List<Award> allAwards = awardRepo.findAll();
         List<Long> assignedAwardIds = teamAwardRepo.findByTeamIdAndProjectId(teamId, projectId)
@@ -207,6 +280,14 @@ public class AwardService {
                 .toList();
     }
 
+    /**
+     * Retorna os prémios disponíveis para atribuição a um estudante num dado
+     * projeto, excluindo prémios já atribuídos a esse estudante nesse projeto.
+     *
+     * @param studentId id do estudante
+     * @param projectId id do projeto
+     * @return lista de prémios do tipo INDIVIDUAL disponíveis
+     */
     public List<Award> getAvailableAwardsForStudent(Long studentId, Long projectId) {
         List<Award> allAwards = awardRepo.findAll();
         List<Long> assignedAwardIds = studentAwardRepo.findByStudentIdAndProjectId(studentId, projectId)
@@ -220,7 +301,14 @@ public class AwardService {
                 .toList();
     }
 
-    // --- ATRIBUIÇÃO E CÁLCULOS ---
+    /**
+     * Atribui um prémio existente a um estudante num projeto. Verifica
+     * duplicados e atualiza o score do estudante.
+     *
+     * @param awardId id do prémio
+     * @param studentId id do estudante
+     * @param projectId id do projeto
+     */
     public void assignAwardToStudent(Long awardId, Long studentId, Long projectId) {
         Award award = getAwardById(awardId);
         User student = userRepo.findById(studentId).orElseThrow();
@@ -241,13 +329,20 @@ public class AwardService {
 
         // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
-            student, 
-            NotificationType.AWARD, 
-            "Novo Prémio Conquistado!", 
-            "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP) no projeto " + project.getName()
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Conquistado!",
+                "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP) no projeto " + project.getName()
         );
     }
 
+    /**
+     * Atribui um prémio existente a um estudante (sem projeto). Mantido por
+     * compatibilidade.
+     *
+     * @param awardId id do prémio
+     * @param studentId id do estudante
+     */
     public void assignAwardToStudent(Long awardId, Long studentId) {
         Award award = getAwardById(awardId);
         User student = userRepo.findById(studentId).orElseThrow();
@@ -262,13 +357,21 @@ public class AwardService {
 
         // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
-            student, 
-            NotificationType.AWARD, 
-            "Novo Prémio Conquistado!", 
-            "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Conquistado!",
+                "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
         );
     }
 
+    /**
+     * Atribui um prémio existente a uma equipa num projeto. Verifica duplicados
+     * e atualiza os scores da equipa e dos seus membros.
+     *
+     * @param awardId id do prémio
+     * @param teamId id da equipa
+     * @param projectId id do projeto
+     */
     public void assignAwardToTeam(Long awardId, Long teamId, Long projectId) {
         Award award = getAwardById(awardId);
         Team team = teamRepo.findById(teamId).orElseThrow();
@@ -286,7 +389,7 @@ public class AwardService {
         teamAwardRepo.save(ta);
 
         updateTeamScore(team);
-        
+
         // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, false);
     }
@@ -302,17 +405,24 @@ public class AwardService {
         teamAwardRepo.save(ta);
 
         updateTeamScore(team);
-        
+
         // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, false);
     }
 
+    /**
+     * Calcula os pontos totais de um estudante somando prémios individuais e os
+     * pontos das equipas a que pertence.
+     *
+     * @param studentId id do estudante
+     * @return total de pontos
+     */
     public int calculateTotalPoints(Long studentId) {
         int individualPoints = studentAwardRepo.findAllByStudentId(studentId).stream()
                 .mapToInt(StudentAward::getPointsEarned).sum();
 
         int teamPoints = 0;
-        List<Team> teams = teamRepo.findTeamByUserId(studentId); 
+        List<Team> teams = teamRepo.findTeamByUserId(studentId);
 
         if (teams != null && !teams.isEmpty()) {
             for (Team team : teams) {
@@ -324,7 +434,13 @@ public class AwardService {
         return individualPoints + teamPoints;
     }
 
-    // --- MÉTODOS AUXILIARES PARA ATUALIZAR TABELA SCORE ---
+    /**
+     * Atualiza o `Score` global de um utilizador com base nos pontos
+     * calculados. Depois de guardar o `Score`, verifica o ranking global para
+     * atribuir prémios automáticos baseados na posição (ex: Top5, Top3).
+     *
+     * @param user o utilizador cujo score será atualizado
+     */
     private void updateUserScore(User user) {
         int total = calculateTotalPoints(user.getId());
 
@@ -340,7 +456,7 @@ public class AwardService {
         }
         score.setTotalPoints(total);
         scoreRepo.save(score);
-        
+
         // --- AFTER SAVE: check ranking-based automatic awards ---
         try {
             List<pt.up.edscrum.model.Score> allScores = scoreRepo.findAllByUserIsNotNullOrderByTotalPointsDesc();
@@ -365,6 +481,11 @@ public class AwardService {
         }
     }
 
+    /**
+     * Atualiza o `Score` de uma equipa com a soma dos `TeamAwards` atribuídos.
+     *
+     * @param team equipa a atualizar
+     */
     private void updateTeamScore(Team team) {
         int total = teamAwardRepo.findByTeamId(team.getId()).stream()
                 .mapToInt(TeamAward::getPointsEarned).sum();
@@ -373,7 +494,7 @@ public class AwardService {
         if (score == null) {
             score = new Score();
             score.setTeam(team);
-            score.setUser(null); 
+            score.setUser(null);
         }
         score.setTotalPoints(total);
         scoreRepo.save(score);

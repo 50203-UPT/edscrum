@@ -1,7 +1,6 @@
 package pt.up.edscrum.controller;
 
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,46 +27,90 @@ public class AwardController {
         this.awardService = awardService;
     }
 
-    // CRUD --------------------------
+    /**
+     * Obtém todos os prémios disponíveis.
+     *
+     * @return Lista de Award
+     */
     @GetMapping
     public List<Award> getAll() {
         return awardService.getAllAwards();
     }
 
+    /**
+     * Obtém um prémio pelo seu ID.
+     *
+     * @param id ID do prémio
+     * @return Award correspondente
+     */
     @GetMapping("/{id}")
     public Award getById(@PathVariable Long id) {
         return awardService.getAwardById(id);
     }
 
+    /**
+     * Cria um novo prémio.
+     *
+     * @param award Dados do prémio
+     * @return Award criado
+     */
     @PostMapping
     public Award create(@RequestBody Award award) {
         return awardService.createAward(award);
     }
 
+    /**
+     * Atualiza um prémio existente.
+     *
+     * @param id ID do prémio a atualizar
+     * @param award Dados atualizados
+     * @return Award atualizado
+     */
     @PutMapping("/{id}")
     public Award update(@PathVariable Long id, @RequestBody Award award) {
         return awardService.updateAward(id, award);
     }
 
+    /**
+     * Elimina um prémio pelo ID.
+     *
+     * @param id ID do prémio a eliminar
+     */
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         awardService.deleteAward(id);
     }
-    
-    // OBTER PRÉMIOS DISPONÍVEIS (não atribuídos) PARA EQUIPA NUM PROJETO
+
+    /**
+     * Obtém prémios disponíveis (não atribuídos) para uma equipa num projeto.
+     *
+     * @param teamId ID da equipa
+     * @param projectId ID do projeto
+     * @return Lista de Award disponíveis
+     */
     @GetMapping("/available-for-team")
     public List<Award> getAvailableAwardsForTeam(@RequestParam Long teamId, @RequestParam Long projectId) {
         return awardService.getAvailableAwardsForTeam(teamId, projectId);
     }
-    
-    // OBTER PRÉMIOS DISPONÍVEIS (não atribuídos) PARA ESTUDANTE NUM PROJETO
+
+    /**
+     * Obtém prémios disponíveis (não atribuídos) para um estudante num projeto.
+     *
+     * @param studentId ID do estudante
+     * @param projectId ID do projeto
+     * @return Lista de Award disponíveis
+     */
     @GetMapping("/available-for-student")
     public List<Award> getAvailableAwardsForStudent(@RequestParam Long studentId, @RequestParam Long projectId) {
         return awardService.getAvailableAwardsForStudent(studentId, projectId);
     }
 
-    // ATRIBUI PONTOS A UM ESTUDANTE -------------------------
-    // Corrigido: agora retorna void porque o serviço também é void
+    /**
+     * Atribui um prémio a um estudante.
+     *
+     * @param awardId ID do prémio
+     * @param studentId ID do estudante
+     */
     @PostMapping("/assign/{awardId}/to/{studentId}")
     public void assignAwardToStudent(
             @PathVariable Long awardId,
@@ -75,7 +118,12 @@ public class AwardController {
         awardService.assignAwardToStudent(awardId, studentId);
     }
 
-    // ATRIBUI PONTOS A UMA EQUIPA (NOVO) --------------------
+    /**
+     * Atribui um prémio a uma equipa.
+     *
+     * @param awardId ID do prémio
+     * @param teamId ID da equipa
+     */
     @PostMapping("/assign/{awardId}/to-team/{teamId}")
     public void assignAwardToTeam(
             @PathVariable Long awardId,
@@ -83,7 +131,12 @@ public class AwardController {
         awardService.assignAwardToTeam(awardId, teamId);
     }
 
-    // CALCULA TOTAL DE PONTOS -----------------------------
+    /**
+     * Calcula o total de pontos de um estudante.
+     *
+     * @param studentId ID do estudante
+     * @return Total de pontos
+     */
     @GetMapping("/points/{studentId}")
     public int getTotalPoints(@PathVariable Long studentId) {
         return awardService.calculateTotalPoints(studentId);

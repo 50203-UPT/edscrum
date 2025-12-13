@@ -21,11 +21,11 @@ public class Course {
     private Long id;
 
     private String name;
-    
+
     private String tag;         // NOVO: Identificador Visual (ex: "#QS")
-    
+
     private String code;        // Senha de Acesso (Privada)
-    
+
     private String description;
     private Integer semester;
     private Integer year;
@@ -45,36 +45,91 @@ public class Course {
     private List<Team> teams;
 
     // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getTag() { return tag; } 
-    public void setTag(String tag) { this.tag = tag; } 
+    public String getName() {
+        return name;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getTag() {
+        return tag;
+    }
 
-    public Integer getSemester() { return semester; }
-    public void setSemester(Integer semester) { this.semester = semester; }
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+    public String getCode() {
+        return code;
+    }
 
-    public List<Project> getProjects() { return projects; }
-    public void setProjects(List<Project> projects) { this.projects = projects; }
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-    public List<Enrollment> getEnrollments() { return enrollments; }
-    public void setEnrollments(List<Enrollment> enrollments) { this.enrollments = enrollments; }
+    public String getDescription() {
+        return description;
+    }
 
-    public User getTeacher() { return teacher; }
-    public void setTeacher(User teacher) { this.teacher = teacher; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public List<Team> getTeams() { return teams; }
-    public void setTeams(List<Team> teams) { this.teams = teams; }
+    public Integer getSemester() {
+        return semester;
+    }
+
+    public void setSemester(Integer semester) {
+        this.semester = semester;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<Project> projects) {
+        this.projects = projects;
+    }
+
+    public List<Enrollment> getEnrollments() {
+        return enrollments;
+    }
+
+    public void setEnrollments(List<Enrollment> enrollments) {
+        this.enrollments = enrollments;
+    }
+
+    public User getTeacher() {
+        return teacher;
+    }
+
+    public void setTeacher(User teacher) {
+        this.teacher = teacher;
+    }
+
+    public List<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(List<Team> teams) {
+        this.teams = teams;
+    }
 }
