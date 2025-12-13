@@ -657,10 +657,15 @@
                         <div th:each="member : ${project.members}" 
                              class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 border">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" 
-                                     style="width: 42px; height: 42px;"
-                                     th:style="${member.role == 'Product Owner'} ? 'width:42px; height:42px; background-color:#0d6efd;' : (${member.role == 'Scrum Master'} ? 'width:42px; height:42px; background-color:#6f42c1;' : 'width:42px; height:42px; background-color:#198754;')"
-                                     th:text="${#strings.substring(member.name, 0, 1).toUpperCase()}">J</div>
+                                <div>
+                                    <div th:if="${userProfileImageMap[member.id] != null}">
+                                        <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[member.id]}}" th:alt="${member.name}" class="rounded-circle" style="width:42px; height:42px; object-fit:cover;" />
+                                    </div>
+                                    <div th:unless="${userProfileImageMap[member.id] != null}" class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                                         style="width: 42px; height: 42px;"
+                                         th:style="${member.role == 'Product Owner'} ? 'width:42px; height:42px; background-color:#0d6efd;' : (${member.role == 'Scrum Master'} ? 'width:42px; height:42px; background-color:#6f42c1;' : 'width:42px; height:42px; background-color:#198754;')"
+                                         th:text="${#strings.substring(member.name, 0, 1).toUpperCase()}">J</div>
+                                </div>
                                 <div>
                                     <h6 class="fw-bold text-dark mb-0" th:text="${member.name}">Utilizador</h6>
                                     <span class="badge badge-role" 
