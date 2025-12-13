@@ -3,12 +3,14 @@ package pt.up.edscrum.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -852,21 +854,43 @@ public class WebController {
     }
 
    @PostMapping("/api/student/enroll")
-    public String enrollStudent(
+    public Object enrollStudent(
             @RequestParam Long studentId,
             @RequestParam Long courseId,
             @RequestParam(required = false) String accessCode,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             RedirectAttributes redirectAttributes) {
         
+        boolean isAjax = "XMLHttpRequest".equals(requestedWith);
+        
         try {
+            // Obter nome do curso antes de inscrever
+            Course course = courseService.getCourseById(courseId);
+            String courseName = course != null ? course.getName() : "";
+            
             // Chama o serviço do Dashboard (onde pusemos a lógica)
             dashboardService.enrollStudentInCourse(studentId, courseId, accessCode);
             
-            redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso! Bem-vindo ao curso.");
+            // Se é um pedido AJAX, retornar sucesso com o nome do curso
+            if (isAjax) {
+                return ResponseEntity.ok().body(courseName);
+            }
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso! Bem-vindo ao curso " + courseName + ".");
         } catch (IllegalArgumentException e) {
+            // Se é um pedido AJAX, retornar erro HTTP para mostrar no modal
+            if (isAjax) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+            
             // Erros de código errado ou curso não encontrado
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
+            // Se é um pedido AJAX, retornar erro HTTP
+            if (isAjax) {
+                return ResponseEntity.status(500).body("Erro inesperado ao inscrever: " + e.getMessage());
+            }
+            
             // Outros erros genéricos
             redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao inscrever: " + e.getMessage());
         }

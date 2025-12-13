@@ -230,6 +230,19 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
     }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .hover-shadow:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transform: translateY(-2px);
+    }
+    
+    .transition {
+        transition: all 0.3s ease;
+    }
     </style>
 </head>
 <body class="student-bg">
@@ -582,35 +595,46 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        <!-- Botão Concluir: aparece quando status NÃO é CONCLUIDO e todos os sprints estão concluídos -->
+                        <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints)}" 
+                                class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#completeProjectModal"
+                                th:data-project-id="${project.id}"
+                                onclick="setupCompleteProjectModal(this)"
+                                style="display: none !important;">
+                            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                            <span>Concluir Projeto</span>
+                        </button>
+                        
+                        <!-- Botão Reabrir: aparece quando status É CONCLUIDO -->
+                        <button th:if="${project.status.name() == 'CONCLUIDO'}" 
+                                class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#reopenProjectModal"
+                                th:data-project-id="${project.id}"
+                                onclick="setupReopenProjectModal(this)">
+                            <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
+                            <span>Reabrir Projeto</span>
+                        </button>
+                        
                         <span class="badge text-white px-3 py-2 rounded-pill"
                               th:classappend="${project.status.name() == 'CONCLUIDO' ? 'bg-success' : (project.status.name() == 'EM_CURSO' ? 'bg-warning' : 'bg-secondary')}"
                               th:text="${#strings.replace(project.status.name(), '_', ' ')}">Ativo</span>
-                        <a th:href="@{/view/project/{projectId}/user/{userId}(projectId=${project.id}, userId=${student.id})}" 
-                           class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-1"
-                           title="Ver detalhes completos do projeto">
-                            <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
-                            <span>Detalhes</span>
-                        </a>
                     </div>
                 </div>
+                
+                <!-- Hidden inputs com datas do projeto e último sprint para validação JS -->
+                <input type="hidden" th:id="'projectStartDateHidden-' + ${project.id}" th:value="${project.startDate}" />
+                <input type="hidden" th:id="'projectEndDateHidden-' + ${project.id}" th:value="${project.endDate}" />
+                <input type="hidden" th:if="${project.sprints != null and !#lists.isEmpty(project.sprints)}" th:id="'lastSprintEndHidden-' + ${project.id}" th:value="${project.sprints[#lists.size(project.sprints) - 1].endDate}" />
 
                 <div class="mb-4">
                     <h6 class="text-muted small fw-bold text-uppercase mb-2"><i data-lucide="users" class="w-3 h-3 inline me-1"></i> Equipa <span th:text="${student.teamName}">Alpha</span></h6>
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="d-flex -space-x-2">
-                            <div th:each="member, iterStat : ${project.members}" 
-                                 th:if="${iterStat.index < 5}"
-                                 class="border border-white rounded-circle d-flex align-items-center justify-content-center text-xs fw-bold text-white" 
-                                 th:classappend="${iterStat.index == 0 ? 'bg-primary' : (iterStat.index == 1 ? 'bg-success' : (iterStat.index == 2 ? 'bg-info' : (iterStat.index == 3 ? 'bg-warning' : 'bg-danger')))}"
-                                 th:style="'width: 32px; height: 32px; font-size: 0.75rem;' + (${iterStat.index > 0} ? ' margin-left: -8px;' : '')"
-                                 th:title="${member.name}"
-                                 th:text="${#strings.substring(member.name, 0, 2).toUpperCase()}">AB</div>
-                            <div th:if="${#lists.size(project.members) > 5}"
-                                 class="bg-secondary text-white border border-white rounded-circle d-flex align-items-center justify-content-center text-xs fw-bold"
-                                 style="width: 32px; height: 32px; font-size: 0.65rem; margin-left: -8px;"
-                                 th:text="'+' + ${#lists.size(project.members) - 5}">+2</div>
-                        </div>
-                        <span class="text-muted small ms-2" th:text="${#lists.size(project.members)} + ' membros'">Membros ativos</span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span th:each="member, iterStat : ${project.members}" 
+                              class="badge bg-light text-dark border px-3 py-2"
+                              th:text="${member.name}">Nome do Estudante</span>
                     </div>
                 </div>
 
@@ -630,26 +654,41 @@
                 </div>
 
                 <div>
-                    <h6 class="fw-bold mb-3 d-flex align-items-center">
-                        <i data-lucide="layers" class="w-4 h-4 me-2 text-dark"></i> Sprints (<span th:text="${project.sprints != null ? #lists.size(project.sprints) : 0}">0</span>)
-                    </h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0 d-flex align-items-center">
+                            <i data-lucide="layers" class="w-4 h-4 me-2 text-dark"></i> Sprints (<span th:text="${project.sprints != null ? #lists.size(project.sprints) : 0}">0</span>)
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-1"
+                                    th:if="${project.status.name() != 'CONCLUIDO'}"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#newSprintModal"
+                                    th:data-project-id="${project.id}"
+                                    onclick="setupNewSprintModal(this)">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                                <span>Nova Sprint</span>
+                            </button>
+                        </div>
+                    </div>
                     
-                    <div class="d-flex flex-column gap-3">
-                        <div th:each="sprint : ${project.sprints}" class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border-start border-4"
-                             th:classappend="${sprint.status?.name() == 'CONCLUIDO'} ? 'border-success' : 'border-primary'">
+                    <div class="d-flex flex-column gap-3 sprints-container">
+                        <div th:each="sprint, iterStat : ${project.sprints}" class="sprint-item d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border-start border-4 hover-shadow transition cursor-pointer"
+                             th:classappend="${sprint.status?.name() == 'CONCLUIDO'} ? 'border-success' : 'border-primary'"
+                             th:data-status="${sprint.status?.name()}"
+                             th:onclick="|window.location.href='/view/sprint/${sprint.id}/user/${student.id}'|">
                             
-                            <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-3 flex-grow-1">
                                 <i th:if="${sprint.status?.name() == 'CONCLUIDO'}" data-lucide="check-circle-2" class="text-success w-5 h-5"></i>
                                 <i th:if="${sprint.status?.name() != 'CONCLUIDO'}" data-lucide="circle-dashed" class="text-primary w-5 h-5"></i>
                                 
-                                <div>
-                                    <h6 class="mb-0 fw-bold text-dark" th:text="${sprint.name}">Sprint 1</h6>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0 fw-bold text-dark" th:text="'Sprint ' + ${iterStat.count} + ' - ' + ${sprint.name}">Sprint 1 - Nome</h6>
                                     <small class="text-muted" th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</small>
                                 </div>
                             </div>
 
-                            <div class="d-flex align-items-center gap-3" style="width: 30%;">
-                                <div class="progress flex-grow-1" style="height: 6px;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="progress" style="width: 150px; height: 6px;">
                                     <div class="progress-bar rounded-pill" 
                                          th:classappend="${sprint.status?.name() == 'CONCLUIDO'} ? 'bg-success' : 'bg-primary'"
                                          role="progressbar" 
@@ -657,12 +696,14 @@
                                 </div>
                                 <span class="small fw-bold" 
                                       th:classappend="${sprint.status?.name() == 'CONCLUIDO'} ? 'text-success' : 'text-primary'"
+                                      style="min-width: 45px;"
                                       th:text="${sprint.progress} + '%'">100%</span>
+                                <i data-lucide="chevron-right" class="text-muted" style="width: 20px; height: 20px;"></i>
                             </div>
                         </div>
                         
-                        <div th:if="${#lists.isEmpty(project.sprints)}" class="text-muted small text-center">
-                            Nenhuma sprint criada neste projeto.
+                        <div th:if="${#lists.isEmpty(project.sprints)}" class="text-muted small text-center py-3">
+                            Nenhuma sprint criada neste projeto. Clique em "Adicionar Sprint" para começar.
                         </div>
                     </div>
                 </div>
@@ -842,7 +883,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form th:action="@{/api/student/enroll}" method="POST">
+            <form id="enrollForm" th:action="@{/api/student/enroll}" method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="studentId" th:value="${student.id}" />
                     <input type="hidden" id="enrollCourseId" name="courseId" />
@@ -853,6 +894,12 @@
                             <span class="d-block small text-muted text-uppercase fw-bold">Vais entrar em:</span>
                             <span id="enrollCourseName" class="fw-bold h5 text-dark mb-0">Nome do Curso</span>
                         </div>
+                    </div>
+                    
+                    <!-- Mensagem de erro -->
+                    <div id="enrollErrorMessage" class="alert alert-danger d-flex align-items-center mb-3" style="display: none !important;">
+                        <i data-lucide="alert-circle" class="w-4 h-4 me-2"></i>
+                        <span id="enrollErrorText">O código de acesso está incorreto.</span>
                     </div>
 
                     <div class="mb-3">
@@ -871,12 +918,110 @@
 
                 <div class="modal-footer border-0 pt-2 px-0 pb-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Validar e Entrar</button>
+                    <button type="submit" id="enrollSubmitBtn" class="btn btn-primary rounded-pill px-4 fw-bold">Validar e Entrar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+    <div class="modal fade" id="newSprintModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <span id="nextSprintLabel" class="text-muted small fw-bold text-uppercase" style="letter-spacing: 1px;">SPRINT 1</span>
+                        <h4 class="modal-title fw-bold mt-1">Nova Sprint</h4>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newSprintForm" th:action="@{/sprints/create}" method="POST">
+                        <input type="hidden" id="newSprintProjectId" name="projectId">
+                        <input type="hidden" name="studentId" th:value="${student.id}">
+                        <!-- Hidden inputs para validação de datas -->
+                        <input type="hidden" id="currentProjectStart" value="">
+                        <input type="hidden" id="currentProjectEnd" value="">
+                        <input type="hidden" id="currentLastSprintEnd" value="">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome da Sprint</label>
+                            <input type="text" name="name" class="form-control bg-light border-0 py-2" placeholder="ex: Planeamento Inicial" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Descrição</label>
+                            <textarea name="description" class="form-control bg-light border-0" rows="3" placeholder="Objetivos e entregas desta sprint..."></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Data Início</label>
+                                <input id="sprintStartDate" type="date" name="startDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">Data Fim</label>
+                                <input id="sprintEndDate" type="date" name="endDate" class="form-control bg-light border-0 py-2" required>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Sprint</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Concluir Projeto -->
+    <div class="modal fade" id="completeProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-success">Concluir Projeto</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja marcar este projeto como concluído?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Todos os sprints devem estar concluídos para completar o projeto.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmCompleteProjectBtn" class="btn btn-success rounded-pill px-4 fw-bold" onclick="confirmCompleteProject()">
+                        <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reabrir Projeto -->
+    <div class="modal fade" id="reopenProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-warning">Reabrir Projeto</h4>
+                        <p class="text-muted small mb-0">Tem certeza que deseja reabrir este projeto?</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">O projeto voltará ao estado EM_CURSO.</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold" onclick="confirmReopenProject()">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
     <script>
@@ -1067,6 +1212,28 @@
                 });
             }
 
+            // Verificar se há mensagem de sucesso guardada em sessionStorage (de inscrição AJAX)
+            const enrollSuccessMsg = sessionStorage.getItem('enrollSuccessMessage');
+            if (enrollSuccessMsg) {
+                sessionStorage.removeItem('enrollSuccessMessage');
+                // Criar alerta de sucesso dinamicamente
+                const alertContainer = document.querySelector('.container.mt-3');
+                if (alertContainer) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show shadow-sm border-0';
+                    alertDiv.setAttribute('role', 'alert');
+                    alertDiv.style.cssText = 'background-color: #d1e7dd; color: #0f5132;';
+                    alertDiv.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i>' + enrollSuccessMsg + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                    alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+                    lucide.createIcons();
+                    // Auto-dismiss após 3 segundos
+                    setTimeout(function() {
+                        const bsAlert = new bootstrap.Alert(alertDiv);
+                        bsAlert.close();
+                    }, 3000);
+                }
+            }
+
             // Auto-dismiss success alerts after 3 seconds
             const successAlert = document.querySelector('.alert-success');
             if (successAlert) {
@@ -1227,7 +1394,424 @@
             // Limpar o campo de código sempre que abre o modal
             const codeInput = document.getElementById('accessCode');
             if(codeInput) codeInput.value = '';
+            
+            // Esconder mensagem de erro
+            const errorDiv = document.getElementById('enrollErrorMessage');
+            if(errorDiv) errorDiv.style.setProperty('display', 'none', 'important');
         }
+        
+        // Handler para o formulário de inscrição via AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const enrollForm = document.getElementById('enrollForm');
+            if (enrollForm) {
+                enrollForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    const formData = new FormData(enrollForm);
+                    const submitBtn = document.getElementById('enrollSubmitBtn');
+                    const errorDiv = document.getElementById('enrollErrorMessage');
+                    const errorText = document.getElementById('enrollErrorText');
+                    
+                    // Esconder erro anterior
+                    if(errorDiv) errorDiv.style.setProperty('display', 'none', 'important');
+                    
+                    // Desativar botão durante o pedido
+                    if(submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>A validar...';
+                    }
+                    
+                    fetch(enrollForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Sucesso - obter nome do curso e guardar mensagem
+                            return response.text().then(courseName => {
+                                // Guardar mensagem de sucesso em sessionStorage
+                                sessionStorage.setItem('enrollSuccessMessage', 'Inscrição realizada com sucesso! Bem-vindo ao curso ' + courseName + '.');
+                                // Redirecionar
+                                window.location.href = window.location.pathname + '?tab=all-courses&t=' + Date.now();
+                            });
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error(text || 'O código de acesso está incorreto.');
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        // Mostrar erro no modal
+                        if(errorDiv && errorText) {
+                            errorText.textContent = error.message || 'O código de acesso está incorreto.';
+                            errorDiv.style.setProperty('display', 'flex', 'important');
+                            lucide.createIcons();
+                        }
+                        
+                        // Limpar campo de código para tentar novamente
+                        const codeInput = document.getElementById('accessCode');
+                        if(codeInput) {
+                            codeInput.value = '';
+                            codeInput.focus();
+                        }
+                    })
+                    .finally(() => {
+                        // Reativar botão
+                        if(submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = 'Validar e Entrar';
+                        }
+                    });
+                });
+            }
+        });
+        
+        // Variável global para armazenar o projectId selecionado
+        let selectedProjectId = null;
+        
+        // Date helpers (re-usable)
+        function formatDateToYMD(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        function addDaysYMD(ymd, days) {
+            const date = new Date(ymd + 'T00:00:00');
+            date.setDate(date.getDate() + days);
+            return formatDateToYMD(date);
+        }
+        
+        // Configura o modal de nova sprint com o ID do projeto e datas de validação
+        function setupNewSprintModal(button) {
+            const projectId = button.getAttribute('data-project-id');
+            document.getElementById('newSprintProjectId').value = projectId;
+            
+            // Copiar as datas do projeto para os hidden inputs do modal
+            const projectStart = document.getElementById('projectStartDateHidden-' + projectId);
+            const projectEnd = document.getElementById('projectEndDateHidden-' + projectId);
+            const lastSprintEnd = document.getElementById('lastSprintEndHidden-' + projectId);
+            
+            document.getElementById('currentProjectStart').value = projectStart ? projectStart.value : '';
+            document.getElementById('currentProjectEnd').value = projectEnd ? projectEnd.value : '';
+            document.getElementById('currentLastSprintEnd').value = lastSprintEnd ? lastSprintEnd.value : '';
+            
+            // Contar sprints e atualizar label
+            const projectCard = button.closest('.content-card');
+            if (projectCard) {
+                const sprintCount = projectCard.querySelectorAll('.border-start.border-4').length;
+                const label = document.getElementById('nextSprintLabel');
+                if (label) label.textContent = 'SPRINT ' + (sprintCount + 1);
+            }
+            
+            // Configurar restrições de data
+            setSprintDateConstraints();
+        }
+        
+        function setSprintDateConstraints() {
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            if (!startInput) return;
+
+            // Base constraints
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const minToday = formatDateToYMD(tomorrow);
+
+            const projectStart = document.getElementById('currentProjectStart').value;
+            const projectEnd = document.getElementById('currentProjectEnd').value;
+            const lastSprintEnd = document.getElementById('currentLastSprintEnd').value;
+
+            // candidates for start min: tomorrow, projectStart, lastSprintEnd+1
+            const candidates = [minToday];
+            if (projectStart) candidates.push(projectStart);
+            if (lastSprintEnd) candidates.push(addDaysYMD(lastSprintEnd, 1));
+
+            // find latest date string (YYYY-MM-DD) lexicographically
+            let minStart = candidates.reduce((a,b) => a > b ? a : b);
+            startInput.min = minStart;
+
+            // end date max is project end if present
+            if (projectEnd && endInput) {
+                endInput.max = projectEnd;
+            }
+
+            // end date min depends on start value
+            if (endInput) {
+                const startVal = startInput.value || minStart;
+                endInput.min = addDaysYMD(startVal, 1);
+            }
+
+            // If minStart is after project end, set a custom validity so user cannot submit a sprint
+            if (projectEnd && minStart > projectEnd) {
+                startInput.setCustomValidity('Não há espaço para um novo sprint dentro do prazo do projeto.');
+            } else {
+                startInput.setCustomValidity('');
+            }
+
+            // If no value set, default start to minStart to help user
+            if (!startInput.value) startInput.value = minStart;
+            if (endInput && !endInput.value) endInput.value = endInput.min;
+        }
+
+        function updateSprintEndMinFromStart() {
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            if (!startInput || !endInput) return;
+            if (startInput.value) {
+                endInput.min = addDaysYMD(startInput.value, 1);
+                // If end < min, clear it
+                if (endInput.value && endInput.value < endInput.min) endInput.value = endInput.min;
+            }
+            startInput.setCustomValidity('');
+            endInput.setCustomValidity('');
+        }
+        
+        // Configura o modal de concluir projeto
+        function setupCompleteProjectModal(button) {
+            selectedProjectId = button.getAttribute('data-project-id');
+        }
+        
+        // Configura o modal de reabrir projeto
+        function setupReopenProjectModal(button) {
+            selectedProjectId = button.getAttribute('data-project-id');
+        }
+        
+        // Função para reabrir o projeto (igual à de projectDetails.html)
+        function confirmReopenProject() {
+            if (!selectedProjectId) {
+                console.error('ID do projeto não encontrado.');
+                return;
+            }
+            fetch(`/projects/${selectedProjectId}/reopen`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                } else {
+                    return response.text().then(text => {
+                        console.error('Erro ao reabrir projeto:', text);
+                        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+            });
+        }
+        
+        // Função para concluir o projeto (igual à de projectDetails.html)
+        function confirmCompleteProject() {
+            if (!selectedProjectId) {
+                console.error('ID do projeto não encontrado.');
+                return;
+            }
+            
+            fetch(`/projects/${selectedProjectId}/complete`, {
+                method: 'PUT'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Fecha o modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                    if (modal) modal.hide();
+                    
+                    // Redireciona imediatamente
+                    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                } else {
+                    return response.text().then(text => {
+                        // Fecha o modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                        if (modal) modal.hide();
+                        
+                        // Mostra mensagem de erro
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                        errorDiv.style.zIndex = '9999';
+                        errorDiv.style.maxWidth = '500px';
+                        errorDiv.innerHTML = `
+                            <strong><i data-lucide="x-circle" class="w-4 h-4 inline me-2"></i>Erro!</strong> ${text || 'Não foi possível concluir o projeto.'}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.body.appendChild(errorDiv);
+                        lucide.createIcons();
+                        
+                        setTimeout(() => {
+                            errorDiv.remove();
+                        }, 5000);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectModal'));
+                if (modal) modal.hide();
+                
+                // Mostra mensagem de erro
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                errorDiv.style.zIndex = '9999';
+                errorDiv.style.maxWidth = '500px';
+                errorDiv.innerHTML = `
+                    <strong><i data-lucide="x-circle" class="w-4 h-4 inline me-2"></i>Erro!</strong> Erro de conexão ao concluir projeto.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(errorDiv);
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            });
+        }
+        
+        // Verifica se todos os sprints estão concluídos para mostrar o botão de concluir projeto
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.complete-project-btn').forEach(btn => {
+                const projectCard = btn.closest('.content-card');
+                if (projectCard) {
+                    const sprintItems = projectCard.querySelectorAll('.sprint-item');
+                    
+                    if (sprintItems.length === 0) {
+                        btn.style.setProperty('display', 'none', 'important');
+                        return;
+                    }
+                    
+                    let allCompleted = true;
+                    
+                    sprintItems.forEach((sprint, index) => {
+                        const status = sprint.getAttribute('data-status');
+                        if (status !== 'CONCLUIDO') {
+                            allCompleted = false;
+                        }
+                    });
+                    
+                    if (allCompleted) {
+                        btn.style.setProperty('display', 'flex', 'important');
+                    } else {
+                        btn.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            });
+            
+            // Hook validações de data para o formulário de nova sprint
+            const startInput = document.getElementById('sprintStartDate');
+            const endInput = document.getElementById('sprintEndDate');
+            const newSprintForm = document.getElementById('newSprintForm');
+
+            if (startInput) startInput.addEventListener('input', updateSprintEndMinFromStart);
+            if (endInput) endInput.addEventListener('input', function() { this.setCustomValidity(''); });
+
+            if (newSprintForm) {
+                newSprintForm.addEventListener('submit', function(event) {
+                    event.preventDefault(); // Sempre prevenir submit normal
+                    
+                    if (startInput) startInput.setCustomValidity('');
+                    if (endInput) endInput.setCustomValidity('');
+
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+                    const minToday = formatDateToYMD(tomorrow);
+
+                    const projectStart = document.getElementById('currentProjectStart').value;
+                    const projectEnd = document.getElementById('currentProjectEnd').value;
+                    const lastSprintEnd = document.getElementById('currentLastSprintEnd').value;
+
+                    const sVal = startInput ? startInput.value : '';
+                    const eVal = endInput ? endInput.value : '';
+                    let ok = true;
+
+                    if (!sVal) {
+                        if (startInput) startInput.setCustomValidity('Introduza a data de início.');
+                        ok = false;
+                    } else {
+                        if (sVal < minToday) {
+                            startInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
+                            ok = false;
+                        }
+                        if (projectStart && sVal < projectStart) {
+                            startInput.setCustomValidity('A data de início do sprint não pode ser anterior ao início do projeto.');
+                            ok = false;
+                        }
+                        if (lastSprintEnd && sVal <= lastSprintEnd) {
+                            startInput.setCustomValidity('A data de início deve ser posterior ao fim do último sprint.');
+                            ok = false;
+                        }
+                    }
+
+                    if (!eVal) {
+                        if (endInput) endInput.setCustomValidity('Introduza a data de fim.');
+                        ok = false;
+                    } else {
+                        if (projectEnd && eVal > projectEnd) {
+                            endInput.setCustomValidity('A data de fim do sprint deve ser antes do fim do projeto.');
+                            ok = false;
+                        }
+                        if (sVal && eVal <= sVal) {
+                            endInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
+                            ok = false;
+                        }
+                    }
+
+                    if (!ok || !newSprintForm.checkValidity()) {
+                        newSprintForm.reportValidity();
+                        return;
+                    }
+                    
+                    // Submit via AJAX
+                    const formData = new FormData(newSprintForm);
+                    
+                    fetch(newSprintForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok || response.redirected) {
+                            // Fecha o modal
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('newSprintModal'));
+                            if (modal) modal.hide();
+                            
+                            // Atualiza a página studentHome na aba projetos
+                            window.location.href = window.location.pathname + '?tab=projects&t=' + Date.now();
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error(text || 'Erro ao criar sprint');
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        // Fecha o modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('newSprintModal'));
+                        if (modal) modal.hide();
+                        
+                        // Mostra mensagem de erro
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                        errorDiv.style.zIndex = '9999';
+                        errorDiv.style.maxWidth = '500px';
+                        errorDiv.innerHTML = `
+                            <strong><i data-lucide="x-circle" class="w-4 h-4 inline me-2"></i>Erro!</strong> ${error.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.body.appendChild(errorDiv);
+                        lucide.createIcons();
+                        
+                        setTimeout(() => {
+                            errorDiv.remove();
+                        }, 5000);
+                    });
+                });
+            }
+        });
 
         lucide.createIcons();
         function openTab(tabId, btnElement) {
@@ -1290,21 +1874,19 @@
                     bsAlert.close();
                 }, 3000);
             }
-       // NOVO: Verificar URL para abrir a tab correta (Cursos) automaticamente
-        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Verificar URL para abrir a tab correta automaticamente
             const urlParams = new URLSearchParams(window.location.search);
             const activeTab = urlParams.get('tab');
             
             if (activeTab) {
                 // Procura o botão que tem o onclick para esta tab e simula um clique
-                // Ex: procura por onclick="openTab('all-courses', this)"
                 const tabBtn = document.querySelector(`.tab-btn[onclick*="'${activeTab}'"]`);
                 if (tabBtn) {
-                    // Chama a tua função openTab diretamente
+                    // Chama a função openTab diretamente
                     openTab(activeTab, tabBtn);
                 }
             }
-        });
         });
     </script>
 </body>
