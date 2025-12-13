@@ -252,28 +252,42 @@ public class WebController {
         model.addAttribute("scoreVariation", 0);
 
         if (!teacherCourses.isEmpty()) {
-            Long firstCourseId = teacherCourses.get(0).getId();
-            rankings = dashboardService.getStudentRanking(firstCourseId);
+            // Agregar rankings de todos os cursos do professor, evitando duplicados
+            java.util.Map<Long, RankingDTO> byStudent = new java.util.HashMap<>();
+            for (Course c : teacherCourses) {
+                List<RankingDTO> rlist = dashboardService.getStudentRanking(c.getId());
+                for (RankingDTO r : rlist) {
+                    RankingDTO existing = byStudent.get(r.getId());
+                    if (existing == null) {
+                        byStudent.put(r.getId(), new RankingDTO(r.getId(), r.getName(), r.getTotalPoints()));
+                    } else {
+                        // Mantém a maior pontuação encontrada (evita duplicados entre cursos)
+                        if (r.getTotalPoints() > existing.getTotalPoints()) {
+                            byStudent.put(r.getId(), new RankingDTO(r.getId(), r.getName(), r.getTotalPoints()));
+                        }
+                    }
+                }
+            }
 
-            // Se houver dados, calcula as estatísticas
+            rankings = new ArrayList<>(byStudent.values());
+            rankings.sort((r1, r2) -> Long.compare(r2.getTotalPoints(), r1.getTotalPoints()));
+
+            // Se houver dados, calcula as estatísticas agregadas
             if (!rankings.isEmpty()) {
-                // 1. Totais
                 model.addAttribute("totalStudents", rankings.size());
+                List<Long> courseIds = teacherCourses.stream().map(Course::getId).toList();
                 long courseTeams = allTeams.stream()
-                        .filter(t -> t.getCourse() != null && t.getCourse().getId().equals(firstCourseId))
+                        .filter(t -> t.getCourse() != null && courseIds.contains(t.getCourse().getId()))
                         .count();
                 model.addAttribute("activeTeamsCount", courseTeams);
 
-                // 2. Média
                 double avg = rankings.stream().mapToLong(RankingDTO::getTotalPoints).average().orElse(0.0);
                 model.addAttribute("averageScore", (int) avg);
 
-                // 3. Top Performer
                 RankingDTO top = rankings.get(0);
                 model.addAttribute("topPerformerName", top.getName());
                 model.addAttribute("topPerformerScore", top.getTotalPoints());
 
-                // 4. Variação
                 RankingDTO bottom = rankings.get(rankings.size() - 1);
                 long variation = top.getTotalPoints() - bottom.getTotalPoints();
                 model.addAttribute("scoreVariation", variation);
@@ -411,8 +425,16 @@ public class WebController {
             // Define estado inicial
             sprint.setStatus(pt.up.edscrum.enums.SprintStatus.PLANEAMENTO);
 
-            // O SprintService já trata de associar ao projeto
-            sprintService.createSprint(projectId, sprint);
+            // Associa quem criou (se fornecido) e chama o serviço
+            if (studentId != null) {
+                sprint.setCreatedBy(userService.getUserById(studentId));
+            }
+            Sprint saved = sprintService.createSprint(projectId, sprint);
+
+            // Trigger prémios automáticos relacionados com sprints
+            if (studentId != null) {
+                awardService.handleSprintCreated(studentId, projectId);
+            }
 
             redirectAttributes.addFlashAttribute("successMessage", "Sprint criada com sucesso!");
         } catch (Exception e) {
@@ -466,6 +488,31 @@ public class WebController {
             }
 
             teamService.createTeam(team);
+
+            // Prémios automáticos: Formaste a tua primeira equipa?
+            try {
+                if (scrumMasterId != null) {
+                    List<Team> teamsOfSM = teamService.findTeamsByUserId(scrumMasterId);
+                    if (teamsOfSM != null && teamsOfSM.size() == 1) {
+                        awardService.assignAutomaticAwardToStudentByName("Arquiteto de Equipas", "Formaste a tua primeira equipa.", 30, scrumMasterId, null);
+                    }
+                    // Se o team está associado a um projeto, e é a primeira vez como líder num projeto
+                    if (projectId != null) {
+                        awardService.assignAutomaticAwardToStudentByName("Líder de Projeto (SM)", "Assumiste o papel de Scrum Master num projeto.", 80, scrumMasterId, projectId);
+                    }
+                }
+                if (productOwnerId != null) {
+                    List<Team> teamsOfPO = teamService.findTeamsByUserId(productOwnerId);
+                    if (teamsOfPO != null && teamsOfPO.size() == 1) {
+                        awardService.assignAutomaticAwardToStudentByName("Arquiteto de Equipas", "Formaste a tua primeira equipa.", 30, productOwnerId, null);
+                    }
+                    if (projectId != null) {
+                        awardService.assignAutomaticAwardToStudentByName("Líder de Projeto (PO)", "Assumiste o papel de Product Owner num projeto.", 80, productOwnerId, projectId);
+                    }
+                }
+            } catch (Exception e) {
+                // Non-fatal
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com sucesso!");
 
         } catch (Exception e) {
@@ -635,10 +682,10 @@ public class WebController {
     // NOVO: Atribuir prémio a uma equipa
     @PostMapping("/action/assign-award-to-team")
     public String assignAwardToTeamAction(@RequestParam Long teamId,
-                                          @RequestParam Long awardId,
-                                          @RequestParam Long projectId,
-                                          @RequestParam Long teacherId, // Para redirecionamento
-                                          RedirectAttributes redirectAttributes) {
+            @RequestParam Long awardId,
+            @RequestParam Long projectId,
+            @RequestParam Long teacherId, // Para redirecionamento
+            RedirectAttributes redirectAttributes) {
         try {
             awardService.assignAwardToTeam(awardId, teamId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído à equipa com sucesso!");
@@ -651,10 +698,10 @@ public class WebController {
     // NOVO: Atribuir prémio a um aluno específico de uma equipa
     @PostMapping("/action/assign-award-to-student-in-team")
     public String assignAwardToStudentInTeamAction(@RequestParam Long studentId,
-                                                   @RequestParam Long awardId,
-                                                   @RequestParam Long projectId,
-                                                   @RequestParam Long teacherId, // Para redirecionamento
-                                                   RedirectAttributes redirectAttributes) {
+            @RequestParam Long awardId,
+            @RequestParam Long projectId,
+            @RequestParam Long teacherId, // Para redirecionamento
+            RedirectAttributes redirectAttributes) {
         try {
             awardService.assignAwardToStudent(awardId, studentId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído ao aluno com sucesso!");
@@ -665,7 +712,7 @@ public class WebController {
     }
 
     // Rota legacy - redireciona para a home correta (projectDetails foi removido)
-   @GetMapping("/view/project/{projectId}/user/{userId}")
+    @GetMapping("/view/project/{projectId}/user/{userId}")
     public String projectDetailsRedirect(@PathVariable Long projectId, @PathVariable Long userId) {
         try {
             User user = userService.getUserById(userId);
@@ -722,8 +769,8 @@ public class WebController {
             model.addAttribute("totalStories", sprint.getUserStories().size());
 
             // Verificar se todas as stories estão DONE
-            boolean allDone = sprint.getUserStories().isEmpty() || 
-                             sprint.getUserStories().stream().allMatch(s -> s.getStatus().name().equals("DONE"));
+            boolean allDone = sprint.getUserStories().isEmpty()
+                    || sprint.getUserStories().stream().allMatch(s -> s.getStatus().name().equals("DONE"));
             model.addAttribute("canComplete", allDone && !sprint.getUserStories().isEmpty());
 
             return "sprintDashboard";
@@ -746,6 +793,15 @@ public class WebController {
 
             // 3. Adiciona ao modelo para o Thymeleaf
             model.addAttribute("student", data);
+
+            // 4. Adiciona contagem total de estudantes para exibição no dashboard
+            // Usa UserService.getAllStudents() (retorna lista) e pega o tamanho.
+            try {
+                int totalStudents = userService.getAllStudents() != null ? userService.getAllStudents().size() : 0;
+                model.addAttribute("studentCount", totalStudents);
+            } catch (Exception ex) {
+                model.addAttribute("studentCount", 0);
+            }
 
             // Sucesso: Retorna a view
             return "studentHome";
@@ -850,36 +906,36 @@ public class WebController {
         return "redirect:/view/student/home/" + id;
     }
 
-   @PostMapping("/api/student/enroll")
+    @PostMapping("/api/student/enroll")
     public Object enrollStudent(
             @RequestParam Long studentId,
             @RequestParam Long courseId,
             @RequestParam(required = false) String accessCode,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             RedirectAttributes redirectAttributes) {
-        
+
         boolean isAjax = "XMLHttpRequest".equals(requestedWith);
-        
+
         try {
             // Obter nome do curso antes de inscrever
             Course course = courseService.getCourseById(courseId);
             String courseName = course != null ? course.getName() : "";
-            
+
             // Chama o serviço do Dashboard (onde pusemos a lógica)
             dashboardService.enrollStudentInCourse(studentId, courseId, accessCode);
-            
+
             // Se é um pedido AJAX, retornar sucesso com o nome do curso
             if (isAjax) {
                 return ResponseEntity.ok().body(courseName);
             }
-            
+
             redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso! Bem-vindo ao curso " + courseName + ".");
         } catch (IllegalArgumentException e) {
             // Se é um pedido AJAX, retornar erro HTTP para mostrar no modal
             if (isAjax) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
-            
+
             // Erros de código errado ou curso não encontrado
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
@@ -887,11 +943,11 @@ public class WebController {
             if (isAjax) {
                 return ResponseEntity.status(500).body("Erro inesperado ao inscrever: " + e.getMessage());
             }
-            
+
             // Outros erros genéricos
             redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao inscrever: " + e.getMessage());
         }
-        
+
         return "redirect:/view/student/home/" + studentId + "?tab=all-courses";
     }
 

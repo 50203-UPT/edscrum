@@ -176,7 +176,7 @@ public class DashboardService {
 
             // Usa o novo método do repositório para buscar a equipa específica DESTE curso
             teamRepo.findTeamByCourseAndUser(currentCourseId, studentId).ifPresent(team -> {
-                
+
                 // Se a equipa for do curso que estamos a mostrar como "Principal", preenche o cabeçalho
                 if (dto.getCourseId() != null && dto.getCourseId().equals(currentCourseId)) {
                     dto.setTeamName(team.getName());
@@ -189,7 +189,7 @@ public class DashboardService {
                 }
             });
         }
-        
+
         // 5. Converter Projects para ProjectWithProgressDTO com cálculo de progresso
         List<pt.up.edscrum.dto.dashboard.ProjectWithProgressDTO> projectsWithProgress = new ArrayList<>();
         for (Project project : allStudentProjects) {
@@ -230,6 +230,17 @@ public class DashboardService {
         enrollment.setCourse(course);
         enrollment.setStudent(student);
         enrollmentRepo.save(enrollment);
+
+        // Trigger: Explorador de Cursos (3 cursos)
+        try {
+            int enrollCount = enrollmentRepo.findAllByStudent(student).size();
+            if (enrollCount >= 3) {
+                awardService.assignAutomaticAwardToStudentByName("Explorador de Cursos", "Inscreveste-te em 3 cursos diferentes.", 40, studentId, null);
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+        // NOTE: daily-activity based awards removed per request
     }
 
     @Transactional(readOnly = true)
@@ -248,18 +259,18 @@ public class DashboardService {
         dto.setStartDate(project.getStartDate());
         dto.setEndDate(project.getEndDate());
         dto.setCourseId(project.getCourse().getId());
-        
+
         // Converter sprints para DTO simples
         List<ProjectDetailsDTO.SprintDTO> sprintDTOs = new ArrayList<>();
         if (project.getSprints() != null) {
             for (Sprint s : project.getSprints()) {
                 sprintDTOs.add(new ProjectDetailsDTO.SprintDTO(
-                    s.getId(), s.getName(), s.getStatus().name(), s.getStartDate(), s.getEndDate()
+                        s.getId(), s.getName(), s.getStatus().name(), s.getStartDate(), s.getEndDate()
                 ));
             }
         }
         dto.setSprints(sprintDTOs);
-        
+
         // Converter equipas disponíveis para DTO simples
         List<Team> availableTeams = teamRepo.findAvailableTeamsByCourse(project.getCourse().getId());
         List<ProjectDetailsDTO.AvailableTeamDTO> availableTeamDTOs = new ArrayList<>();
@@ -279,8 +290,8 @@ public class DashboardService {
             List<ProjectDetailsDTO.TeamAwardDTO> awardDTOs = new ArrayList<>();
             for (TeamAward ta : tAwards) {
                 awardDTOs.add(new ProjectDetailsDTO.TeamAwardDTO(
-                    ta.getAward() != null ? ta.getAward().getName() : "Prémio",
-                    ta.getPointsEarned()
+                        ta.getAward() != null ? ta.getAward().getName() : "Prémio",
+                        ta.getPointsEarned()
                 ));
             }
             dto.setTeamAwards(awardDTOs);
@@ -358,10 +369,13 @@ public class DashboardService {
     }
 
     // ===================== HELPER METHODS =====================
-    
     private String getRoleInTeam(Team team, Long studentId) {
-        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) return "Scrum Master";
-        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) return "Product Owner";
+        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
+            return "Scrum Master";
+        }
+        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
+            return "Product Owner";
+        }
         return "Developer";
     }
 
@@ -443,11 +457,11 @@ public class DashboardService {
                     int xp = studentAwardRepo.findAllByStudentId(po.getId()).stream()
                             .mapToInt(sa -> sa.getPointsEarned()).sum();
                     pt.up.edscrum.dto.dashboard.MemberWithRoleDTO poMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
-                        po.getId(), 
-                        po.getName(), 
-                        "Product Owner",
-                        awardsCount,
-                        xp
+                            po.getId(),
+                            po.getName(),
+                            "Product Owner",
+                            awardsCount,
+                            xp
                     );
                     if (projectMembers.stream().noneMatch(m -> m.getId().equals(poMember.getId()))) {
                         projectMembers.add(poMember);
@@ -460,11 +474,11 @@ public class DashboardService {
                     int xp = studentAwardRepo.findAllByStudentId(sm.getId()).stream()
                             .mapToInt(sa -> sa.getPointsEarned()).sum();
                     pt.up.edscrum.dto.dashboard.MemberWithRoleDTO smMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
-                        sm.getId(), 
-                        sm.getName(), 
-                        "Scrum Master",
-                        awardsCount,
-                        xp
+                            sm.getId(),
+                            sm.getName(),
+                            "Scrum Master",
+                            awardsCount,
+                            xp
                     );
                     if (projectMembers.stream().noneMatch(m -> m.getId().equals(smMember.getId()))) {
                         projectMembers.add(smMember);
@@ -477,11 +491,11 @@ public class DashboardService {
                         int xp = studentAwardRepo.findAllByStudentId(developer.getId()).stream()
                                 .mapToInt(sa -> sa.getPointsEarned()).sum();
                         pt.up.edscrum.dto.dashboard.MemberWithRoleDTO devMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
-                            developer.getId(), 
-                            developer.getName(), 
-                            "Developer",
-                            awardsCount,
-                            xp
+                                developer.getId(),
+                                developer.getName(),
+                                "Developer",
+                                awardsCount,
+                                xp
                         );
                         if (projectMembers.stream().noneMatch(m -> m.getId().equals(devMember.getId()))) {
                             projectMembers.add(devMember);

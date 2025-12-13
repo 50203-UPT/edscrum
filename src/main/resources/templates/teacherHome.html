@@ -477,7 +477,10 @@
                                     <!-- Product Owner (Azul) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#0d6efd;" th:text="${#strings.substring(team.productOwner.name, 0, 1).toUpperCase()}">J</div>
+                                            <div th:if="${userProfileImageMap[team.productOwner.id] != null}">
+                                                <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[team.productOwner.id]}}" th:alt="${team.productOwner.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
+                                            </div>
+                                            <div th:unless="${userProfileImageMap[team.productOwner.id] != null}" class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#0d6efd;" th:text="${#strings.substring(team.productOwner.name, 0, 1).toUpperCase()}">J</div>
                                             <span th:text="${team.productOwner.name}" class="small fw-bold text-dark">Nome</span>
                                         </div>
                                         <span class="badge-role role-po">Product Owner</span>
@@ -485,7 +488,10 @@
                                     <!-- Scrum Master (Roxo) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#6f42c1;" th:text="${#strings.substring(team.scrumMaster.name, 0, 1).toUpperCase()}">J</div>
+                                            <div th:if="${userProfileImageMap[team.scrumMaster.id] != null}">
+                                                <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[team.scrumMaster.id]}}" th:alt="${team.scrumMaster.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
+                                            </div>
+                                            <div th:unless="${userProfileImageMap[team.scrumMaster.id] != null}" class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#6f42c1;" th:text="${#strings.substring(team.scrumMaster.name, 0, 1).toUpperCase()}">J</div>
                                             <span th:text="${team.scrumMaster.name}" class="small fw-bold text-dark">Nome</span>
                                         </div>
                                         <span class="badge-role role-sm">Scrum Master</span>
@@ -493,7 +499,10 @@
                                     <!-- Developers (Verde) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem;" th:text="${#strings.substring(dev.name, 0, 1).toUpperCase()}">J</div>
+                                            <div th:if="${userProfileImageMap[dev.id] != null}">
+                                                <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[dev.id]}}" th:alt="${dev.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
+                                            </div>
+                                            <div th:unless="${userProfileImageMap[dev.id] != null}" class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem;" th:text="${#strings.substring(dev.name, 0, 1).toUpperCase()}">J</div>
                                             <span th:text="${dev.name}" class="small fw-bold text-dark">Nome Dev</span>
                                         </div>
                                         <span class="badge-role role-dev">Developer</span>
@@ -607,13 +616,19 @@
                     <h5 class="mb-1 fw-bold">Ranking de Estudantes</h5>
                     <p class="mb-0 small text-muted">Classificação geral por pontuação</p>
                 </div>
-                <select class="form-select form-select-sm w-auto bg-light border-0 fw-bold text-muted rounded-pill px-3">
-                    <option>Todos os cursos</option>
-                    <option th:each="c : ${courses}" th:text="${c.name}"></option>
-                </select>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group" role="group" aria-label="Ranking type">
+                        <button id="studentsBtn" type="button" class="btn btn-sm btn-primary" onclick="switchRankingView('students', this)">Estudantes</button>
+                        <button id="teamsBtn" type="button" class="btn btn-sm btn-outline-secondary" onclick="switchRankingView('teams', this)">Equipas</button>
+                    </div>
+                    <select id="teamCourseSelectForRanking" class="form-select form-select-sm w-auto bg-light border-0 fw-bold text-muted rounded-pill px-3" style="display:none;" onchange="loadTeamRanking(this.value)">
+                        <option value="">Selecione o curso</option>
+                        <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name}"></option>
+                    </select>
+                </div>
             </div>
 
-            <div class="table-responsive">
+            <div id="studentRankingSection" class="table-responsive">
                 <table class="table table-hover mb-0 ranking-table align-middle">
                     <thead class="bg-light">
                     <tr>
@@ -633,12 +648,16 @@
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white" style="width: 40px; height: 40px;" th:styleappend="${iter.index == 0 ? 'background-color: #f59e0b' : 'background-color: #e5e7eb; color: #6b7280 !important'}">
-                                    <span th:if="${iter.index == 0}"><i data-lucide="trophy" style="width: 18px;"></i></span>
-                                    <span th:if="${iter.index > 0}" th:text="${#strings.substring(studentRank.name,0,1)}">A</span>
+                                    <img th:if="${userProfileImageMap[studentRank.id] != null}"
+                                         th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[studentRank.id]}}"
+                                         th:alt="${studentRank.name}"
+                                         style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+                                    <span th:if="${userProfileImageMap[studentRank.id] == null and iter.index == 0}"><i data-lucide="trophy" style="width: 18px;"></i></span>
+                                    <span th:if="${userProfileImageMap[studentRank.id] == null and iter.index > 0}" th:text="${#strings.substring(studentRank.name,0,1)}">A</span>
                                 </div>
-                                <div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-blue-sem me-2" th:text="'UPT-' + ${studentRank.id}">UPT-45</span>
                                     <h6 class="mb-0 fw-bold text-dark" th:text="${studentRank.name}">Nome</h6>
-                                    <small class="text-muted" th:text="'ID: ' + ${studentRank.id}">ID</small>
                                 </div>
                             </div>
                         </td>
@@ -651,6 +670,26 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Team ranking container (hidden by default) -->
+            <div id="teamRankingContainer" style="display:none; margin-top:16px;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 ranking-table align-middle">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Posição</th>
+                            <th>Equipa</th>
+                            <th class="text-end pe-4">Total XP</th>
+                        </tr>
+                        </thead>
+                        <tbody id="teamRankingBody">
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">Selecione um curso para ver o ranking de equipas.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -731,7 +770,7 @@
                         <label class="form-label fw-bold small">Curso</label>
                         <select id="teamCourseSelect" name="courseId" class="form-select bg-light border-0" required onchange="updateTakenStatus()">
                             <option value="">Selecione o curso...</option>
-                            <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name} + ' (' + ${c.code} + ')'"></option>
+                            <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name} + ' (' + ${c.tag} + ')'"></option>
                         </select>
                     </div>
 
@@ -947,10 +986,9 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Tipo</label>
-                            <select name="type" class="form-select bg-light border-0 py-2">
-                                <option value="MANUAL">Manual</option>
-                                <option value="AUTOMATIC">Automático</option>
-                            </select>
+                            <!-- Forçar criação apenas de prémios manuais: input oculto + rótulo informativo -->
+                            <input type="hidden" name="type" value="MANUAL" />
+                            <div class="form-control bg-light border-0 py-2 text-muted">Manual</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Destinatário</label>
@@ -1293,8 +1331,80 @@
     });
 </script>
 <script th:inline="javascript">
+    function switchRankingView(type, btn) {
+        const studentsBtn = document.getElementById('studentsBtn');
+        const teamsBtn = document.getElementById('teamsBtn');
+        const studentTable = document.getElementById('studentRankingSection');
+        const teamSelect = document.getElementById('teamCourseSelectForRanking');
+        const teamContainer = document.getElementById('teamRankingContainer');
+        if (!studentTable || !teamContainer) return;
+
+        if (type === 'teams') {
+            studentsBtn.classList.remove('btn-primary'); studentsBtn.classList.add('btn-outline-secondary');
+            teamsBtn.classList.remove('btn-outline-secondary'); teamsBtn.classList.add('btn-primary');
+            studentTable.style.display = 'none';
+            teamSelect.style.display = 'inline-block';
+            teamContainer.style.display = 'block';
+            // load for selected or first course
+            const val = teamSelect.value;
+            if (val) loadTeamRanking(val);
+            else {
+                const firstOpt = teamSelect.querySelector('option[value]:not([value=""])');
+                if (firstOpt) { teamSelect.value = firstOpt.value; loadTeamRanking(firstOpt.value); }
+            }
+        } else {
+            studentsBtn.classList.add('btn-primary'); studentsBtn.classList.remove('btn-outline-secondary');
+            teamsBtn.classList.add('btn-outline-secondary'); teamsBtn.classList.remove('btn-primary');
+            studentTable.style.display = 'block';
+            teamSelect.style.display = 'none';
+            teamContainer.style.display = 'none';
+        }
+    }
+
+    async function loadTeamRanking(courseId) {
+        const container = document.getElementById('teamRankingBody');
+        if (!container) return;
+        if (!courseId) {
+            container.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Selecione um curso.</td></tr>';
+            return;
+        }
+        container.innerHTML = '<tr><td colspan="3" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+        try {
+            const resp = await fetch('/dashboard/ranking/team/' + courseId);
+            if (!resp.ok) throw new Error('Fetch failed');
+            const list = await resp.json();
+            if (!list || list.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">Sem dados de ranking para equipas neste curso.</td></tr>';
+                return;
+            }
+            container.innerHTML = list.map((r, idx) => `
+                <tr>
+                    <td class="ps-4" style="width: 80px;">
+                        ${idx === 0 ? '<div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px;">1</div>' :
+                          idx === 1 ? '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #9ca3af !important;">2</div>' :
+                          idx === 2 ? '<div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px; background-color: #d97706 !important;">3</div>' :
+                          '<span class="fw-bold text-muted ps-3">' + (idx + 1) + '</span>'}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <h6 class="mb-0 fw-bold text-dark">${r.name}</h6>
+                        </div>
+                    </td>
+                    <td class="text-end pe-4"><h5 class="mb-0 fw-bold text-dark">${r.totalPoints}</h5></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Erro ao carregar ranking de equipas', e);
+            container.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Erro ao carregar ranking de equipas.</td></tr>';
+        }
+    }
+</script>
+<script th:inline="javascript">
     lucide.createIcons();
     let unreadNotificationCount = 0; // Global variable to store unread count
+    /*<![CDATA[*/
+    const userProfileImageMap = /*[[${userProfileImageMap}]]*/ {};
+    /*]]>*/
 
     function openTab(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -1494,13 +1604,13 @@
                     const bgColor = member.role === 'Product Owner' ? '#0d6efd' : 
                                    (member.role === 'Scrum Master' ? '#6f42c1' : '#198754');
                     const initials = member.name ? member.name.split(' ').map(n => n.charAt(0)).slice(0, 2).join('').toUpperCase() : 'U';
+                    const imgHtml = (userProfileImageMap && userProfileImageMap[member.id]) ?
+                        `<img src="/uploads/profile-images/${userProfileImageMap[member.id]}" alt="${member.name}" style="width:42px; height:42px; object-fit:cover; border-radius:50%;" />` :
+                        `<div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; background-color: ${bgColor};">${initials}</div>`;
                     return `
                         <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" 
-                                     style="width: 42px; height: 42px; background-color: ${bgColor};">
-                                    ${initials}
-                                </div>
+                                ${imgHtml}
                                 <div>
                                     <h6 class="fw-bold text-dark mb-0">${member.name || 'Utilizador'}</h6>
                                     <span class="badge badge-role ${roleClass}">${member.role || 'Developer'}</span>
@@ -2296,11 +2406,13 @@
         fetch(`/awards/available-for-team?teamId=${teamId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                if (awards.length === 0) {
-                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                // Filter to show only manual awards for teacher assignment
+                const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
+                if (manualAwards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
-                    awards.forEach(award => {
+                    manualAwards.forEach(award => {
                         const opt = document.createElement('option');
                         opt.value = award.id;
                         opt.textContent = `${award.name} (${award.points} pts)`;
@@ -2343,11 +2455,13 @@
         fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                if (awards.length === 0) {
-                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                // Filter to show only manual awards for teacher assignment
+                const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
+                if (manualAwards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
-                    awards.forEach(award => {
+                    manualAwards.forEach(award => {
                         const opt = document.createElement('option');
                         opt.value = award.id;
                         opt.textContent = `${award.name} (${award.points} pts)`;
@@ -2449,14 +2563,28 @@
             enrolledStudents.forEach(student => {
                 const studentDiv = document.createElement('div');
                 studentDiv.className = 'd-flex justify-content-between align-items-center py-2 px-3 bg-light rounded mb-2';
+                const imgHtml = (userProfileImageMap && userProfileImageMap[student.id]) ?
+                    `<img src="/uploads/profile-images/${userProfileImageMap[student.id]}" alt="${student.name}" style="width:32px; height:32px; object-fit:cover; border-radius:50%; display:block;" />` :
+                    `<div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width:32px; height:32px; font-size:0.8rem;">${student.name ? student.name.charAt(0).toUpperCase() : 'A'}</div>`;
+
+                // Avatar with blue UPT badge overlay (keeps a single visible badge and avoids duplication)
+                const avatarHtml = `
+                    <div style="position:relative; width:32px; height:32px;">
+                        ${imgHtml}
+                        <span class="badge badge-blue-sem" style="position:absolute; right:-8px; bottom:-8px; font-size:0.65rem; padding:2px 6px; border-radius:8px;">UPT-${student.id}</span>
+                    </div>`;
+
+                // Only show studentTag if it already follows the UPT-... format; otherwise show email
+                const displayTag = (student.studentTag && typeof student.studentTag === 'string' && student.studentTag.startsWith('UPT-')) ? student.studentTag : (student.email || '');
+
                 studentDiv.innerHTML = `
                     <div class="d-flex align-items-center gap-2">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width:32px; height:32px; font-size:0.8rem;">
-                            ${student.name ? student.name.charAt(0).toUpperCase() : 'A'}
-                        </div>
-                        <div>
-                            <div class="fw-bold text-dark">${student.name}</div>
-                            <small class="text-muted">${student.studentTag || student.email}</small>
+                        ${avatarHtml}
+                        <div style="margin-left:8px;">
+                            <div class="d-flex align-items-center">
+                                <div class="fw-bold text-dark">${student.name}</div>
+                            </div>
+                            <small class="text-muted">${displayTag}</small>
                         </div>
                     </div>
                     <span class="badge bg-success rounded-pill">Inscrito</span>
@@ -2577,6 +2705,196 @@
         </div>
     </div>
 </div>
+<script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+<script th:inline="javascript">
+    // Inicializa os ícones Lucide
+    lucide.createIcons();
 
+    // Obtém o ID do utilizador atual (seja Professor ou Estudante) via Thymeleaf
+    /*<![CDATA[*/
+    const currentUserId = /*[[${teacher != null ? teacher.id : (student != null ? student.id : 0)}]]*/ 0;
+    /*]]>*/
+
+    // ==========================================
+    // LÓGICA DE NOTIFICAÇÕES AUTOMÁTICAS
+    // ==========================================
+
+    async function fetchNotifications() {
+        const notificationsContainer = document.getElementById('notificationsContainer');
+        const notificationCountBadge = document.getElementById('notificationCount');
+        const notificationBellIcon = document.getElementById('notificationBellIcon');
+        const noNotificationsMessage = document.getElementById('noNotifications');
+
+        // Mostra estado de carregamento
+        notificationsContainer.innerHTML = `
+            <div class="text-center text-muted mt-4">
+                <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                <p class="mt-2 small">A carregar...</p>
+            </div>`;
+        
+        try {
+            if (currentUserId === 0) {
+                console.warn("ID de utilizador não encontrado para notificações.");
+                notificationsContainer.innerHTML = '<p class="text-muted text-center mt-3 small">Erro: Utilizador não identificado.</p>';
+                return;
+            }
+
+            // Chamada à API Real
+            const response = await fetch(`/api/notifications/${currentUserId}`);
+            
+            if (!response.ok) throw new Error("Falha ao buscar notificações");
+            
+            const notifications = await response.json();
+            
+            // Limpa o container
+            notificationsContainer.innerHTML = '';
+
+            if (notifications.length === 0) {
+                noNotificationsMessage.style.display = 'block';
+                notificationsContainer.appendChild(noNotificationsMessage);
+                updateBadge(0);
+            } else {
+                noNotificationsMessage.style.display = 'none';
+                
+                notifications.forEach(notification => {
+                    const el = createNotificationElement(notification);
+                    notificationsContainer.appendChild(el);
+                });
+                
+                // Conta apenas as não lidas para o badge vermelho
+                const unreadCount = notifications.filter(n => !n.read).length;
+                updateBadge(unreadCount);
+            }
+            
+            // Re-renderiza os ícones novos
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Erro:', error);
+            notificationsContainer.innerHTML = '<p class="text-danger text-center mt-3 small">Não foi possível carregar as notificações.</p>';
+        }
+    }
+
+    function updateBadge(count) {
+        const badge = document.getElementById('notificationCount');
+        const icon = document.getElementById('notificationBellIcon');
+        
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'block';
+            icon.classList.remove('text-secondary');
+            icon.classList.add('text-danger');
+        } else {
+            badge.style.display = 'none';
+            icon.classList.remove('text-danger');
+            icon.classList.add('text-secondary');
+        }
+    }
+
+    function createNotificationElement(notification) {
+        const item = document.createElement('div');
+        // Adiciona classe 'unread' para estilo visual (ex: fundo azul claro ou borda)
+        item.className = `notification-item ${!notification.read ? 'unread' : ''}`;
+        
+        // Define ícone e cor baseados no tipo
+        let iconName = 'bell';
+        let iconBgClass = 'bg-secondary';
+
+        switch (notification.type) {
+            case 'AWARD':
+                iconName = 'trophy';
+                iconBgClass = 'bg-warning'; // Amarelo
+                break;
+            case 'TEAM':
+                iconName = 'users';
+                iconBgClass = 'bg-primary'; // Azul
+                break;
+            case 'SPRINT':
+                iconName = 'flag';
+                iconBgClass = 'bg-success'; // Verde
+                break;
+            case 'SYSTEM':
+            case 'RANKING':
+                iconName = 'info';
+                iconBgClass = 'bg-info'; // Ciano
+                break;
+        }
+
+        item.innerHTML = `
+            <div class="notification-icon ${iconBgClass}">
+                <i data-lucide="${iconName}" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div class="notification-content">
+                <h6 class="fw-bold mb-1" style="font-size: 0.9rem;">${notification.title}</h6>
+                <p class="text-muted small mb-1" style="font-size: 0.8rem; line-height: 1.3;">${notification.message}</p>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="notification-time text-muted" style="font-size: 0.7rem;">
+                        ${timeAgo(notification.createdAt)}
+                    </span>
+                    ${!notification.read ? 
+                        `<button class="btn btn-sm btn-link p-0 text-decoration-none" style="font-size: 0.75rem;" onclick="markNotificationAsRead(${notification.id})">
+                            Marcar como lida
+                        </button>` : 
+                        '<span class="text-success" style="font-size: 0.75rem;"><i data-lucide="check" style="width:12px; display:inline;"></i> Lida</span>'
+                    }
+                </div>
+            </div>
+        `;
+        return item;
+    }
+
+    async function markNotificationAsRead(notificationId) {
+        try {
+            await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+            // Recarrega a lista para atualizar a UI (badge e estilo)
+            fetchNotifications(); 
+        } catch (error) {
+            console.error('Erro ao marcar como lida:', error);
+        }
+    }
+
+    // Função utilitária para "Há X minutos atrás"
+    function timeAgo(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const seconds = Math.floor((now - date) / 1000);
+
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " anos atrás";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " meses atrás";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " dias atrás";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " horas atrás";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutos atrás";
+        return "agora mesmo";
+    }
+
+    // ==========================================
+    // Sidebar Toggle
+    // ==========================================
+    function toggleNotificationSidebar() {
+        const sidebar = document.getElementById('notificationSidebar');
+        sidebar.classList.toggle('open');
+        if (sidebar.classList.contains('open')) {
+            fetchNotifications();
+        }
+    }
+
+    // Inicialização ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carrega notificações inicialmente para atualizar o badge (sino)
+        fetchNotifications();
+        
+        // Outras inicializações (Tabs, Theme, etc. que já tinhas)
+        const themeSwitcher = document.getElementById('theme-switcher');
+        if(themeSwitcher && localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeSwitcher.checked = true;
+        }
+    });
+</script>
 </body>
 </html>
