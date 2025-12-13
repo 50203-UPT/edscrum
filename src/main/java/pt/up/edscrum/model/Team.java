@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Column;
 
 @Entity
 public class Team {
@@ -54,7 +54,7 @@ public class Team {
     // Team closure and capacity management
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isClosed = false;
-    
+
     @Column(nullable = false, columnDefinition = "INT DEFAULT 10")
     private Integer maxMembers = 10; // Default max is 10 (1 PO + 1 SM + 8 Devs)
 
@@ -136,8 +136,12 @@ public class Team {
      */
     public int getCurrentMemberCount() {
         int count = 0;
-        if (this.productOwner != null) count++;
-        if (this.scrumMaster != null) count++;
+        if (this.productOwner != null) {
+            count++;
+        }
+        if (this.scrumMaster != null) {
+            count++;
+        }
         if (this.developers != null) {
             count += this.developers.size();
         }

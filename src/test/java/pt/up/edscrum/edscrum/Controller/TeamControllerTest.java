@@ -1,18 +1,20 @@
 package pt.up.edscrum.edscrum.Controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -100,7 +102,6 @@ class TeamControllerTest {
         assertTrue(teams.stream().anyMatch(t -> t.getName().equals("Team A")));
         assertTrue(teams.stream().anyMatch(t -> t.getName().equals("Team B")));
     }*/
-
     @Test
     void testUpdateTeam() {
         // Arrange

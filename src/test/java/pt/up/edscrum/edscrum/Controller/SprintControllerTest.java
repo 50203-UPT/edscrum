@@ -1,17 +1,18 @@
 package pt.up.edscrum.edscrum.Controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.SprintRepository;
 import pt.up.edscrum.service.SprintService;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -61,4 +62,3 @@ public class SprintControllerTest {
         assertEquals("Initial description", foundSprint.getDescription());
     }
 }
-

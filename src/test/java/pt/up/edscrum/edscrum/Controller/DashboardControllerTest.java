@@ -1,10 +1,15 @@
 package pt.up.edscrum.edscrum.Controller;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
@@ -16,10 +21,6 @@ import pt.up.edscrum.repository.ScoreRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
 import pt.up.edscrum.service.DashboardService;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
