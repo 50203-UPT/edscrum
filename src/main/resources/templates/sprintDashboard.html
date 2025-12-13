@@ -159,7 +159,10 @@
 
     <nav th:class="'d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top ' + (${teacher != null ? 'navbar-teacher' : 'navbar-student'})" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-3">
-            <a th:href="@{/view/project/{projectId}/user/{userId}(projectId=${projectId}, userId=${teacher != null ? teacher.id : student.id})}" class="btn-back-custom" title="Voltar">
+            <a th:if="${teacher != null}" th:href="@{/view/teacher/home/{userId}(userId=${teacher.id})}" class="btn-back-custom" title="Voltar">
+                <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+            </a>
+            <a th:if="${student != null}" th:href="@{/view/student/home/{userId}(userId=${student.id})}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
             <div th:class="'text-white p-2 rounded-3 shadow-sm ' + (${teacher != null ? 'bg-primary' : 'bg-success'})">
@@ -600,6 +603,7 @@
         const sprintId = /*[[${sprint.id}]]*/ 0;
         const projectId = /*[[${projectId}]]*/ 0;
         const userId = /*[[${teacher != null ? teacher.id : student.id}]]*/ 0;
+        const isTeacher = /*[[${teacher != null}]]*/ false;
     </script>
     <script>
         lucide.createIcons();
@@ -827,7 +831,12 @@
             })
             .then(response => {
                 if (response.ok) {
-                    window.location.href = `/view/project/${projectId}/user/${userId}`;
+                    // Redirecionar para a home correta
+                    if (isTeacher) {
+                        window.location.href = `/view/teacher/home/${userId}`;
+                    } else {
+                        window.location.href = `/view/student/home/${userId}`;
+                    }
                 } else {
                     console.error('Erro ao eliminar sprint.');
                 }

@@ -1,5 +1,7 @@
 package pt.up.edscrum.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,10 +32,12 @@ public class UserStory {
 
     @ManyToOne
     @JoinColumn(name = "sprint_id")
+    @JsonIgnoreProperties({"userStories", "project"})
     private Sprint sprint;
 
     @ManyToOne
     @JoinColumn(name = "assignee_id")
+    @JsonIgnoreProperties({"userStories", "teams", "enrollments"})
     private User assignee; // Pode ser null (Unassigned)
 
     // Getters e Setters

@@ -386,11 +386,9 @@ public class WebController {
             redirectAttributes.addFlashAttribute("successMessage", "Projeto eliminado e equipas desassociadas com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar projeto: " + e.getMessage());
-            // Se der erro, volta para a página do projeto
-            return "redirect:/view/project/" + projectId + "/user/" + teacherId;
         }
 
-        // Se sucesso, volta para a dashboard do professor
+        // Volta sempre para a dashboard do professor
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
@@ -414,8 +412,8 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar sprint: " + e.getMessage());
         }
 
-        // Redireciona de volta para os detalhes do projeto
-        return "redirect:/view/project/" + projectId + "/user/" + studentId;
+        // Redireciona de volta para a página do aluno
+        return "redirect:/view/student/home/" + studentId;
     }
 
 // 2. ATUALIZAR CREATE TEAM
@@ -457,16 +455,10 @@ public class WebController {
             teamService.createTeam(team);
             redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com sucesso!");
 
-            if (projectId != null) {
-                return "redirect:/view/project/" + projectId + "/user/" + teacherId;
-            }
-
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
-            if (projectId != null) {
-                return "redirect:/view/project/" + projectId + "/user/" + teacherId;
-            }
         }
+        // Sempre redireciona para teacherHome
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
@@ -593,7 +585,8 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao associar equipa: " + e.getMessage());
         }
-        return "redirect:/view/project/" + projectId + "/user/" + userId;
+        // Redirecionar para a página do professor
+        return "redirect:/view/teacher/home/" + userId;
     }
 
     @PostMapping("/action/assign-award")
@@ -638,46 +631,17 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // Método Atualizado: Agora recebe userId para carregar a Navbar correta
+    // Rota legacy - redireciona para a home correta (projectDetails foi removido)
    @GetMapping("/view/project/{projectId}/user/{userId}")
-    public String projectDetails(@PathVariable Long projectId, @PathVariable Long userId, Model model) {
+    public String projectDetailsRedirect(@PathVariable Long projectId, @PathVariable Long userId) {
         try {
             User user = userService.getUserById(userId);
 
             if ("TEACHER".equals(user.getRole())) {
-                model.addAttribute("teacher", user);
+                return "redirect:/view/teacher/home/" + userId;
             } else {
-                model.addAttribute("student", user);
+                return "redirect:/view/student/home/" + userId;
             }
-
-            ProjectDetailsDTO project = dashboardService.getProjectDetails(projectId);
-            
-            // Debug: Log do status do projeto
-            System.out.println("=== PROJECT DETAILS DEBUG ===");
-            System.out.println("Project ID: " + projectId);
-            System.out.println("Project Status: " + project.getStatus());
-            System.out.println("Is Student: " + ("STUDENT".equals(user.getRole())));
-            System.out.println("============================");
-            
-            model.addAttribute("project", project);
-
-            // Carregar todos os utilizadores (Professores e Alunos)
-            model.addAttribute("students", userService.getAllUsers());
-
-            // --- NOVO: Lista de Alunos já ocupados neste curso ---
-            // O project.getCourseId() vem do DTO
-            java.util.Set<Long> takenIds = teamService.getTakenStudentIdsByCourse(project.getCourseId());
-            model.addAttribute("takenStudentIds", takenIds);
-
-            // --- NOVO: Lista de Alunos inscritos neste curso ---
-            List<User> enrolledStudents = courseService.getEnrolledStudentsByCourse(project.getCourseId());
-            java.util.Set<Long> enrolledStudentIds = enrolledStudents.stream()
-                    .map(User::getId)
-                    .collect(java.util.stream.Collectors.toSet());
-            model.addAttribute("enrolledStudentIds", enrolledStudentIds);
-
-            return "projectDetails";
-
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/?error=project_error";

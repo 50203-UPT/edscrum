@@ -373,10 +373,11 @@
                     </button>
                 </div>
                 <div class="d-flex flex-column gap-2">
-                    <div th:each="project : ${course.projects}" class="project-list-item">
+                    <div th:each="project, iterStat : ${course.projects}" class="project-list-item"
+                         th:data-project-id="${project.id}">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle" style="width: 8px; height: 8px;" th:classappend="${project.sprints != null and #lists.size(project.sprints) > 0} ? 'bg-primary' : 'bg-success'"></div>
+                                <div class="rounded-circle" style="width: 8px; height: 8px;" th:classappend="${project.status.name() == 'CONCLUIDO'} ? 'bg-success' : (${project.status.name() == 'EM_CURSO'} ? 'bg-warning' : 'bg-secondary')"></div>
                                 <div>
                                     <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;" th:text="${project.name}">Nome</h6>
                                     <small class="text-muted">
@@ -387,15 +388,19 @@
                             </div>
                             <div class="d-flex align-items-center gap-4">
                                 <div class="text-end">
-                                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">Score: 0%</div>
-                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">Ativo</span>
+                                    <span class="badge rounded-pill px-2 py-1" style="font-size: 0.7rem;"
+                                          th:classappend="${project.status.name() == 'CONCLUIDO'} ? 'bg-success' : (${project.status.name() == 'EM_CURSO'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                                          th:text="${#strings.replace(project.status, '_', ' ')}">Status</span>
                                 </div>
 
-                                <a th:href="@{'/view/project/' + ${project.id} + '/user/' + ${teacher.id}}"
-                                   class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center"
-                                   style="width: 32px; height: 32px;">
+                                <button type="button"
+                                        class="btn btn-sm btn-light border rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+                                        style="width: 32px; height: 32px;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#projectDetailsModal"
+                                        onclick="openProjectDetailsModal(this.closest('.project-list-item'))">
                                     <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1268,6 +1273,314 @@
         setProjectDateMinToTomorrow();
     }
 
+    // ==================== MODAL DETALHES DO PROJETO ====================
+    let currentProjectId = null;
+    let currentTeacherId = /*[[${teacher.id}]]*/ null;
+    let currentProjectData = null;
+    
+    function openProjectDetailsModal(projectElement) {
+        // Extrair dados básicos do elemento
+        const projectId = projectElement.getAttribute('data-project-id');
+        currentProjectId = projectId;
+        
+        // Mostrar loading
+        document.getElementById('projectModalName').textContent = 'A carregar...';
+        document.getElementById('projectModalDescription').textContent = '';
+        document.getElementById('projectModalSprintsList').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        document.getElementById('projectModalTeamContent').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        
+        // Carregar dados via API
+        fetch('/projects/' + projectId + '/details')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Dados do projeto carregados:', data);
+                console.log('Sprints:', data.sprints);
+                console.log('Team:', data.teamName, data.members);
+                currentProjectData = data;
+                populateProjectModal(data);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar detalhes do projeto:', error);
+                document.getElementById('projectModalName').textContent = 'Erro ao carregar';
+            });
+        
+        // Atualizar ID para eliminar
+        document.getElementById('deleteProjectIdFromModal').value = projectId;
+    }
+    
+    function populateProjectModal(data) {
+        // Preencher header do modal
+        document.getElementById('projectModalName').textContent = data.name || 'Projeto';
+        document.getElementById('projectModalDescription').textContent = data.description || 'Sem descrição';
+        document.getElementById('projectModalCourseName').textContent = data.courseName || '';
+        document.getElementById('projectModalDates').textContent = (data.startDate || '?') + ' - ' + (data.endDate || '?');
+        document.getElementById('projectModalSprintsCount').textContent = (data.sprints ? data.sprints.length : 0) + ' Sprints';
+        
+        // Status badge
+        const statusBadge = document.getElementById('projectModalStatus');
+        const status = data.status || 'PLANEAMENTO';
+        statusBadge.textContent = status.replace('_', ' ');
+        statusBadge.className = 'badge rounded-pill ' + 
+            (status === 'CONCLUIDO' ? 'bg-success' : 
+             status === 'EM_CURSO' ? 'bg-warning text-dark' : 'bg-secondary');
+        
+        // Preencher progresso
+        const totalStories = data.totalStories || 0;
+        const completedStories = data.completedStories || 0;
+        const progressPercent = data.progressPercentage || 0;
+        document.getElementById('projectModalTotalStories').textContent = totalStories;
+        document.getElementById('projectModalCompletedStories').textContent = completedStories;
+        document.getElementById('projectModalProgressPercent').textContent = progressPercent + '%';
+        const progressBar = document.getElementById('projectModalProgressBar');
+        progressBar.style.width = progressPercent + '%';
+        progressBar.setAttribute('aria-valuenow', progressPercent);
+        
+        // Carregar sprints
+        loadProjectSprintsFromData(data.sprints);
+        
+        // Carregar equipa
+        loadProjectTeamFromData(data);
+        
+        lucide.createIcons();
+    }
+    
+    function loadProjectSprintsFromData(sprints) {
+        const container = document.getElementById('projectModalSprintsList');
+        console.log('loadProjectSprintsFromData chamada, container:', container, 'sprints:', sprints);
+        
+        if (!container) {
+            console.error('Container projectModalSprintsList não encontrado!');
+            return;
+        }
+        
+        if (!sprints || sprints.length === 0) {
+            container.innerHTML = '<div class="text-center py-4 text-muted"><i data-lucide="inbox" class="w-12 h-12 mb-2"></i><p>Ainda não há sprints criadas.</p></div>';
+        } else {
+            let html = '';
+            sprints.forEach((sprint, index) => {
+                const statusClass = sprint.status === 'CONCLUIDO' ? 'bg-success' : 
+                                   (sprint.status === 'EM_CURSO' ? 'bg-warning' : 'bg-secondary');
+                const statusText = sprint.status ? sprint.status.replace('_', ' ') : 'PLANEAMENTO';
+                html += `
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="p-2 bg-white rounded-3 border">
+                                <i data-lucide="target" class="text-primary w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge ${statusClass} rounded-pill" style="font-size: 0.65rem;">${statusText}</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-0">Sprint ${index + 1} - ${sprint.name}</h6>
+                                <small class="text-muted">${sprint.startDate || '?'} até ${sprint.endDate || '?'}</small>
+                            </div>
+                        </div>
+                        <a href="/view/sprint/${sprint.id}/user/${currentTeacherId}" 
+                           class="btn btn-outline-primary rounded-pill px-3 btn-sm fw-bold">
+                            <i data-lucide="layout-grid" class="w-4 h-4 me-1"></i>Ver Board
+                        </a>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            console.log('Sprints HTML inserido:', html.substring(0, 200) + '...');
+        }
+        
+        lucide.createIcons();
+    }
+    
+    function loadProjectTeamFromData(data) {
+        const container = document.getElementById('projectModalTeamContent');
+        console.log('loadProjectTeamFromData chamada, container:', container);
+        
+        if (!container) {
+            console.error('Container projectModalTeamContent não encontrado!');
+            return;
+        }
+        
+        const teamName = data.teamName;
+        const members = data.members || [];
+        console.log('Team data - teamName:', teamName, 'members:', members);
+        
+        if (!teamName || teamName === '') {
+            // Sem equipa - mostrar opção de adicionar
+            container.innerHTML = `
+                <div class="text-center py-5 border border-dashed rounded-3 bg-light">
+                    <div class="mb-3 p-3 bg-white rounded-circle d-inline-block shadow-sm">
+                        <i data-lucide="users" class="w-10 h-10 text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">Este projeto não tem equipa</h5>
+                    <p class="text-muted small mb-3">Associe uma equipa existente a este projeto.</p>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" 
+                            onclick="showAddTeamToProjectForm('${data.id}', '${data.courseId}')">
+                        <i data-lucide="plus" class="w-4 h-4 me-1"></i> Adicionar Equipa
+                    </button>
+                </div>
+            `;
+        } else {
+            // Com equipa - mostrar membros
+            let membersHtml = '';
+            if (members && members.length > 0) {
+                membersHtml = members.map(member => {
+                    const roleClass = member.role === 'Scrum Master' ? 'role-sm' : 
+                                     (member.role === 'Product Owner' ? 'role-po' : 'role-dev');
+                    return `
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary border" 
+                                     style="width: 42px; height: 42px;">
+                                    ${member.name ? member.name.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0">${member.name || 'Utilizador'}</h6>
+                                    <span class="badge badge-role ${roleClass}">${member.role || 'Developer'}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-4">
+                                <div class="text-end">
+                                    <div class="small text-muted">Prémios</div>
+                                    <div class="fw-bold text-dark">${member.awardsCount || 0}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted">XP</div>
+                                    <div class="fw-bold text-primary">${member.individualXP || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                membersHtml = '<p class="text-muted small">Nenhum membro na equipa.</p>';
+            }
+            
+            const teamId = data.teamId || '';
+            container.innerHTML = `
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-4 bg-primary text-white rounded-4 h-100">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="fw-bold text-white mb-1">${teamName}</h5>
+                                    <span class="opacity-75">Pontuação Total</span>
+                                </div>
+                                <i data-lucide="shield" class="w-8 h-8 opacity-50"></i>
+                            </div>
+                            <h2 class="display-4 fw-bold mt-3 mb-0 text-white">${data.teamTotalXP || 0}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-4 bg-white rounded-4 h-100 border">
+                            <h6 class="fw-bold text-dark mb-3">Prémios da Equipa</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                ${data.teamAwards && data.teamAwards.length > 0 
+                                    ? data.teamAwards.map(ta => `<span class="badge bg-warning text-dark border border-warning rounded-pill p-2 px-3 d-flex align-items-center gap-2"><i data-lucide="trophy" class="w-3 h-3"></i> ${ta.awardName || 'Prémio'}</span>`).join('')
+                                    : '<span class="text-muted small">Sem prémios.</span>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Membros</h6>
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="removeTeamFromProject('${data.id}', '${teamId}')">
+                        <i data-lucide="unlink" class="w-4 h-4 me-1"></i> Remover Equipa
+                    </button>
+                </div>
+                ${membersHtml}
+            `;
+        }
+        
+        lucide.createIcons();
+    }
+    
+    function showAddTeamToProjectForm(projectId, courseId) {
+        const container = document.getElementById('projectModalTeamContent');
+        // Obter equipas disponíveis do select do modal de novo projeto
+        const select = document.getElementById('projectTeamSelect');
+        let optionsHtml = '<option value="" disabled selected>Selecione uma equipa...</option>';
+        let hasOptions = false;
+        
+        if (select) {
+            select.querySelectorAll('option').forEach(opt => {
+                if (opt.value && opt.getAttribute('data-course-id') === courseId) {
+                    optionsHtml += `<option value="${opt.value}">${opt.textContent}</option>`;
+                    hasOptions = true;
+                }
+            });
+        }
+        
+        if (!hasOptions) {
+            container.innerHTML = `
+                <div class="text-center py-5 border border-dashed rounded-3 bg-light">
+                    <div class="mb-3 p-3 bg-white rounded-circle d-inline-block shadow-sm">
+                        <i data-lucide="users-x" class="w-10 h-10 text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">Sem equipas disponíveis</h5>
+                    <p class="text-muted small mb-3">Crie uma nova equipa primeiro na aba Equipas.</p>
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
+                        Fechar
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        container.innerHTML = `
+            <form action="/projects/assign-team" method="POST">
+                <input type="hidden" name="projectId" value="${projectId}">
+                <input type="hidden" name="userId" value="${currentTeacherId}">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Equipas Disponíveis</label>
+                    <select name="teamId" class="form-select bg-light border-0 py-3" required>
+                        ${optionsHtml}
+                    </select>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" 
+                            onclick="loadProjectTeamFromData(currentProjectData)">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill flex-fill fw-bold">
+                        <i data-lucide="link" class="w-4 h-4 me-1"></i> Associar Equipa
+                    </button>
+                </div>
+            </form>
+        `;
+        
+        lucide.createIcons();
+    }
+    
+    function removeTeamFromProject(projectId, teamId) {
+        if (!confirm('Tem a certeza que deseja remover a equipa deste projeto?')) return;
+        
+        fetch('/projects/' + projectId + '/remove-team/' + teamId, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Fechar modal e recarregar página
+                const modal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+                if (modal) modal.hide();
+                window.location.reload();
+            } else {
+                alert('Erro ao remover equipa.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de conexão.');
+        });
+    }
+    
+    function confirmDeleteProjectFromModal() {
+        if (confirm('Tem a certeza que deseja eliminar este projeto? As equipas serão desassociadas.')) {
+            document.getElementById('deleteProjectFromModalForm').submit();
+        }
+    }
+    // ==================== FIM MODAL DETALHES DO PROJETO ====================
+
     // Date helpers and validation for project form
     function formatDateToYMD(date) {
         const yyyy = date.getFullYear();
@@ -1857,6 +2170,91 @@
         lucide.createIcons();
     }
 </script>
+
+<!-- Modal de Detalhes do Projeto -->
+<div class="modal fade" id="projectDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom pb-3">
+                <div class="d-flex align-items-start gap-3 w-100">
+                    <div class="bg-primary text-white p-3 rounded-3">
+                        <i data-lucide="folder-kanban" style="width: 28px; height: 28px;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span id="projectModalStatus" class="badge rounded-pill bg-warning text-dark">EM CURSO</span>
+                            <small class="text-muted fw-bold" id="projectModalCourseName">Curso</small>
+                        </div>
+                        <h4 class="modal-title fw-bold mb-0" id="projectModalName">Nome do Projeto</h4>
+                        <p class="text-muted small mb-0" id="projectModalDescription">Descrição</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="d-flex align-items-center gap-2 text-muted mb-1">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <small id="projectModalDates">Datas</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 justify-content-end text-dark fw-bold">
+                            <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
+                            <span id="projectModalSprintsCount">0 Sprints</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-0">
+                <!-- Progresso Geral -->
+                <div class="px-4 pt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark small">Progresso Geral</span>
+                        <span class="text-muted small"><span id="projectModalCompletedStories">0</span>/<span id="projectModalTotalStories">0</span> User Stories</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div id="projectModalProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-end mt-1">
+                        <small id="projectModalProgressPercent" class="text-muted fw-bold">0%</small>
+                    </div>
+                </div>
+                
+                <!-- Sprints -->
+                <div class="px-4 pt-4">
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i data-lucide="list-todo" class="w-5 h-5 text-primary"></i>
+                        Sprints do Projeto
+                    </h6>
+                    <div id="projectModalSprintsList">
+                        <p class="text-muted">A carregar sprints...</p>
+                    </div>
+                </div>
+                
+                <!-- Equipa -->
+                <div class="px-4 pt-4 pb-4">
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i data-lucide="users" class="w-5 h-5 text-primary"></i>
+                        Equipa do Projeto
+                    </h6>
+                    <div id="projectModalTeamContent">
+                        <p class="text-muted">A carregar equipa...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-top pt-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="confirmDeleteProjectFromModal()">
+                    <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> Eliminar Projeto
+                </button>
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form para eliminar projeto do modal -->
+<form id="deleteProjectFromModalForm" th:action="@{/projects/delete}" method="POST" style="display:none;">
+    <input type="hidden" id="deleteProjectIdFromModal" name="projectId" />
+    <input type="hidden" name="teacherId" th:value="${teacher.id}" />
+</form>
 
 <!-- Modal para Ver Alunos Inscritos no Curso -->
 <div class="modal fade" id="enrolledStudentsModal" tabindex="-1" aria-hidden="true">

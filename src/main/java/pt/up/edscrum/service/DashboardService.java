@@ -30,6 +30,7 @@ import pt.up.edscrum.repository.StudentAwardRepository;
 import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
+import pt.up.edscrum.repository.UserStoryRepository;
 
 @Service
 public class DashboardService {
@@ -44,8 +45,9 @@ public class DashboardService {
     private final EnrollmentRepository enrollmentRepo;
     private final AwardService awardService;
     private final SprintService sprintService;
+    private final UserStoryRepository userStoryRepo;
 
-    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService, SprintService sprintService) {
+    public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService, SprintService sprintService, UserStoryRepository userStoryRepo) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
         this.teamRepo = teamRepo;
@@ -56,6 +58,7 @@ public class DashboardService {
         this.enrollmentRepo = enrollmentRepo;
         this.awardService = awardService;
         this.sprintService = sprintService;
+        this.userStoryRepo = userStoryRepo;
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
@@ -244,18 +247,43 @@ public class DashboardService {
         dto.setStatus(project.getStatus().name());
         dto.setStartDate(project.getStartDate());
         dto.setEndDate(project.getEndDate());
-        dto.setSprints(project.getSprints());
         dto.setCourseId(project.getCourse().getId());
-        dto.setAvailableTeams(teamRepo.findAvailableTeamsByCourse(project.getCourse().getId()));
+        
+        // Converter sprints para DTO simples
+        List<ProjectDetailsDTO.SprintDTO> sprintDTOs = new ArrayList<>();
+        if (project.getSprints() != null) {
+            for (Sprint s : project.getSprints()) {
+                sprintDTOs.add(new ProjectDetailsDTO.SprintDTO(
+                    s.getId(), s.getName(), s.getStatus().name(), s.getStartDate(), s.getEndDate()
+                ));
+            }
+        }
+        dto.setSprints(sprintDTOs);
+        
+        // Converter equipas disponíveis para DTO simples
+        List<Team> availableTeams = teamRepo.findAvailableTeamsByCourse(project.getCourse().getId());
+        List<ProjectDetailsDTO.AvailableTeamDTO> availableTeamDTOs = new ArrayList<>();
+        for (Team t : availableTeams) {
+            availableTeamDTOs.add(new ProjectDetailsDTO.AvailableTeamDTO(t.getId(), t.getName()));
+        }
+        dto.setAvailableTeams(availableTeamDTOs);
 
         // Dados da Equipa (Assumindo 1 equipa por projeto para simplificar visualização)
         if (project.getTeams() != null && !project.getTeams().isEmpty()) {
             Team team = project.getTeams().get(0);
+            dto.setTeamId(team.getId());
             dto.setTeamName(team.getName());
 
             // 1. XP e Prémios da Equipa
             List<TeamAward> tAwards = teamAwardRepo.findByTeamId(team.getId());
-            dto.setTeamAwards(tAwards);
+            List<ProjectDetailsDTO.TeamAwardDTO> awardDTOs = new ArrayList<>();
+            for (TeamAward ta : tAwards) {
+                awardDTOs.add(new ProjectDetailsDTO.TeamAwardDTO(
+                    ta.getAward() != null ? ta.getAward().getName() : "Prémio",
+                    ta.getPointsEarned()
+                ));
+            }
+            dto.setTeamAwards(awardDTOs);
             int teamScore = tAwards.stream().mapToInt(TeamAward::getPointsEarned).sum();
             dto.setTeamTotalXP(teamScore);
 
@@ -276,6 +304,22 @@ public class DashboardService {
             }
             dto.setMembers(members);
         }
+
+        // Calcular progresso do projeto (baseado em User Stories) - usando repositório para evitar LazyInit
+        int totalStories = 0;
+        int completedStories = 0;
+        if (project.getSprints() != null) {
+            for (Sprint sprint : project.getSprints()) {
+                List<pt.up.edscrum.model.UserStory> stories = userStoryRepo.findBySprintId(sprint.getId());
+                totalStories += stories.size();
+                completedStories += (int) stories.stream()
+                        .filter(us -> "DONE".equals(us.getStatus().name()))
+                        .count();
+            }
+        }
+        dto.setTotalStories(totalStories);
+        dto.setCompletedStories(completedStories);
+        dto.setProgressPercentage(totalStories > 0 ? (completedStories * 100) / totalStories : 0);
 
         return dto;
     }

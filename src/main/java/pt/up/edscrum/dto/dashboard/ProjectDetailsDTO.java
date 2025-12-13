@@ -3,10 +3,6 @@ package pt.up.edscrum.dto.dashboard;
 import java.time.LocalDate;
 import java.util.List;
 
-import pt.up.edscrum.model.Sprint;
-import pt.up.edscrum.model.Team;
-import pt.up.edscrum.model.TeamAward;
-
 public class ProjectDetailsDTO {
 
     private Long id;
@@ -18,15 +14,21 @@ public class ProjectDetailsDTO {
     private LocalDate endDate;
 
     // Dados da Equipa Principal
+    private Long teamId;
     private String teamName;
     private int teamTotalXP;
     private List<TeamMemberDTO> members;
-    private List<TeamAward> teamAwards;
+    private List<TeamAwardDTO> teamAwards;
 
     private Long courseId;
-    private List<Team> availableTeams;
+    private List<AvailableTeamDTO> availableTeams;
 
-    private List<Sprint> sprints;
+    private List<SprintDTO> sprints;
+
+    // Progresso do projeto
+    private int totalStories;
+    private int completedStories;
+    private int progressPercentage;
 
     // Classe interna para detalhes dos membros
     public static class TeamMemberDTO {
@@ -43,6 +45,45 @@ public class ProjectDetailsDTO {
             this.role = role;
             this.individualXP = individualXP;
             this.awardsCount = awardsCount;
+        }
+    }
+    
+    // Classe interna para sprints simples
+    public static class SprintDTO {
+        public Long id;
+        public String name;
+        public String status;
+        public LocalDate startDate;
+        public LocalDate endDate;
+        
+        public SprintDTO(Long id, String name, String status, LocalDate startDate, LocalDate endDate) {
+            this.id = id;
+            this.name = name;
+            this.status = status;
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
+    }
+    
+    // Classe interna para awards da equipa
+    public static class TeamAwardDTO {
+        public String awardName;
+        public int pointsEarned;
+        
+        public TeamAwardDTO(String awardName, int pointsEarned) {
+            this.awardName = awardName;
+            this.pointsEarned = pointsEarned;
+        }
+    }
+    
+    // Classe interna para equipas disponíveis
+    public static class AvailableTeamDTO {
+        public Long id;
+        public String name;
+        
+        public AvailableTeamDTO(Long id, String name) {
+            this.id = id;
+            this.name = name;
         }
     }
 
@@ -114,6 +155,14 @@ public class ProjectDetailsDTO {
         this.teamName = teamName;
     }
 
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
     public int getTeamTotalXP() {
         return teamTotalXP;
     }
@@ -130,19 +179,19 @@ public class ProjectDetailsDTO {
         this.members = members;
     }
 
-    public List<TeamAward> getTeamAwards() {
+    public List<TeamAwardDTO> getTeamAwards() {
         return teamAwards;
     }
 
-    public void setTeamAwards(List<TeamAward> teamAwards) {
+    public void setTeamAwards(List<TeamAwardDTO> teamAwards) {
         this.teamAwards = teamAwards;
     }
 
-    public List<Sprint> getSprints() {
+    public List<SprintDTO> getSprints() {
         return sprints;
     }
 
-    public void setSprints(List<Sprint> sprints) {
+    public void setSprints(List<SprintDTO> sprints) {
         this.sprints = sprints;
     }
 
@@ -154,11 +203,35 @@ public class ProjectDetailsDTO {
         this.courseId = courseId;
     }
 
-    public List<Team> getAvailableTeams() {
+    public List<AvailableTeamDTO> getAvailableTeams() {
         return availableTeams;
     }
 
-    public void setAvailableTeams(List<Team> availableTeams) {
+    public void setAvailableTeams(List<AvailableTeamDTO> availableTeams) {
         this.availableTeams = availableTeams;
+    }
+
+    public int getTotalStories() {
+        return totalStories;
+    }
+
+    public void setTotalStories(int totalStories) {
+        this.totalStories = totalStories;
+    }
+
+    public int getCompletedStories() {
+        return completedStories;
+    }
+
+    public void setCompletedStories(int completedStories) {
+        this.completedStories = completedStories;
+    }
+
+    public int getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(int progressPercentage) {
+        this.progressPercentage = progressPercentage;
     }
 }

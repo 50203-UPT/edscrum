@@ -3,6 +3,8 @@ package pt.up.edscrum.model;
 import java.time.LocalDate; // IMPORTANTE
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,12 +34,15 @@ public class Project {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
+    @JsonIgnoreProperties({"projects", "enrollments", "teams"})
     private Course course;
 
     @OneToMany(mappedBy = "project")
+    @JsonIgnoreProperties({"project", "course"})
     private List<Team> teams;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("project")
     private List<Sprint> sprints;
 
     @Enumerated(EnumType.STRING)

@@ -85,4 +85,18 @@ public class ProjectService {
         project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
         projectRepository.save(project);
     }
+
+    // Remover equipa do projeto
+    public void removeTeamFromProject(Long projectId, Long teamId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+        
+        // Verificar se a equipa está associada a este projeto
+        if (team.getProject() != null && team.getProject().getId().equals(projectId)) {
+            team.setProject(null);
+            teamRepository.save(team);
+        } else {
+            throw new RuntimeException("Esta equipa não está associada a este projeto.");
+        }
+    }
 }

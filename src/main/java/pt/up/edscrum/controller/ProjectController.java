@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 import pt.up.edscrum.model.Project;
+import pt.up.edscrum.service.DashboardService;
 import pt.up.edscrum.service.ProjectService;
 
 @RestController
@@ -20,9 +22,11 @@ import pt.up.edscrum.service.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final DashboardService dashboardService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, DashboardService dashboardService) {
         this.projectService = projectService;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping
@@ -34,6 +38,12 @@ public class ProjectController {
     public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
         Project project = projectService.getProjectById(id);
         return ResponseEntity.ok(project);
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<ProjectDetailsDTO> getProjectDetails(@PathVariable Long id) {
+        ProjectDetailsDTO details = dashboardService.getProjectDetails(id);
+        return ResponseEntity.ok(details);
     }
 
     @PostMapping
@@ -73,6 +83,16 @@ public class ProjectController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erro ao reabrir projeto: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{projectId}/remove-team/{teamId}")
+    public ResponseEntity<?> removeTeamFromProject(@PathVariable Long projectId, @PathVariable Long teamId) {
+        try {
+            projectService.removeTeamFromProject(projectId, teamId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao remover equipa: " + e.getMessage());
         }
     }
 }

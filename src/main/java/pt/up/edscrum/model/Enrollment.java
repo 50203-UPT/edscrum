@@ -1,5 +1,7 @@
 package pt.up.edscrum.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +19,7 @@ public class Enrollment {
     private User student;
 
     @ManyToOne
+    @JsonBackReference
     private Course course;
 
     // Getters e Setters

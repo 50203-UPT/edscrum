@@ -2,6 +2,8 @@ package pt.up.edscrum.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,10 +24,12 @@ public class Team {
 
     @ManyToOne
     @JoinColumn(name = "project_id")
+    @JsonIgnoreProperties({"teams", "sprints", "course"})
     private Project project;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
+    @JsonIgnoreProperties({"projects", "enrollments", "teams"})
     private Course course;
 
     // Papéis Scrum
