@@ -33,10 +33,10 @@
         .content-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
         .badge-role { font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
 
-        /* CORES DOS ROLES (Developer atualizado para Verde) */
-        .role-sm { background-color: #fff3cd; color: #856404; }
-        .role-po { background-color: #d1ecf1; color: #0c5460; }
-        .role-dev { background-color: #d1e7dd; color: #0f5132; } /* Verde Claro */
+        /* CORES DOS ROLES: PO (azul), SM (roxo), Dev (verde) */
+        .role-po { background-color: #cce5ff; color: #004085; } /* Azul */
+        .role-sm { background-color: #e2d9f3; color: #6f42c1; } /* Roxo */
+        .role-dev { background-color: #d1e7dd; color: #0f5132; } /* Verde */
 
         .award-manual { border-left: 4px solid #ffc107 !important; }
         .award-auto { border-left: 4px solid #0d6efd !important; }
@@ -415,91 +415,81 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold mb-1">Equipas Scrum</h3>
-                <p class="text-muted">Visão geral de todas as equipas</p>
+                <p class="text-muted">Visão geral de todas as equipas organizadas por curso</p>
             </div>
             <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTeamModal">
                 <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova Equipa
             </button>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6" th:each="team : ${teams}">
-                <div class="content-card h-100 position-relative">
+        <div th:if="${#lists.isEmpty(teams)}" class="alert alert-warning">Não existem equipas criadas.</div>
 
-                    <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
-                        <div>
-                            <h5 class="fw-bold mb-0 text-dark">
-                                <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
-                                <span th:text="${team.name}">Nome Equipa</span>
-                            </h5>
-                            <small class="text-muted" th:if="${team.course != null}" th:text="${team.course.name}">Curso</small>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <!-- New buttons for awarding -->
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#assignAwardToTeamModal"
-                                    th:data-team-id="${team.id}"
-                                    th:data-team-name="${team.name}"
-                                    onclick="prepareAssignAwardToTeamModal(this)"
-                                    title="Atribuir Prémio à Equipa">
-                                <i data-lucide="award" class="w-4 h-4 inline me-1"></i> Equipa
-                            </button>
-                            <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#assignAwardToStudentInTeamModal"
-                                    th:data-team-id="${team.id}"
-                                    th:data-team-name="${team.name}"
-                                    th:data-sm-id="${team.scrumMaster != null ? team.scrumMaster.id : ''}"
-                                    th:data-sm-name="${team.scrumMaster != null ? team.scrumMaster.name : ''}"
-                                    th:data-po-id="${team.productOwner != null ? team.productOwner.id : ''}"
-                                    th:data-po-name="${team.productOwner != null ? team.productOwner.name : ''}"
-                                    th:data-devs="${#strings.listJoin(team.developers.![id + ':' + name], ',')}"
-                                    onclick="prepareAssignAwardToStudentInTeamModal(this)"
-                                    title="Atribuir Prémio a Aluno da Equipa">
-                                <i data-lucide="user-plus" class="w-4 h-4 inline me-1"></i> Aluno
-                            </button>
-
-                            <button class="btn-delete-team shadow-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteTeamModal"
-                                    th:data-team-id="${team.id}"
-                                    onclick="prepareDeleteTeamModal(this)"
-                                    title="Eliminar Equipa">
-                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
+        <!-- Agrupar equipas por curso -->
+        <div th:each="course : ${courses}" class="mb-5">
+            <div th:with="courseTeams=${teamsByCourse.get(course.id)}">
+                <div th:if="${courseTeams != null && !#lists.isEmpty(courseTeams)}">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i data-lucide="book-open" class="w-5 h-5 text-primary"></i>
+                        <h4 class="fw-bold mb-0" th:text="${course.name}">Nome do Curso</h4>
+                        <span class="badge bg-primary rounded-pill" th:text="${#lists.size(courseTeams)}">0</span>
                     </div>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6" th:each="team : ${courseTeams}">
+                            <div class="content-card h-100 position-relative">
 
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-warning text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">SM</div>
-                                <span th:text="${team.scrumMaster.name}" class="small fw-bold text-dark">Nome</span>
+                                <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-dark">
+                                            <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
+                                            <span th:text="${team.name}">Nome Equipa</span>
+                                        </h5>
+                                        <small class="text-muted" th:if="${team.project != null}" th:text="${team.project.name}">Projeto</small>
+                                        <small class="text-muted" th:if="${team.project == null}">Sem projeto atribuído</small>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn-delete-team shadow-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteTeamModal"
+                                                th:data-team-id="${team.id}"
+                                                onclick="prepareDeleteTeamModal(this)"
+                                                title="Eliminar Equipa">
+                                            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-column gap-2">
+                                    <!-- Product Owner (Azul) -->
+                                    <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#0d6efd;" th:text="${#strings.substring(team.productOwner.name, 0, 1).toUpperCase()}">J</div>
+                                            <span th:text="${team.productOwner.name}" class="small fw-bold text-dark">Nome</span>
+                                        </div>
+                                        <span class="badge-role role-po">Product Owner</span>
+                                    </div>
+                                    <!-- Scrum Master (Roxo) -->
+                                    <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem; background-color:#6f42c1;" th:text="${#strings.substring(team.scrumMaster.name, 0, 1).toUpperCase()}">J</div>
+                                            <span th:text="${team.scrumMaster.name}" class="small fw-bold text-dark">Nome</span>
+                                        </div>
+                                        <span class="badge-role role-sm">Scrum Master</span>
+                                    </div>
+                                    <!-- Developers (Verde) -->
+                                    <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.6rem;" th:text="${#strings.substring(dev.name, 0, 1).toUpperCase()}">J</div>
+                                            <span th:text="${dev.name}" class="small fw-bold text-dark">Nome Dev</span>
+                                        </div>
+                                        <span class="badge-role role-dev">Developer</span>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="badge-role role-sm">Scrum Master</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-info text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">PO</div>
-                                <span th:text="${team.productOwner.name}" class="small fw-bold text-dark">Nome</span>
-                            </div>
-                            <span class="badge-role role-po">Product Owner</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; font-size:0.7rem;">D</div>
-                                <span th:text="${dev.name}" class="small fw-bold text-dark">Nome Dev</span>
-                            </div>
-                            <span class="badge-role role-dev">Developer</span>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div th:if="${#lists.isEmpty(teams)}" class="col-12">
-                <div class="alert alert-warning">Não existem equipas criadas.</div>
             </div>
         </div>
     </div>
@@ -509,17 +499,24 @@
             <div><h3 class="fw-bold mb-1">Sistema de Prémios</h3><p class="text-muted">Catálogo de prémios disponíveis</p></div>
             <div class="d-flex gap-2"><button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#newAwardModal"><i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Novo Prémio</button></div>
         </div>
-        <div class="d-flex gap-2 mb-4">
-            <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold transition" onclick="filterAwards('all', this)">Todos (<span th:text="${#lists.size(awards)}">0</span>)</button>
-            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('MANUAL', this)">Manuais</button>
-            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('AUTOMATIC', this)">Automáticos</button>
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+            <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold transition" onclick="filterAwards('all', null, this)">Todos</button>
+            <span class="vr mx-1"></span>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('MANUAL', null, this)">Manuais</button>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards('AUTOMATIC', null, this)">Automáticos</button>
+            <span class="vr mx-1"></span>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards(null, 'INDIVIDUAL', this)">Individual</button>
+            <button class="btn btn-white border btn-sm rounded-pill px-4 text-muted fw-bold transition" onclick="filterAwards(null, 'TEAM', this)">Equipa</button>
         </div>
         <div class="row g-3">
-            <div class="col-md-4 award-item" th:each="award : ${awards}" th:data-type="${award.type}">
+            <div class="col-md-4 award-item" th:each="award : ${awards}" th:data-type="${award.type}" th:data-target-type="${award.targetType}">
                 <div class="content-card h-100 position-relative" th:classappend="${award.type == 'MANUAL'} ? 'award-manual' : 'award-auto'">
                     <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex gap-2 align-items-center"><i th:if="${award.type == 'MANUAL'}" data-lucide="star" class="w-5 h-5 text-warning"></i><i th:if="${award.type == 'AUTOMATIC'}" data-lucide="cpu" class="w-5 h-5 text-primary"></i><h6 class="fw-bold mb-0 text-dark" th:text="${award.name}">Nome</h6></div><div class="fw-bold text-dark bg-light px-2 py-1 rounded" th:text="${award.points} + ' pts'"></div></div>
                     <p class="small text-muted mb-3" th:text="${award.description}">Desc</p>
-                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-light"><span class="badge rounded-pill" th:classappend="${award.type == 'MANUAL'} ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-25 text-primary'" th:text="${award.type}">Tipo</span></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-light">
+                        <span class="badge rounded-pill" th:classappend="${award.type == 'MANUAL'} ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-25 text-primary'" th:text="${award.type}">Tipo</span>
+                        <span class="badge rounded-pill" th:classappend="${award.targetType == 'TEAM'} ? 'bg-success bg-opacity-25 text-success' : 'bg-info bg-opacity-25 text-info'" th:text="${award.targetType == 'TEAM'} ? 'Equipa' : 'Individual'">Destinatário</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -904,15 +901,22 @@
                         <textarea name="description" class="form-control bg-light border-0" rows="2" placeholder="Descrição do prémio..."></textarea>
                     </div>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">Pontos</label>
                             <input type="number" name="points" class="form-control bg-light border-0 py-2" placeholder="100" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">Tipo</label>
                             <select name="type" class="form-select bg-light border-0 py-2">
                                 <option value="MANUAL">Manual</option>
                                 <option value="AUTOMATIC">Automático</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Destinatário</label>
+                            <select name="targetType" class="form-select bg-light border-0 py-2">
+                                <option value="INDIVIDUAL">Individual</option>
+                                <option value="TEAM">Equipa</option>
                             </select>
                         </div>
                     </div>
@@ -1248,7 +1252,7 @@
         fetchNotifications();
     });
 </script>
-<script>
+<script th:inline="javascript">
     lucide.createIcons();
     let unreadNotificationCount = 0; // Global variable to store unread count
 
@@ -1258,6 +1262,22 @@
         document.getElementById(tabId).classList.add('active');
         btnElement.classList.add('active');
     }
+    
+    // Verificar parâmetro tab na URL ao carregar a página
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab) {
+            const tabContent = document.getElementById(tab);
+            const tabBtn = document.querySelector(`.tab-btn[onclick*="'${tab}'"]`);
+            if (tabContent && tabBtn) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                tabContent.classList.add('active');
+                tabBtn.classList.add('active');
+            }
+        }
+    })();
     function prepareProjectModal(button) {
         const courseId = button.getAttribute('data-course-id');
         document.getElementById('modalCourseId').value = courseId;
@@ -1418,25 +1438,35 @@
                 </div>
             `;
         } else {
-            // Com equipa - mostrar membros
+            // Com equipa - mostrar membros (ordenados: PO, SM, Devs)
             let membersHtml = '';
             if (members && members.length > 0) {
-                membersHtml = members.map(member => {
+                // Ordenar: Product Owner primeiro, Scrum Master segundo, Developers por último
+                const roleOrder = {'Product Owner': 1, 'Scrum Master': 2, 'Developer': 3};
+                const sortedMembers = [...members].sort((a, b) => {
+                    const orderA = roleOrder[a.role] || 3;
+                    const orderB = roleOrder[b.role] || 3;
+                    return orderA - orderB;
+                });
+                membersHtml = sortedMembers.map(member => {
                     const roleClass = member.role === 'Scrum Master' ? 'role-sm' : 
                                      (member.role === 'Product Owner' ? 'role-po' : 'role-dev');
+                    const bgColor = member.role === 'Product Owner' ? '#0d6efd' : 
+                                   (member.role === 'Scrum Master' ? '#6f42c1' : '#198754');
+                    const initials = member.name ? member.name.split(' ').map(n => n.charAt(0)).slice(0, 2).join('').toUpperCase() : 'U';
                     return `
                         <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary border" 
-                                     style="width: 42px; height: 42px;">
-                                    ${member.name ? member.name.charAt(0).toUpperCase() : 'U'}
+                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                                     style="width: 42px; height: 42px; background-color: ${bgColor};">
+                                    ${initials}
                                 </div>
                                 <div>
                                     <h6 class="fw-bold text-dark mb-0">${member.name || 'Utilizador'}</h6>
                                     <span class="badge badge-role ${roleClass}">${member.role || 'Developer'}</span>
                                 </div>
                             </div>
-                            <div class="d-flex gap-4">
+                            <div class="d-flex gap-3 align-items-center">
                                 <div class="text-end">
                                     <div class="small text-muted">Prémios</div>
                                     <div class="fw-bold text-dark">${member.awardsCount || 0}</div>
@@ -1445,6 +1475,11 @@
                                     <div class="small text-muted">XP</div>
                                     <div class="fw-bold text-primary">${member.individualXP || 0}</div>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill" 
+                                        onclick="openAssignAwardToMemberModal(${member.id}, '${member.name}', ${data.teamId}, ${data.id})"
+                                        title="Atribuir Prémio">
+                                    <i data-lucide="award" class="w-4 h-4"></i>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1470,7 +1505,13 @@
                     </div>
                     <div class="col-md-6">
                         <div class="p-4 bg-white rounded-4 h-100 border">
-                            <h6 class="fw-bold text-dark mb-3">Prémios da Equipa</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Prémios da Equipa</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" 
+                                        onclick="openAssignAwardToTeamModal(${teamId}, '${teamName}', ${data.id})">
+                                    <i data-lucide="plus" class="w-4 h-4 me-1"></i>Atribuir
+                                </button>
+                            </div>
                             <div class="d-flex flex-wrap gap-2">
                                 ${data.teamAwards && data.teamAwards.length > 0 
                                     ? data.teamAwards.map(ta => `<span class="badge bg-warning text-dark border border-warning rounded-pill p-2 px-3 d-flex align-items-center gap-2"><i data-lucide="trophy" class="w-3 h-3"></i> ${ta.awardName || 'Prémio'}</span>`).join('')
@@ -1678,12 +1719,51 @@
         }
     });
 
-    function filterAwards(type, btnElement) {
-        const buttons = btnElement.parentElement.querySelectorAll('button');
-        buttons.forEach(btn => { btn.classList.remove('btn-primary', 'text-white'); btn.classList.add('btn-white', 'border', 'text-muted'); });
-        btnElement.classList.remove('btn-white', 'border', 'text-muted'); btnElement.classList.add('btn-primary', 'text-white');
+    let currentAwardTypeFilter = 'all';
+    let currentAwardTargetFilter = null;
+    
+    function filterAwards(type, targetType, btnElement) {
+        // Atualizar filtros ativos
+        if (type !== undefined && type !== null) {
+            currentAwardTypeFilter = type;
+            currentAwardTargetFilter = null; // Reset target filter quando muda o tipo
+        }
+        if (targetType !== undefined && targetType !== null) {
+            currentAwardTargetFilter = targetType;
+            currentAwardTypeFilter = 'all'; // Reset type filter quando muda o target
+        }
+        
+        // Atualizar estado visual dos botões
+        const allButtons = document.querySelectorAll('#awards .d-flex.gap-2 button');
+        allButtons.forEach(btn => { 
+            btn.classList.remove('btn-primary', 'text-white'); 
+            btn.classList.add('btn-white', 'border', 'text-muted'); 
+        });
+        if (btnElement) {
+            btnElement.classList.remove('btn-white', 'border', 'text-muted'); 
+            btnElement.classList.add('btn-primary', 'text-white');
+        }
+        
+        // Aplicar filtro aos itens
         const items = document.querySelectorAll('.award-item');
-        items.forEach(item => { if (type === 'all' || item.getAttribute('data-type') === type) item.style.display = 'block'; else item.style.display = 'none'; });
+        items.forEach(item => { 
+            const itemType = item.getAttribute('data-type');
+            const itemTargetType = item.getAttribute('data-target-type');
+            
+            let show = true;
+            
+            // Filtrar por tipo (MANUAL/AUTOMATIC)
+            if (currentAwardTypeFilter !== 'all' && currentAwardTypeFilter !== null) {
+                show = show && (itemType === currentAwardTypeFilter);
+            }
+            
+            // Filtrar por destinatário (INDIVIDUAL/TEAM)
+            if (currentAwardTargetFilter !== null) {
+                show = show && (itemTargetType === currentAwardTargetFilter);
+            }
+            
+            item.style.display = show ? 'block' : 'none';
+        });
     }
 
     // FUNÇÕES PARA EQUIPA
@@ -2005,6 +2085,7 @@
                 <form th:action="@{/action/assign-award-to-team}" method="POST">
                     <input type="hidden" name="teacherId" th:value="${teacher.id}">
                     <input type="hidden" name="teamId" id="assignAwardToTeamId">
+                    <input type="hidden" name="projectId" id="assignAwardToTeamProjectId">
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Prémio</label>
@@ -2039,6 +2120,7 @@
                 <form th:action="@{/action/assign-award-to-student-in-team}" method="POST">
                     <input type="hidden" name="teacherId" th:value="${teacher.id}">
                     <input type="hidden" name="teamId" id="assignAwardToStudentInTeamTeamId">
+                    <input type="hidden" name="projectId" id="assignAwardToStudentProjectId">
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Aluno</label>
@@ -2068,6 +2150,91 @@
 
 <script th:inline="javascript">
     // ... (existing JavaScript code) ...
+
+    // Funções para atribuir prémios a partir do modal de detalhes do projeto
+    function openAssignAwardToTeamModal(teamId, teamName, projectId) {
+        document.getElementById('assignAwardToTeamId').value = teamId;
+        document.getElementById('assignAwardToTeamName').textContent = teamName;
+        document.getElementById('assignAwardToTeamProjectId').value = projectId;
+        
+        // Carregar prémios disponíveis (não atribuídos) para esta equipa neste projeto
+        const awardSelect = document.querySelector('#assignAwardToTeamModal select[name="awardId"]');
+        awardSelect.innerHTML = '<option value="">A carregar prémios...</option>';
+        
+        fetch(`/awards/available-for-team?teamId=${teamId}&projectId=${projectId}`)
+            .then(response => response.json())
+            .then(awards => {
+                if (awards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                } else {
+                    awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
+                    awards.forEach(award => {
+                        const opt = document.createElement('option');
+                        opt.value = award.id;
+                        opt.textContent = `${award.name} (${award.points} pts)`;
+                        awardSelect.appendChild(opt);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar prémios:', error);
+                awardSelect.innerHTML = '<option value="">Erro ao carregar prémios</option>';
+            });
+        
+        // Fechar o modal de detalhes e abrir o modal de prémios
+        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+        if (projectModal) projectModal.hide();
+        
+        const awardModal = new bootstrap.Modal(document.getElementById('assignAwardToTeamModal'));
+        awardModal.show();
+    }
+    
+    function openAssignAwardToMemberModal(memberId, memberName, teamId, projectId) {
+        document.getElementById('assignAwardToStudentInTeamTeamId').value = teamId;
+        document.getElementById('assignAwardToStudentInTeamName').textContent = memberName;
+        document.getElementById('assignAwardToStudentProjectId').value = projectId;
+        
+        const studentSelect = document.getElementById('assignAwardToStudentInTeamStudentSelect');
+        studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
+        
+        // Adicionar apenas o membro selecionado
+        const option = document.createElement('option');
+        option.value = memberId;
+        option.textContent = memberName;
+        option.selected = true;
+        studentSelect.appendChild(option);
+        
+        // Carregar prémios disponíveis (não atribuídos) para este estudante neste projeto
+        const awardSelect = document.querySelector('#assignAwardToStudentInTeamModal select[name="awardId"]');
+        awardSelect.innerHTML = '<option value="">A carregar prémios...</option>';
+        
+        fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`)
+            .then(response => response.json())
+            .then(awards => {
+                if (awards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                } else {
+                    awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
+                    awards.forEach(award => {
+                        const opt = document.createElement('option');
+                        opt.value = award.id;
+                        opt.textContent = `${award.name} (${award.points} pts)`;
+                        awardSelect.appendChild(opt);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar prémios:', error);
+                awardSelect.innerHTML = '<option value="">Erro ao carregar prémios</option>';
+            });
+        
+        // Fechar o modal de detalhes e abrir o modal de prémios
+        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+        if (projectModal) projectModal.hide();
+        
+        const awardModal = new bootstrap.Modal(document.getElementById('assignAwardToStudentInTeamModal'));
+        awardModal.show();
+    }
 
     function prepareAssignAwardToTeamModal(button) {
         const teamId = button.getAttribute('data-team-id');

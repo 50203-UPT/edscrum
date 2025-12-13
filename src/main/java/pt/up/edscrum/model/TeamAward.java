@@ -19,7 +19,18 @@ public class TeamAward {
     @ManyToOne
     private Award award;
 
+    @ManyToOne
+    private Project project; // Projeto onde o prémio foi atribuído
+
     private int pointsEarned; // Pontos que o prémio valia na altura
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
 
     // Getters e Setters
     public Long getId() {

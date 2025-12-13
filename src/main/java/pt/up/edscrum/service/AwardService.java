@@ -5,12 +5,14 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Award;
+import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.StudentAward;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.TeamAward;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.AwardRepository;
+import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.ScoreRepository;
 import pt.up.edscrum.repository.StudentAwardRepository;
 import pt.up.edscrum.repository.TeamAwardRepository;
@@ -26,16 +28,18 @@ public class AwardService {
     private final UserRepository userRepo;
     private final ScoreRepository scoreRepo;
     private final TeamRepository teamRepo;
+    private final ProjectRepository projectRepo;
 
     public AwardService(AwardRepository awardRepo, StudentAwardRepository studentAwardRepo,
             TeamAwardRepository teamAwardRepo, UserRepository userRepo,
-            ScoreRepository scoreRepo, TeamRepository teamRepo) {
+            ScoreRepository scoreRepo, TeamRepository teamRepo, ProjectRepository projectRepo) {
         this.awardRepo = awardRepo;
         this.studentAwardRepo = studentAwardRepo;
         this.teamAwardRepo = teamAwardRepo;
         this.userRepo = userRepo;
         this.scoreRepo = scoreRepo;
         this.teamRepo = teamRepo;
+        this.projectRepo = projectRepo;
     }
 
     // --- MÉTODOS CRUD ---
@@ -64,8 +68,57 @@ public class AwardService {
     public void deleteAward(Long id) {
         awardRepo.deleteById(id);
     }
+    
+    // Obter prémios disponíveis para uma equipa num projeto (exclui já atribuídos e filtra por tipo TEAM)
+    public List<Award> getAvailableAwardsForTeam(Long teamId, Long projectId) {
+        List<Award> allAwards = awardRepo.findAll();
+        List<Long> assignedAwardIds = teamAwardRepo.findByTeamIdAndProjectId(teamId, projectId)
+                .stream()
+                .map(ta -> ta.getAward().getId())
+                .toList();
+        
+        return allAwards.stream()
+                .filter(a -> "TEAM".equals(a.getTargetType()))
+                .filter(a -> !assignedAwardIds.contains(a.getId()))
+                .toList();
+    }
+    
+    // Obter prémios disponíveis para um estudante num projeto (exclui já atribuídos e filtra por tipo INDIVIDUAL)
+    public List<Award> getAvailableAwardsForStudent(Long studentId, Long projectId) {
+        List<Award> allAwards = awardRepo.findAll();
+        List<Long> assignedAwardIds = studentAwardRepo.findByStudentIdAndProjectId(studentId, projectId)
+                .stream()
+                .map(sa -> sa.getAward().getId())
+                .toList();
+        
+        return allAwards.stream()
+                .filter(a -> "INDIVIDUAL".equals(a.getTargetType()))
+                .filter(a -> !assignedAwardIds.contains(a.getId()))
+                .toList();
+    }
 
     // --- ATRIBUIÇÃO E CÁLCULOS ---
+    public void assignAwardToStudent(Long awardId, Long studentId, Long projectId) {
+        Award award = getAwardById(awardId);
+        User student = userRepo.findById(studentId).orElseThrow();
+        Project project = projectRepo.findById(projectId).orElseThrow();
+        
+        // Verificar se já existe este prémio para este estudante neste projeto
+        if (studentAwardRepo.existsByStudentIdAndAwardIdAndProjectId(studentId, awardId, projectId)) {
+            throw new RuntimeException("Este prémio já foi atribuído a este aluno neste projeto.");
+        }
+
+        StudentAward sa = new StudentAward();
+        sa.setAward(award);
+        sa.setStudent(student);
+        sa.setProject(project);
+        sa.setPointsEarned(award.getPoints());
+        studentAwardRepo.save(sa);
+
+        updateUserScore(student);
+    }
+    
+    // Método legacy sem projectId (para compatibilidade)
     public void assignAwardToStudent(Long awardId, Long studentId) {
         Award award = getAwardById(awardId);
         User student = userRepo.findById(studentId).orElseThrow();
@@ -79,6 +132,39 @@ public class AwardService {
         updateUserScore(student);
     }
 
+    public void assignAwardToTeam(Long awardId, Long teamId, Long projectId) {
+        Award award = getAwardById(awardId);
+        Team team = teamRepo.findById(teamId).orElseThrow();
+        Project project = projectRepo.findById(projectId).orElseThrow();
+        
+        // Verificar se já existe este prémio para esta equipa neste projeto
+        if (teamAwardRepo.existsByTeamIdAndAwardIdAndProjectId(teamId, awardId, projectId)) {
+            throw new RuntimeException("Este prémio já foi atribuído a esta equipa neste projeto.");
+        }
+
+        TeamAward ta = new TeamAward();
+        ta.setAward(award);
+        ta.setTeam(team);
+        ta.setProject(project);
+        ta.setPointsEarned(award.getPoints());
+        teamAwardRepo.save(ta);
+
+        // Atualizar score da equipa
+        updateTeamScore(team);
+
+        // Opcional: Atualizar score individual dos membros
+        if (team.getScrumMaster() != null) {
+            updateUserScore(team.getScrumMaster());
+        }
+        if (team.getProductOwner() != null) {
+            updateUserScore(team.getProductOwner());
+        }
+        for (User dev : team.getDevelopers()) {
+            updateUserScore(dev);
+        }
+    }
+    
+    // Método legacy sem projectId (para compatibilidade)
     public void assignAwardToTeam(Long awardId, Long teamId) {
         Award award = getAwardById(awardId);
         Team team = teamRepo.findById(teamId).orElseThrow();
@@ -89,10 +175,8 @@ public class AwardService {
         ta.setPointsEarned(award.getPoints());
         teamAwardRepo.save(ta);
 
-        // Atualizar score da equipa
         updateTeamScore(team);
 
-        // Opcional: Atualizar score individual dos membros
         if (team.getScrumMaster() != null) {
             updateUserScore(team.getScrumMaster());
         }

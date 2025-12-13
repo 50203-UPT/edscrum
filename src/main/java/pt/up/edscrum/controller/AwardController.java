@@ -1,6 +1,7 @@
 package pt.up.edscrum.controller;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import pt.up.edscrum.model.Award;
@@ -50,6 +52,18 @@ public class AwardController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         awardService.deleteAward(id);
+    }
+    
+    // OBTER PRÉMIOS DISPONÍVEIS (não atribuídos) PARA EQUIPA NUM PROJETO
+    @GetMapping("/available-for-team")
+    public List<Award> getAvailableAwardsForTeam(@RequestParam Long teamId, @RequestParam Long projectId) {
+        return awardService.getAvailableAwardsForTeam(teamId, projectId);
+    }
+    
+    // OBTER PRÉMIOS DISPONÍVEIS (não atribuídos) PARA ESTUDANTE NUM PROJETO
+    @GetMapping("/available-for-student")
+    public List<Award> getAvailableAwardsForStudent(@RequestParam Long studentId, @RequestParam Long projectId) {
+        return awardService.getAvailableAwardsForStudent(studentId, projectId);
     }
 
     // ATRIBUI PONTOS A UM ESTUDANTE -------------------------

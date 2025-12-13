@@ -16,6 +16,7 @@ public class Award {
     private String description;
     private int points;
     private String type; // MANUAL ou AUTOMATIC
+    private String targetType; // TEAM ou INDIVIDUAL
 
     // Getters e Setters
     public Long getId() {
@@ -56,5 +57,13 @@ public class Award {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(String targetType) {
+        this.targetType = targetType;
     }
 }

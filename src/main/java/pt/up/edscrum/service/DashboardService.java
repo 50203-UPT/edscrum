@@ -432,23 +432,59 @@ public class DashboardService {
 
         dto.setSprints(sprintsWithProgress);
 
-        // Adicionar membros da equipa
-        List<User> projectMembers = new ArrayList<>();
+        // Adicionar membros da equipa com roles (ordenados: PO, SM, Devs)
+        List<pt.up.edscrum.dto.dashboard.MemberWithRoleDTO> projectMembers = new ArrayList<>();
         if (project.getTeams() != null) {
             for (Team team : project.getTeams()) {
-                // Adicionar Scrum Master
-                if (team.getScrumMaster() != null && !projectMembers.contains(team.getScrumMaster())) {
-                    projectMembers.add(team.getScrumMaster());
+                // Adicionar Product Owner primeiro (Azul)
+                if (team.getProductOwner() != null) {
+                    User po = team.getProductOwner();
+                    int awardsCount = studentAwardRepo.findAllByStudentId(po.getId()).size();
+                    int xp = studentAwardRepo.findAllByStudentId(po.getId()).stream()
+                            .mapToInt(sa -> sa.getPointsEarned()).sum();
+                    pt.up.edscrum.dto.dashboard.MemberWithRoleDTO poMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
+                        po.getId(), 
+                        po.getName(), 
+                        "Product Owner",
+                        awardsCount,
+                        xp
+                    );
+                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(poMember.getId()))) {
+                        projectMembers.add(poMember);
+                    }
                 }
-                // Adicionar Product Owner
-                if (team.getProductOwner() != null && !projectMembers.contains(team.getProductOwner())) {
-                    projectMembers.add(team.getProductOwner());
+                // Adicionar Scrum Master segundo (Roxo)
+                if (team.getScrumMaster() != null) {
+                    User sm = team.getScrumMaster();
+                    int awardsCount = studentAwardRepo.findAllByStudentId(sm.getId()).size();
+                    int xp = studentAwardRepo.findAllByStudentId(sm.getId()).stream()
+                            .mapToInt(sa -> sa.getPointsEarned()).sum();
+                    pt.up.edscrum.dto.dashboard.MemberWithRoleDTO smMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
+                        sm.getId(), 
+                        sm.getName(), 
+                        "Scrum Master",
+                        awardsCount,
+                        xp
+                    );
+                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(smMember.getId()))) {
+                        projectMembers.add(smMember);
+                    }
                 }
-                // Adicionar Developers
+                // Adicionar Developers por último (Verde)
                 if (team.getDevelopers() != null) {
                     for (User developer : team.getDevelopers()) {
-                        if (!projectMembers.contains(developer)) {
-                            projectMembers.add(developer);
+                        int awardsCount = studentAwardRepo.findAllByStudentId(developer.getId()).size();
+                        int xp = studentAwardRepo.findAllByStudentId(developer.getId()).stream()
+                                .mapToInt(sa -> sa.getPointsEarned()).sum();
+                        pt.up.edscrum.dto.dashboard.MemberWithRoleDTO devMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
+                            developer.getId(), 
+                            developer.getName(), 
+                            "Developer",
+                            awardsCount,
+                            xp
+                        );
+                        if (projectMembers.stream().noneMatch(m -> m.getId().equals(devMember.getId()))) {
+                            projectMembers.add(devMember);
                         }
                     }
                 }

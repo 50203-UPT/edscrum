@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import pt.up.edscrum.enums.ProjectStatus;
-import pt.up.edscrum.model.User;
 
 public class ProjectWithProgressDTO {
     private Long id;
@@ -15,7 +14,7 @@ public class ProjectWithProgressDTO {
     private ProjectStatus status;
     private int progress; // 0-100
     private List<SprintWithProgressDTO> sprints;
-    private List<User> members;
+    private List<MemberWithRoleDTO> members;
 
     // Getters e Setters
     public Long getId() {
@@ -82,11 +81,11 @@ public class ProjectWithProgressDTO {
         this.sprints = sprints;
     }
 
-    public List<User> getMembers() {
+    public List<MemberWithRoleDTO> getMembers() {
         return members;
     }
 
-    public void setMembers(List<User> members) {
+    public void setMembers(List<MemberWithRoleDTO> members) {
         this.members = members;
     }
 }

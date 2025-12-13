@@ -19,7 +19,18 @@ public class StudentAward {
     @ManyToOne
     private Award award;
 
+    @ManyToOne
+    private Project project; // Projeto onde o prémio foi atribuído
+
     private int pointsEarned; // guarda a pontuação atribuída
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
 
     public Long getId() {
         return id;

@@ -2,6 +2,8 @@ package pt.up.edscrum.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -222,6 +224,12 @@ public class WebController {
         model.addAttribute("courses", teacherCourses);
         model.addAttribute("teams", allTeams);
         model.addAttribute("awards", awardService.getAllAwards());
+
+        // Agrupar equipas por curso (para a vista de equipas organizadas por curso)
+        Map<Long, List<Team>> teamsByCourse = allTeams.stream()
+                .filter(t -> t.getCourse() != null)
+                .collect(Collectors.groupingBy(t -> t.getCourse().getId()));
+        model.addAttribute("teamsByCourse", teamsByCourse);
 
         // --- Lista de Equipas Disponíveis (Agregada) ---
         List<Team> availableTeams = new ArrayList<>();
@@ -458,8 +466,8 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
         }
-        // Sempre redireciona para teacherHome
-        return "redirect:/view/teacher/home/" + teacherId;
+        // Redireciona para teacherHome na aba de equipas
+        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
     // --- Apagar Equipa ---
@@ -478,7 +486,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar equipa: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
     @PostMapping("/awards/create")
@@ -494,7 +502,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar prémio: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home/" + teacherId + "?tab=awards";
     }
 
     @PostMapping("/api/teacher/settings")
@@ -605,10 +613,11 @@ public class WebController {
     @PostMapping("/action/assign-award-to-team")
     public String assignAwardToTeamAction(@RequestParam Long teamId,
                                           @RequestParam Long awardId,
+                                          @RequestParam Long projectId,
                                           @RequestParam Long teacherId, // Para redirecionamento
                                           RedirectAttributes redirectAttributes) {
         try {
-            awardService.assignAwardToTeam(awardId, teamId);
+            awardService.assignAwardToTeam(awardId, teamId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído à equipa com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio à equipa: " + e.getMessage());
@@ -620,10 +629,11 @@ public class WebController {
     @PostMapping("/action/assign-award-to-student-in-team")
     public String assignAwardToStudentInTeamAction(@RequestParam Long studentId,
                                                    @RequestParam Long awardId,
+                                                   @RequestParam Long projectId,
                                                    @RequestParam Long teacherId, // Para redirecionamento
                                                    RedirectAttributes redirectAttributes) {
         try {
-            awardService.assignAwardToStudent(awardId, studentId); // Reutiliza o método existente
+            awardService.assignAwardToStudent(awardId, studentId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído ao aluno com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio ao aluno: " + e.getMessage());

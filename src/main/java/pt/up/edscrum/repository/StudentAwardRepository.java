@@ -27,4 +27,10 @@ public interface StudentAwardRepository extends JpaRepository<StudentAward, Long
     List<AwardStatsDTO> findAwardsForStudent(Long studentId);
 
     List<StudentAward> findAllByStudentId(Long studentId);
+    
+    // Verificar se já existe prémio atribuído ao estudante no projeto
+    boolean existsByStudentIdAndAwardIdAndProjectId(Long studentId, Long awardId, Long projectId);
+    
+    // Obter todos os prémios atribuídos ao estudante num projeto
+    List<StudentAward> findByStudentIdAndProjectId(Long studentId, Long projectId);
 }
