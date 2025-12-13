@@ -118,7 +118,6 @@ public class ExportController {
         sb.append('\uFEFF');
 
         final String sep = ";";
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String teacherName = "";
         try { User t = userService.getUserById(teacherId); teacherName = t.getName(); } catch (Exception e) { }
 
