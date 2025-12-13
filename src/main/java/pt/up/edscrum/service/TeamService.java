@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import pt.up.edscrum.enums.NotificationType; // Importação
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.TeamRepository;
@@ -16,13 +17,18 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
     private final pt.up.edscrum.service.AwardService awardService;
+    
+    // Serviço de Notificações
+    private final NotificationService notificationService;
 
     public TeamService(TeamRepository teamRepository,
             pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository,
-            pt.up.edscrum.service.AwardService awardService) {
+            pt.up.edscrum.service.AwardService awardService,
+            NotificationService notificationService) {
         this.teamRepository = teamRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.awardService = awardService;
+        this.notificationService = notificationService;
     }
 
     public List<Team> getAllTeams() {
@@ -34,21 +40,17 @@ public class TeamService {
                 .orElseThrow(() -> new RuntimeException("Team not found"));
     }
 
-    // --- NOVO: Validar duplicações antes da UI ---
     public Set<Long> getTakenStudentIdsByCourse(Long courseId) {
         List<Team> teams = teamRepository.findByCourseId(courseId);
         Set<Long> takenIds = new HashSet<>();
 
         for (Team t : teams) {
-            // Verifica Scrum Master (se for aluno)
             if (t.getScrumMaster() != null && "STUDENT".equals(t.getScrumMaster().getRole())) {
                 takenIds.add(t.getScrumMaster().getId());
             }
-            // Verifica Product Owner (se for aluno) - Professores são ignorados aqui!
             if (t.getProductOwner() != null && "STUDENT".equals(t.getProductOwner().getRole())) {
                 takenIds.add(t.getProductOwner().getId());
             }
-            // Verifica Developers
             if (t.getDevelopers() != null) {
                 for (User dev : t.getDevelopers()) {
                     if ("STUDENT".equals(dev.getRole())) {
@@ -60,16 +62,13 @@ public class TeamService {
         return takenIds;
     }
 
-    // Método auxiliar para validar duplicações no SAVE (Backend safety)
     private void validateStudentAvailability(User student, Long courseId) {
         if (student != null && "STUDENT".equals(student.getRole())) {
-            // NOVA VALIDAÇÃO: Verificar se o aluno está inscrito no curso
             boolean isEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(student.getId(), courseId);
             if (!isEnrolled) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) não está inscrito neste curso!");
             }
 
-            // Validação existente: Verificar duplicações
             long count = teamRepository.countStudentTeamsInCourse(student.getId(), courseId);
             if (count > 0) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) já pertence a uma equipa neste curso!");
@@ -91,14 +90,17 @@ public class TeamService {
 
         Team saved = teamRepository.save(team);
 
-        // Atribuir prémio de equipa automático por formação da equipa
+        // --- NOTIFICAÇÕES PARA OS MEMBROS ---
+        notifyTeamMembers(saved, "Bem-vindo à equipa!", "Foste adicionado à equipa '" + saved.getName() + "' no curso " + saved.getCourse().getName() + ".");
+
+        // Atribuir prémio de equipa automático
         try {
             awardService.assignAutomaticAwardToTeamByName("Equipa Formada", "A tua equipa foi formada.", 30, saved.getId(), null);
         } catch (Exception e) {
             // Non-fatal
         }
 
-        // Após criar equipa, verificar participação em projetos para cada membro (Mentor/Colaborador)
+        // Verificar participação em projetos
         try {
             List<pt.up.edscrum.model.User> members = getTeamMembers(saved.getId());
             for (pt.up.edscrum.model.User u : members) {
@@ -114,6 +116,21 @@ public class TeamService {
 
         return saved;
     }
+    
+    // Helper para notificar todos os membros
+    private void notifyTeamMembers(Team team, String title, String message) {
+        if (team.getScrumMaster() != null) {
+            notificationService.createNotification(team.getScrumMaster(), NotificationType.TEAM, title, message);
+        }
+        if (team.getProductOwner() != null) {
+            notificationService.createNotification(team.getProductOwner(), NotificationType.TEAM, title, message);
+        }
+        if (team.getDevelopers() != null) {
+            for (User dev : team.getDevelopers()) {
+                notificationService.createNotification(dev, NotificationType.TEAM, title, message);
+            }
+        }
+    }
 
     public Team updateTeam(Long id, Team teamDetails) {
         Team team = getTeamById(id);
@@ -126,6 +143,12 @@ public class TeamService {
     }
 
     public void deleteTeam(Long id) {
+        // Opcional: Notificar membros que a equipa foi eliminada antes de apagar
+        try {
+            Team team = getTeamById(id);
+            notifyTeamMembers(team, "Equipa Eliminada", "A equipa '" + team.getName() + "' foi removida.");
+        } catch(Exception e) {}
+        
         teamRepository.deleteById(id);
     }
 
@@ -137,7 +160,6 @@ public class TeamService {
         return teamRepository.findTeamByUserId(userId);
     }
 
-    // Retorna todos os membros de uma equipa (SM, PO e Developers)
     public List<User> getTeamMembers(Long teamId) {
         Team team = getTeamById(teamId);
         java.util.List<User> members = new java.util.ArrayList<>();
@@ -155,7 +177,6 @@ public class TeamService {
         return members;
     }
 
-    // Retorna um Mapa: ID do Curso -> Conjunto de IDs de Alunos Ocupados
     public java.util.Map<Long, java.util.Set<Long>> getTakenStudentsMap() {
         java.util.Map<Long, java.util.Set<Long>> map = new java.util.HashMap<>();
         List<Team> allTeams = teamRepository.findAll();
@@ -167,15 +188,12 @@ public class TeamService {
             Long cId = t.getCourse().getId();
             map.putIfAbsent(cId, new java.util.HashSet<>());
 
-            // SM (se for aluno)
             if (t.getScrumMaster() != null && "STUDENT".equals(t.getScrumMaster().getRole())) {
                 map.get(cId).add(t.getScrumMaster().getId());
             }
-            // PO (se for aluno)
             if (t.getProductOwner() != null && "STUDENT".equals(t.getProductOwner().getRole())) {
                 map.get(cId).add(t.getProductOwner().getId());
             }
-            // Developers
             if (t.getDevelopers() != null) {
                 for (User dev : t.getDevelopers()) {
                     if ("STUDENT".equals(dev.getRole())) {

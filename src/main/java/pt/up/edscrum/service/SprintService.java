@@ -4,10 +4,13 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import pt.up.edscrum.enums.NotificationType; // Importação
 import pt.up.edscrum.enums.ProjectStatus;
 import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Sprint;
+import pt.up.edscrum.model.Team;
+import pt.up.edscrum.model.User;
 import pt.up.edscrum.model.UserStory;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.SprintRepository;
@@ -19,11 +22,16 @@ public class SprintService {
     private final SprintRepository sprintRepository;
     private final ProjectRepository projectRepository;
     private final UserStoryRepository userStoryRepository;
+    
+    // Serviço de Notificações
+    private final NotificationService notificationService;
 
-    public SprintService(SprintRepository sprintRepository, ProjectRepository projectRepository, UserStoryRepository userStoryRepository) {
+    public SprintService(SprintRepository sprintRepository, ProjectRepository projectRepository, 
+                         UserStoryRepository userStoryRepository, NotificationService notificationService) {
         this.sprintRepository = sprintRepository;
         this.projectRepository = projectRepository;
         this.userStoryRepository = userStoryRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Sprint> getSprintsByProject(Long projectId) {
@@ -34,7 +42,6 @@ public class SprintService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        // Se o projeto estiver em PLANEAMENTO, passa para EM_CURSO
         if (project.getStatus() == ProjectStatus.PLANEAMENTO) {
             project.setStatus(ProjectStatus.EM_CURSO);
             projectRepository.save(project);
@@ -66,15 +73,12 @@ public class SprintService {
         userStoryRepository.save(story);
     }
 
-    // Calcula percentagem para o Dashboard baseado no status de cada story
-    // TODO = 0%, IN_PROGRESS = 25%, TESTING = 75%, DONE = 100%
     public int calculateSprintProgress(Long sprintId) {
         Sprint sprint = getSprintById(sprintId);
         if (sprint.getUserStories() == null || sprint.getUserStories().isEmpty()) {
             return 0;
         }
 
-        // Calcular média dos valores fixos de cada story
         double totalProgress = sprint.getUserStories().stream()
                 .mapToDouble(us -> {
                     return switch (us.getStatus()) {
@@ -94,7 +98,6 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
                 .orElseThrow(() -> new RuntimeException("Sprint não encontrada"));
 
-        // Verificar se todas as user stories estão DONE
         boolean allDone = sprint.getUserStories().stream()
                 .allMatch(us -> us.getStatus() == UserStoryStatus.DONE);
 
@@ -103,7 +106,30 @@ public class SprintService {
         }
 
         sprint.setStatus(pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
-        return sprintRepository.save(sprint);
+        Sprint savedSprint = sprintRepository.save(sprint);
+        
+        // --- NOTIFICAÇÃO DE SPRINT CONCLUÍDA ---
+        notifyProjectMembersOfSprintCompletion(savedSprint);
+
+        return savedSprint;
+    }
+    
+    private void notifyProjectMembersOfSprintCompletion(Sprint sprint) {
+        Project project = sprint.getProject();
+        if (project != null && project.getTeams() != null) {
+            String title = "Sprint Concluída";
+            String msg = "A sprint '" + sprint.getName() + "' do projeto '" + project.getName() + "' foi concluída com sucesso!";
+            
+            for (Team team : project.getTeams()) {
+                if (team.getScrumMaster() != null) notificationService.createNotification(team.getScrumMaster(), NotificationType.SPRINT, title, msg);
+                if (team.getProductOwner() != null) notificationService.createNotification(team.getProductOwner(), NotificationType.SPRINT, title, msg);
+                if (team.getDevelopers() != null) {
+                    for (User dev : team.getDevelopers()) {
+                        notificationService.createNotification(dev, NotificationType.SPRINT, title, msg);
+                    }
+                }
+            }
+        }
     }
 
     public Sprint reopenSprint(Long sprintId) {
@@ -112,7 +138,6 @@ public class SprintService {
 
         sprint.setStatus(pt.up.edscrum.enums.SprintStatus.EM_CURSO);
         
-        // Se o projeto estiver concluído, reabri-lo automaticamente
         Project project = sprint.getProject();
         if (project != null && project.getStatus() == pt.up.edscrum.enums.ProjectStatus.CONCLUIDO) {
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
@@ -125,12 +150,10 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
                 .orElseThrow(() -> new RuntimeException("Sprint não encontrada"));
         
-        // Eliminar todas as user stories associadas
         if (sprint.getUserStories() != null && !sprint.getUserStories().isEmpty()) {
             userStoryRepository.deleteAll(sprint.getUserStories());
         }
         
-        // Eliminar o sprint
         sprintRepository.delete(sprint);
     }
 }
