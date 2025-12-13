@@ -451,16 +451,25 @@
                                         <small class="text-muted ms-2" th:text="${team.currentMemberCount} + '/' + ${team.maxMembers} + ' membros'">0/5 membros</small>
                                     </div>
 
-                                    <div class="d-flex align-items-center gap-2">
-                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                                                th:if="${!team.isClosed}"
-                                                th:data-team-id="${team.id}"
-                                                th:data-team-name="${team.name}"
-                                                onclick="prepareCloseTeamModal(this)"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#closeTeamModal"
-                                                title="Fechar Equipa">
-                                            <i data-lucide="lock" style="width: 16px; height: 16px;" class="me-1"></i>Fechar
+                                                                         <div class="d-flex align-items-center gap-2">
+                                                                                                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                                                                                                            th:if="${!team.isClosed and team.currentMemberCount < team.maxMembers}"
+                                                                                                                            th:data-team-id="${team.id}"
+                                                                                                                            th:data-course-id="${team.course != null ? team.course.id : ''}"
+                                                                                                                            th:attr="data-team-po-id=${team.productOwner != null ? team.productOwner.id : ''},data-team-sm-id=${team.scrumMaster != null ? team.scrumMaster.id : ''}"
+                                                                                                                            onclick="prepareAddMemberModal(this)"
+                                                                                                                            data-bs-toggle="modal"
+                                                                                                                            data-bs-target="#addMemberModal"
+                                                                                                                            title="Adicionar Membro">                                                                                <i data-lucide="user-plus" style="width: 16px; height: 16px;" class="me-1"></i>Adicionar
+                                                                            </button>
+                                                                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                                                    th:if="${!team.isClosed and team.productOwner != null and team.scrumMaster != null and team.developers != null and !#lists.isEmpty(team.developers)}"
+                                                                                    th:data-team-id="${team.id}"
+                                                                                    th:data-team-name="${team.name}"
+                                                                                    onclick="prepareCloseTeamModal(this)"
+                                                                                    data-bs-toggle="modal"
+                                                                                    data-bs-target="#closeTeamModal"
+                                                                                    title="Fechar Equipa">                                            <i data-lucide="lock" style="width: 16px; height: 16px;" class="me-1"></i>Fechar
                                         </button>
                                         <button class="btn-delete-team shadow-sm"
                                                 th:if="${!team.isClosed}"
@@ -1631,6 +1640,16 @@
                     const imgHtml = (userProfileImageMap && userProfileImageMap[member.id]) ?
                         `<img src="/uploads/profile-images/${userProfileImageMap[member.id]}" alt="${member.name}" style="width:42px; height:42px; object-fit:cover; border-radius:50%;" />` :
                         `<div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 42px; height: 42px; background-color: ${bgColor};">${initials}</div>`;
+                    
+                    const isTeacherPO = member.role === 'Product Owner' && member.userRole === 'TEACHER';
+                    const awardButtonHtml = isTeacherPO ? '' : `
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill" 
+                                onclick="openAssignAwardToMemberModal(${member.id}, '${member.name}', ${data.teamId}, ${data.id})"
+                                title="Atribuir Prémio">
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                        </button>
+                    `;
+
                     return `
                         <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
                             <div class="d-flex align-items-center gap-3">
@@ -1649,11 +1668,7 @@
                                     <div class="small text-muted">XP</div>
                                     <div class="fw-bold text-primary">${member.individualXP || 0}</div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill" 
-                                        onclick="openAssignAwardToMemberModal(${member.id}, '${member.name}', ${data.teamId}, ${data.id})"
-                                        title="Atribuir Prémio">
-                                    <i data-lucide="award" class="w-4 h-4"></i>
-                                </button>
+                                ${awardButtonHtml}
                             </div>
                         </div>
                     `;
@@ -1663,6 +1678,13 @@
             }
             
             const teamId = data.teamId || '';
+            let removeButtonHtml = '';
+            if (data.status === 'PLANEAMENTO') {
+                removeButtonHtml = `<button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="removeTeamFromProject('${data.id}', '${teamId}')">
+                    <i data-lucide="unlink" class="w-4 h-4 me-1"></i> Remover Equipa
+                </button>`;
+            }
+
             container.innerHTML = `
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
@@ -1696,9 +1718,7 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold text-dark mb-0">Membros</h6>
-                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="removeTeamFromProject('${data.id}', '${teamId}')">
-                        <i data-lucide="unlink" class="w-4 h-4 me-1"></i> Remover Equipa
-                    </button>
+                    ${removeButtonHtml}
                 </div>
                 ${membersHtml}
             `;
@@ -1802,11 +1822,28 @@
             alert('Erro de conexão.');
         });
     }
-    
-    function confirmDeleteProjectFromModal() {
-        if (confirm('Tem a certeza que deseja eliminar este projeto? As equipas serão desassociadas.')) {
-            document.getElementById('deleteProjectFromModalForm').submit();
+
+    function openDeleteProjectConfirmModal() {
+        const projectModalEl = document.getElementById('projectDetailsModal');
+        const projectModal = bootstrap.Modal.getInstance(projectModalEl);
+        if (projectModal) {
+            projectModal.hide();
         }
+
+        const confirmModalEl = document.getElementById('deleteProjectConfirmationModal');
+        const confirmModal = new bootstrap.Modal(confirmModalEl);
+
+        confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            if (projectModal) {
+                projectModal.show();
+            }
+        }, { once: true });
+
+        confirmModal.show();
+    }
+
+    function executeDeleteProject() {
+        document.getElementById('deleteProjectFromModalForm').submit();
     }
     // ==================== FIM MODAL DETALHES DO PROJETO ====================
 
@@ -2182,6 +2219,68 @@
         document.getElementById('closeTeamNameDisplay').textContent = teamName;
     }
 
+    async function prepareAddMemberModal(button) {
+        const teamId = button.getAttribute('data-team-id');
+        const courseId = button.getAttribute('data-course-id');
+        const poId = button.getAttribute('data-team-po-id');
+        const smId = button.getAttribute('data-team-sm-id');
+
+        document.getElementById('addMemberTeamId').value = teamId;
+
+        const studentSelect = document.getElementById('addMemberStudentSelect');
+        const roleSelect = document.getElementById('addMemberRoleSelect');
+        const errorDiv = document.getElementById('addMemberError');
+        
+        studentSelect.innerHTML = '<option value="">A carregar alunos...</option>';
+        roleSelect.value = '';
+        errorDiv.style.display = 'none';
+
+        // Reset disabled options
+        roleSelect.querySelector('option[value="PRODUCT_OWNER"]').disabled = false;
+        roleSelect.querySelector('option[value="SCRUM_MASTER"]').disabled = false;
+        
+        // Disable already taken roles
+        if (poId && poId !== '') {
+            roleSelect.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+        }
+        if (smId && smId !== '') {
+            roleSelect.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+        }
+
+        if (!courseId) {
+            studentSelect.innerHTML = '<option value="">Equipa sem curso associado.</option>';
+            return;
+        }
+
+        try {
+            const allStudents = /*[[${students}]]*/ [];
+            const studentCoursesMap = /*[[${studentCoursesMap}]]*/ {};
+            const courseTakenIds = (takenMap[courseId] || []);
+
+            const availableStudents = allStudents.filter(s => {
+                const studentCourseList = studentCoursesMap[s.id] ? String(studentCoursesMap[s.id]).split(',') : [];
+                const isEnrolled = studentCourseList.includes(String(courseId));
+                const isTaken = courseTakenIds.includes(s.id);
+                return s.role === 'STUDENT' && isEnrolled && !isTaken;
+            });
+
+            if (availableStudents.length === 0) {
+                studentSelect.innerHTML = '<option value="">Nenhum aluno disponível.</option>';
+            } else {
+                studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
+                availableStudents.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.id;
+                    option.textContent = `${student.name} (${student.studentTag})`;
+                    studentSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading students for modal:', error);
+            studentSelect.innerHTML = '<option value="">Erro ao carregar alunos.</option>';
+        }
+    }
+    
     // Notification Sidebar JavaScript
     function toggleNotificationSidebar() {
         const sidebar = document.getElementById('notificationSidebar');
@@ -2335,6 +2434,55 @@
                 bsAlert.close();
             }, 3000);
         }
+
+        const addMemberForm = document.getElementById('addMemberForm');
+        if (addMemberForm) {
+            addMemberForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const teamId = document.getElementById('addMemberTeamId').value;
+                const studentId = document.getElementById('addMemberStudentSelect').value;
+                const role = document.getElementById('addMemberRoleSelect').value;
+                const errorDiv = document.getElementById('addMemberError');
+                const submitBtn = addMemberForm.querySelector('button[type="submit"]');
+
+                errorDiv.style.display = 'none';
+
+                if (!studentId || !role) {
+                    errorDiv.textContent = 'Por favor, selecione um aluno e um papel.';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adicionando...';
+
+                const payload = { studentId, role };
+
+                fetch('/api/teams/' + teamId + '/add-member', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        return response.text().then(text => { throw new Error(text || 'Erro desconhecido.') });
+                    }
+                })
+                .catch(error => {
+                    errorDiv.textContent = 'Erro ao adicionar membro: ' + error.message;
+                    errorDiv.style.display = 'block';
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Adicionar Membro';
+                });
+            });
+        }
     });
 </script>
 
@@ -2452,10 +2600,22 @@
             });
         
         // Fechar o modal de detalhes e abrir o modal de prémios
-        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+        const projectModalEl = document.getElementById('projectDetailsModal');
+        const projectModal = bootstrap.Modal.getInstance(projectModalEl);
         if (projectModal) projectModal.hide();
         
-        const awardModal = new bootstrap.Modal(document.getElementById('assignAwardToTeamModal'));
+        const awardModalEl = document.getElementById('assignAwardToTeamModal');
+        const awardModal = new bootstrap.Modal(awardModalEl);
+
+        // When the award modal is hidden, show the project details modal again.
+        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            if (projectModal) {
+                projectModal.show();
+            }
+            // Remove the event listener to avoid multiple firings.
+            awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
+        });
+
         awardModal.show();
     }
     
@@ -2501,10 +2661,22 @@
             });
         
         // Fechar o modal de detalhes e abrir o modal de prémios
-        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+        const projectModalEl = document.getElementById('projectDetailsModal');
+        const projectModal = bootstrap.Modal.getInstance(projectModalEl);
         if (projectModal) projectModal.hide();
         
-        const awardModal = new bootstrap.Modal(document.getElementById('assignAwardToStudentInTeamModal'));
+        const awardModalEl = document.getElementById('assignAwardToStudentInTeamModal');
+        const awardModal = new bootstrap.Modal(awardModalEl);
+
+        // When the award modal is hidden, show the project details modal again.
+        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            if (projectModal) {
+                projectModal.show();
+            }
+            // Remove the event listener to avoid multiple firings.
+            awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
+        });
+
         awardModal.show();
     }
 
@@ -2694,10 +2866,34 @@
             </div>
             
             <div class="modal-footer border-top pt-3 d-flex justify-content-between">
-                <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="confirmDeleteProjectFromModal()">
+                <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="openDeleteProjectConfirmModal()">
                     <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> Eliminar Projeto
                 </button>
                 <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Confirmar Eliminar Projeto -->
+<div class="modal fade" id="deleteProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-danger">Eliminar Projeto</h4>
+                    <p class="text-muted small mb-0">Esta ação é irreversível.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Tem a certeza que deseja eliminar este projeto? <br>As equipas serão desassociadas e os dados do projeto perdidos.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill flex-fill fw-bold" onclick="executeDeleteProject()">Sim, Eliminar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2922,5 +3118,49 @@
         }
     });
 </script>
+<!-- Modal para Adicionar Membro à Equipa -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Adicionar Membro à Equipa</h4>
+                    <p class="text-muted small mb-0">Selecione um aluno e um papel para adicionar à equipa.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <input type="hidden" name="teamId" id="addMemberTeamId">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Aluno</label>
+                        <select name="studentId" id="addMemberStudentSelect" class="form-select bg-light border-0 py-2" required>
+                            <option value="">A carregar alunos...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Papel</label>
+                        <select name="role" id="addMemberRoleSelect" class="form-select bg-light border-0 py-2" required>
+                            <option value="">Selecione um papel...</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                            <option value="SCRUM_MASTER">Scrum Master</option>
+                            <option value="DEVELOPER">Developer</option>
+                        </select>
+                    </div>
+
+                    <div id="addMemberError" class="alert alert-danger" style="display:none;"></div>
+
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Adicionar Membro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

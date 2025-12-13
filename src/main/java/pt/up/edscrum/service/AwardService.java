@@ -92,6 +92,20 @@ public class AwardService {
      * @param projectId id do projeto (pode ser null)
      */
     public void assignAutomaticAwardToStudentByName(String name, String description, int points, Long studentId, Long projectId) {
+        User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Impedir que um professor que é PO receba prémios automáticos individuais
+        if ("TEACHER".equals(student.getRole())) {
+            List<Team> teams = teamRepo.findTeamByUserId(student.getId());
+            if (teams != null) {
+                for (Team team : teams) {
+                    if (team.getProductOwner() != null && team.getProductOwner().getId().equals(student.getId())) {
+                        return; // Silenciosamente ignora a atribuição do prémio
+                    }
+                }
+            }
+        }
+        
         Award award = ensureAutomaticAward(name, description, points, "INDIVIDUAL");
         // Verifica se já existe
         boolean exists = (projectId != null) ? studentAwardRepo.existsByStudentIdAndAwardIdAndProjectId(studentId, award.getId(), projectId)
@@ -101,7 +115,6 @@ public class AwardService {
             return;
         }
 
-        User student = userRepo.findById(studentId).orElseThrow();
         StudentAward sa = new StudentAward();
         sa.setAward(award);
         sa.setStudent(student);
@@ -170,8 +183,11 @@ public class AwardService {
             notificationService.createNotification(team.getScrumMaster(), NotificationType.AWARD, title, msg);
         }
         if (team.getProductOwner() != null) {
-            updateUserScore(team.getProductOwner());
-            notificationService.createNotification(team.getProductOwner(), NotificationType.AWARD, title, msg);
+            // Garante que o Product Owner só recebe pontos se não for professor
+            if (!"TEACHER".equals(team.getProductOwner().getRole())) {
+                updateUserScore(team.getProductOwner());
+                notificationService.createNotification(team.getProductOwner(), NotificationType.AWARD, title, msg);
+            }
         }
         for (User dev : team.getDevelopers()) {
             updateUserScore(dev);
@@ -310,9 +326,22 @@ public class AwardService {
      * @param projectId id do projeto
      */
     public void assignAwardToStudent(Long awardId, Long studentId, Long projectId) {
+        User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
+        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
+
+        // Impedir que um professor PO receba prémios individuais no âmbito de um projeto
+        if ("TEACHER".equals(student.getRole())) {
+            List<Team> projectTeams = project.getTeams();
+            if (projectTeams != null) {
+                for (Team team : projectTeams) {
+                    if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
+                        throw new RuntimeException("Um professor que é Product Owner não pode receber prémios individuais neste projeto.");
+                    }
+                }
+            }
+        }
+
         Award award = getAwardById(awardId);
-        User student = userRepo.findById(studentId).orElseThrow();
-        Project project = projectRepo.findById(projectId).orElseThrow();
 
         if (studentAwardRepo.existsByStudentIdAndAwardIdAndProjectId(studentId, awardId, projectId)) {
             throw new RuntimeException("Este prémio já foi atribuído a este aluno neste projeto.");
@@ -344,8 +373,21 @@ public class AwardService {
      * @param studentId id do estudante
      */
     public void assignAwardToStudent(Long awardId, Long studentId) {
+        User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Impedir que um professor que é PO receba prémios (contexto geral)
+        if ("TEACHER".equals(student.getRole())) {
+            List<Team> teams = teamRepo.findTeamByUserId(student.getId());
+            if (teams != null) {
+                for (Team team : teams) {
+                    if (team.getProductOwner() != null && team.getProductOwner().getId().equals(student.getId())) {
+                        throw new RuntimeException("Um professor que é Product Owner não pode receber prémios.");
+                    }
+                }
+            }
+        }
+
         Award award = getAwardById(awardId);
-        User student = userRepo.findById(studentId).orElseThrow();
 
         StudentAward sa = new StudentAward();
         sa.setAward(award);

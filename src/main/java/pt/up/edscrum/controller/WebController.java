@@ -966,6 +966,12 @@ public class WebController {
                 Team team = project.getTeams().get(0); // Pega a primeira equipa associada ao projeto
                 List<User> teamMembers = teamService.getTeamMembers(team.getId());
                 model.addAttribute("teamMembers", teamMembers);
+
+                if (team.getProductOwner() != null) {
+                    model.addAttribute("productOwnerId", team.getProductOwner().getId());
+                } else {
+                    model.addAttribute("productOwnerId", -1L);
+                }
             }
 
             // Dados calculados

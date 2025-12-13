@@ -169,6 +169,23 @@ public class TeamController {
         }
     }
 
+    @PostMapping("/{teamId}/add-member")
+    public ResponseEntity<?> addMemberByTeacher(@PathVariable Long teamId, @RequestBody Map<String, Object> payload) {
+        try {
+            Long studentId = Long.valueOf(payload.get("studentId").toString());
+            String role = (String) payload.get("role");
+
+            User student = userRepository.findById(studentId)
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+            
+            teamService.addStudentToTeamWithRole(teamId, studentId, student, role);
+            
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     /**
      * Get coursemates for a specific course (only students WITHOUT a team)
      * Also includes the course teacher for Product Owner selection

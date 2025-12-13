@@ -1016,7 +1016,7 @@
                                 data-bs-target="#completeProjectModal"
                                 th:data-project-id="${project.id}"
                                 onclick="setupCompleteProjectModal(this)"
-                                style="display: none !important;">
+                                style="display: none;">
                             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
                             <span>Concluir Projeto</span>
                         </button>
@@ -1644,6 +1644,86 @@
         }
     }
 
+    function checkAllSprintsCompleted() {
+        const projectCards = document.querySelectorAll('#projects .content-card');
+        
+        projectCards.forEach(card => {
+            const sprints = card.querySelectorAll('.sprint-item');
+            const completeBtn = card.querySelector('.complete-project-btn');
+            
+            if (!sprints.length || !completeBtn) {
+                return;
+            }
+            
+            const allSprintsDone = Array.from(sprints).every(sprint => {
+                const status = sprint.getAttribute('data-status');
+                return status === 'CONCLUIDO';
+            });
+
+            if (allSprintsDone) {
+                completeBtn.style.display = 'flex';
+            } else {
+                completeBtn.style.display = 'none';
+            }
+        });
+    }
+
+    let currentProjectId = null;
+
+    function setupCompleteProjectModal(button) {
+        currentProjectId = button.getAttribute('data-project-id');
+    }
+
+    function confirmCompleteProject() {
+        if (!currentProjectId) return;
+
+        fetch('/projects/' + currentProjectId + '/complete', {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (response.ok) {
+                sessionStorage.setItem('teamSuccessMessage', 'Projeto concluído com sucesso!');
+                window.location.reload();
+            } else {
+                response.text().then(text => {
+                    sessionStorage.setItem('teamErrorMessage', 'Erro ao concluir projeto: ' + text);
+                    window.location.reload();
+                });
+            }
+        })
+        .catch(error => {
+            sessionStorage.setItem('teamErrorMessage', 'Erro de rede ao concluir projeto.');
+            window.location.reload();
+        });
+    }
+
+    function setupReopenProjectModal(button) {
+        currentProjectId = button.getAttribute('data-project-id');
+    }
+
+    function confirmReopenProject() {
+        if (!currentProjectId) return;
+
+        fetch('/projects/' + currentProjectId + '/reopen', {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (response.ok) {
+                sessionStorage.setItem('teamSuccessMessage', 'Projeto reaberto com sucesso!');
+                window.location.reload();
+            } else {
+                response.text().then(text => {
+                    sessionStorage.setItem('teamErrorMessage', 'Erro ao reabrir projeto: ' + text);
+                    window.location.reload();
+                });
+            }
+        })
+        .catch(error => {
+            sessionStorage.setItem('teamErrorMessage', 'Erro de rede ao reabrir projeto.');
+            window.location.reload();
+        });
+    }
+
     // ==========================================
     // 3. UTILS E MODAIS EXISTENTES (PRESERVADO)
     // ==========================================
@@ -1832,6 +1912,8 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         
+        checkAllSprintsCompleted();
+
         // Carrega notificações ao abrir a página para atualizar o badge
         fetchNotifications();
 

@@ -437,6 +437,30 @@
         </div>
     </div>
 
+    <!-- Modal para Confirmar Eliminar User Story -->
+    <div class="modal fade" id="deleteUserStoryConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-danger">Eliminar User Story</h4>
+                        <p class="text-muted small mb-0">Esta ação é irreversível.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0 text-dark">Tem a certeza que deseja eliminar esta User Story?</p>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <div class="w-100 d-flex gap-2">
+                        <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger rounded-pill flex-fill fw-bold" onclick="executeDeleteStory()">Sim, Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Concluir Sprint -->
     <div class="modal fade" id="completeSprintModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -553,7 +577,8 @@
                             <label class="form-label fw-bold small">Atribuir a</label>
                             <select id="storyAssignee" class="form-select bg-light border-0 py-2">
                                 <option value="">Não atribuído</option>
-                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}">Membro</option>
+                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}"
+                                        th:disabled="${productOwnerId != null && member.id == productOwnerId}">Membro</option>
                             </select>
                         </div>
 
@@ -611,7 +636,8 @@
                             <label class="form-label fw-bold small">Atribuir a</label>
                             <select id="editStoryAssignee" class="form-select bg-light border-0 py-2">
                                 <option value="">Não atribuído</option>
-                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}">Membro</option>
+                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}"
+                                        th:disabled="${productOwnerId != null && member.id == productOwnerId}">Membro</option>
                             </select>
                         </div>
 
@@ -796,11 +822,26 @@
 
         // Eliminar User Story
         function deleteStory() {
-            const storyId = document.getElementById('editStoryId').value;
-            
-            if (!confirm('Tem certeza que deseja eliminar esta User Story?')) {
-                return;
+            const editModalEl = document.getElementById('editUserStoryModal');
+            const editModal = bootstrap.Modal.getInstance(editModalEl);
+            if (editModal) {
+                editModal.hide();
             }
+
+            const confirmModalEl = document.getElementById('deleteUserStoryConfirmationModal');
+            const confirmModal = new bootstrap.Modal(confirmModalEl);
+
+            confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                if (editModal) {
+                    editModal.show();
+                }
+            }, { once: true });
+
+            confirmModal.show();
+        }
+
+        function executeDeleteStory() {
+            const storyId = document.getElementById('editStoryId').value;
 
             fetch(`/api/stories/${storyId}`, {
                 method: 'DELETE'

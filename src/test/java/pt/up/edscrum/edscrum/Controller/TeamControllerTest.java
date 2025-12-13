@@ -120,8 +120,6 @@ class TeamControllerTest {
     void testDeleteTeam() {
         // Arrange
         Team team = createTestTeam("Team to Delete");
-        Long teamId = team.getId();
-
         // Act
         teamRepository.delete(team);
 

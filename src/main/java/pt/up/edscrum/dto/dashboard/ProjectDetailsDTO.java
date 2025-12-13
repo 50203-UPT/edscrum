@@ -36,13 +36,15 @@ public class ProjectDetailsDTO {
         public Long id;
         public String name;
         public String role; // SM, PO, Dev
+        public String userRole; // TEACHER or STUDENT
         public int individualXP;
         public int awardsCount; // Quantidade de prémios individuais
 
-        public TeamMemberDTO(Long id, String name, String role, int individualXP, int awardsCount) {
+        public TeamMemberDTO(Long id, String name, String role, String userRole, int individualXP, int awardsCount) {
             this.id = id;
             this.name = name;
             this.role = role;
+            this.userRole = userRole;
             this.individualXP = individualXP;
             this.awardsCount = awardsCount;
         }
