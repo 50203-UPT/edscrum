@@ -96,8 +96,6 @@ public class TeamService {
             team.setClosed(true);
         }
 
-        return teamRepository.save(team);
-        
         Team saved = teamRepository.save(team);
 
         // --- NOTIFICAÇÕES PARA OS MEMBROS ---

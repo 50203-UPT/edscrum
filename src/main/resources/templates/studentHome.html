@@ -808,23 +808,6 @@
                     <div class="content-card h-100 border-start border-4 border-primary">
                         <div class="d-flex justify-content-between align-items-start"><div><h5 class="fw-bold text-dark mb-1" th:text="${course.name}">Nome</h5><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill mb-2" th:text="${course.tag}">TAG</span><p class="text-muted small mb-0" th:text="${course.description}">Desc</p></div><i data-lucide="check-circle" class="text-primary" style="width: 24px; height: 24px;"></i></div>
                         <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-bold">Inscrito</small><button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#courseDetailsModal" th:data-course-id="${course.id}" th:data-course-name="${course.name}" onclick="setupCourseDetailsModal(this)">Ver Detalhes</button></div>
-                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                            <small class="text-muted fw-bold">Inscrito</small>
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-primary rounded-pill px-3"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#courseDetailsModal"
-                                    th:data-id="${course.id}"
-                                    th:data-name="${course.name}"
-                                    th:data-tag="${course.tag}"
-                                    th:data-description="${course.description}"
-                                    th:data-semester="${course.semester}"
-                                    th:data-year="${course.year}"
-                                    th:data-teacher="${course.teacher != null ? course.teacher.name : 'N/D'}"
-                                    th:data-projects="${course.projects != null ? #lists.size(course.projects) : 0}"
-                                    th:data-teams="${course.teams != null ? #lists.size(course.teams) : 0}"
-                                    onclick="setupCourseDetails(this)">Ver Detalhes</button>
-                        </div>
                     </div>
                 </div>
                 <div th:if="${#lists.isEmpty(student.enrolledCourses)}" class="col-12 text-center py-4 bg-white rounded-3 border border-dashed"><p class="text-muted mb-0">Não estás inscrito em nenhum curso.</p></div>
@@ -1317,33 +1300,6 @@
 </div>
     
     <!-- Modal Course Details -->
-    <div class="modal fade" id="courseDetailsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-                <div class="modal-header border-0 pb-0">
-                    <div>
-                        <h4 class="modal-title fw-bold text-primary" id="courseDetailsTitle">Curso</h4>
-                        <p class="text-muted small mb-0" id="courseDetailsTag">TAG</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="courseDetailsDescription" class="mb-3">Descrição</p>
-                    <div class="row g-2">
-                        <div class="col-6"><strong>Semestre</strong><div id="courseDetailsSemester" class="text-muted">-</div></div>
-                        <div class="col-6"><strong>Ano</strong><div id="courseDetailsYear" class="text-muted">-</div></div>
-                        <div class="col-6 mt-2"><strong>Docente</strong><div id="courseDetailsTeacher" class="text-muted">-</div></div>
-                        <div class="col-6 mt-2"><strong>Projetos</strong><div id="courseDetailsProjects" class="text-muted">0</div></div>
-                        <div class="col-6 mt-2"><strong>Equipas</strong><div id="courseDetailsTeams" class="text-muted">0</div></div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-2 px-0 pb-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal fade" id="newSprintModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -1914,29 +1870,14 @@
             });
         }
 
-        // Auto-dismiss success alerts after 3 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const successAlert = document.querySelector('.alert-success');
-            if (successAlert) {
-                setTimeout(function() {
-                    const bsAlert = new bootstrap.Alert(successAlert);
-                    bsAlert.close();
-                }, 3000);
-            }
-            
-            // Verificar URL para abrir a tab correta automaticamente
-            const urlParams = new URLSearchParams(window.location.search);
-            const activeTab = urlParams.get('tab');
-            
-            if (activeTab) {
-                // Procura o botão que tem o onclick para esta tab e simula um clique
-                const tabBtn = document.querySelector(`.tab-btn[onclick*="'${activeTab}'"]`);
-                if (tabBtn) {
-                    // Chama a função openTab diretamente
-                    openTab(activeTab, tabBtn);
-                }
-            }
-        });
+        // Auto-dismiss success alerts after 3 seconds (already declared above, just use it)
+        if (successAlert) {
+            setTimeout(function() {
+                const bsAlert = new bootstrap.Alert(successAlert);
+                bsAlert.close();
+            }, 3000);
+        }
+    });
     </script>
 
     <!-- Modal Detalhes do Curso e Equipa -->
@@ -2061,7 +2002,5 @@
         </div>
     </div>
 
-    });
-</script>
 </body>
 </html>
