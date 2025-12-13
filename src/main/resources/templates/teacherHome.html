@@ -443,12 +443,25 @@
                                         <h5 class="fw-bold mb-0 text-dark">
                                             <i data-lucide="users" class="w-5 h-5 inline-block me-2 text-primary"></i>
                                             <span th:text="${team.name}">Nome Equipa</span>
+                                            <span th:if="${team.isClosed}" class="badge bg-danger ms-2">Fechada</span>
+                                            <span th:if="${!team.isClosed && team.currentMemberCount >= team.maxMembers}" class="badge bg-warning ms-2">Completa</span>
                                         </h5>
                                         <small class="text-muted" th:if="${team.project != null}" th:text="${team.project.name}">Projeto</small>
                                         <small class="text-muted" th:if="${team.project == null}">Sem projeto atribuído</small>
+                                        <small class="text-muted ms-2" th:text="${team.currentMemberCount} + '/' + ${team.maxMembers} + ' membros'">0/5 membros</small>
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                th:if="${!team.isClosed}"
+                                                th:data-team-id="${team.id}"
+                                                th:data-team-name="${team.name}"
+                                                onclick="prepareCloseTeamModal(this)"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#closeTeamModal"
+                                                title="Fechar Equipa">
+                                            <i data-lucide="lock" style="width: 16px; height: 16px;" class="me-1"></i>Fechar
+                                        </button>
                                         <button class="btn-delete-team shadow-sm"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#deleteTeamModal"
@@ -762,7 +775,7 @@
 
                     <div class="mb-3">
                         <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers
-                            <button type="button" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperField()">+ Adicionar outro</button>
+                            <button type="button" id="addDeveloperBtn" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addDeveloperField()">+ Adicionar outro</button>
                         </label>
                         <div id="developers-container">
                             <div class="input-group mb-2 developer-row">
@@ -816,6 +829,32 @@
     </div>
 </div>
 
+<div class="modal fade" id="closeTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Fechar Equipa</h4>
+                    <p class="text-muted small mb-0">A equipa não poderá aceitar novos membros.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Tem a certeza que deseja fechar a equipa <strong id="closeTeamNameDisplay"></strong>? <br>Nenhum aluno adicional poderá inscrever-se nesta equipa.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <form th:action="@{/teams/close}" method="POST" class="w-100 d-flex gap-2">
+                    <input type="hidden" name="teamId" id="closeTeamIdField">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning rounded-pill flex-fill fw-bold">Sim, Fechar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="newProjectModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -861,10 +900,11 @@
                             <option th:each="team : ${availableTeams}"
                                     th:value="${team.id}"
                                     th:text="${team.name}"
-                                    th:data-course-id="${team.course != null ? team.course.id : ''}">
+                                    th:data-course-id="${team.course != null ? team.course.id : ''}"
+                                    th:data-is-closed="${team.isClosed}">
                             </option>
                         </select>
-                        <small class="text-muted" style="font-size: 0.7rem;">Apenas equipas deste curso são mostradas.</small>
+                        <small class="text-muted" style="font-size: 0.7rem;">Apenas equipas fechadas deste curso podem ser atribuídas a projetos.</small>
                     </div>
 
                     <div class="modal-footer border-0 pt-4 px-0 pb-0">
@@ -1542,7 +1582,9 @@
         
         if (select) {
             select.querySelectorAll('option').forEach(opt => {
-                if (opt.value && opt.getAttribute('data-course-id') === courseId) {
+                // Only show closed teams
+                const isClosed = opt.getAttribute('data-is-closed') === 'true';
+                if (opt.value && opt.getAttribute('data-course-id') === courseId && isClosed) {
                     optionsHtml += `<option value="${opt.value}">${opt.textContent}</option>`;
                     hasOptions = true;
                 }
@@ -1555,8 +1597,8 @@
                     <div class="mb-3 p-3 bg-white rounded-circle d-inline-block shadow-sm">
                         <i data-lucide="users-x" class="w-10 h-10 text-muted opacity-50"></i>
                     </div>
-                    <h5 class="fw-bold text-dark">Sem equipas disponíveis</h5>
-                    <p class="text-muted small mb-3">Crie uma nova equipa primeiro na aba Equipas.</p>
+                    <h5 class="fw-bold text-dark">Sem equipas fechadas disponíveis</h5>
+                    <p class="text-muted small mb-3">Crie e feche uma equipa primeiro nas abas anteriores.</p>
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
                         Fechar
                     </button>
@@ -1572,7 +1614,7 @@
                 <input type="hidden" name="userId" value="${currentTeacherId}">
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Equipas Disponíveis</label>
+                    <label class="form-label fw-bold small">Equipas Disponíveis (Fechadas)</label>
                     <select name="teamId" class="form-select bg-light border-0 py-3" required>
                         ${optionsHtml}
                     </select>
@@ -1876,10 +1918,93 @@
                 }
             });
         });
+
+        // Update the "Add developer" button state
+        const container = document.getElementById('developers-container');
+        const developerRows = container.querySelectorAll('.developer-row');
+        const addBtn = document.getElementById('addDeveloperBtn');
+        if (developerRows.length >= 8) {
+            addBtn.disabled = true;
+            addBtn.classList.add('opacity-50');
+        } else {
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-50');
+        }
     }
+
+    /**
+     * Validates team creation form before submission
+     */
+    function validateTeamForm() {
+        const form = document.querySelector('form[action*="/teams/create"]');
+        if (!form) return true;
+
+        const courseId = document.getElementById('teamCourseSelect').value;
+        const poSelect = form.querySelector('select[name="productOwnerId"]');
+        const smSelect = form.querySelector('select[name="scrumMasterId"]');
+        const devContainer = document.getElementById('developers-container');
+        const devSelects = devContainer.querySelectorAll('select[name="developerIds"]');
+        
+        const poId = poSelect.value;
+        const smId = smSelect.value;
+        const devIds = Array.from(devSelects)
+            .map(s => s.value)
+            .filter(v => v !== "");
+
+        // Validation: Must have PO and SM
+        if (!poId || !smId) {
+            alert('A equipa deve ter pelo menos um Product Owner e um Scrum Master!');
+            return false;
+        }
+
+        // Validation: Must have at least 1 developer
+        if (devIds.length === 0) {
+            alert('A equipa deve ter pelo menos um Developer!');
+            return false;
+        }
+
+        // Validation: No duplicate members
+        const allMembers = [poId, smId, ...devIds];
+        if (new Set(allMembers).size !== allMembers.length) {
+            alert('Não pode haver membros duplicados na equipa!');
+            return false;
+        }
+
+        // Validation: Max 10 members total (1 PO + 1 SM + 8 Devs)
+        if (allMembers.length > 10) {
+            alert('A equipa não pode ter mais de 10 membros!');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Hook form submission for validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('newTeamModal');
+        if (modal) {
+            const form = modal.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!validateTeamForm()) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        }
+    });
+
 
     function addDeveloperField() {
         const container = document.getElementById('developers-container');
+        const developerRows = container.querySelectorAll('.developer-row');
+        
+        // Maximum 8 developers total (1 initial + 7 additional)
+        if (developerRows.length >= 8) {
+            alert('Máximo de 8 developers permitidos');
+            return;
+        }
+
         const firstRow = container.querySelector('.developer-row');
         const newRow = firstRow.cloneNode(true);
         const select = newRow.querySelector('select');
@@ -1912,6 +2037,13 @@
     function prepareDeleteTeamModal(button) {
         const teamId = button.getAttribute('data-team-id');
         document.getElementById('deleteTeamIdField').value = teamId;
+    }
+
+    function prepareCloseTeamModal(button) {
+        const teamId = button.getAttribute('data-team-id');
+        const teamName = button.getAttribute('data-team-name');
+        document.getElementById('closeTeamIdField').value = teamId;
+        document.getElementById('closeTeamNameDisplay').textContent = teamName;
     }
 
     // Notification Sidebar JavaScript

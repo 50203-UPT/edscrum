@@ -86,6 +86,14 @@ public class TeamService {
             }
         }
 
+        // Calculate current member count
+        int memberCount = team.getCurrentMemberCount();
+        
+        // Auto-close team if it's full
+        if (memberCount >= team.getMaxMembers()) {
+            team.setClosed(true);
+        }
+
         return teamRepository.save(team);
     }
 
@@ -153,5 +161,85 @@ public class TeamService {
             }
         }
         return map;
+    }
+
+    /**
+     * Gets available teams for a course (not closed and has slots available)
+     */
+    public List<Team> getAvailableTeamsForStudentByCourse(Long courseId) {
+        List<Team> teams = teamRepository.findByCourseId(courseId);
+        return teams.stream()
+                .filter(t -> !t.isClosed() && t.canAcceptMembers())
+                .toList();
+    }
+
+    /**
+     * Closes a team (prevents new members from joining)
+     */
+    public Team closeTeam(Long teamId) {
+        Team team = getTeamById(teamId);
+        team.setClosed(true);
+        return teamRepository.save(team);
+    }
+
+    /**
+     * Gets the team a student belongs to in a specific course
+     */
+    public Team getStudentTeamInCourse(Long studentId, Long courseId) {
+        List<Team> teams = teamRepository.findByCourseId(courseId);
+        for (Team team : teams) {
+            if (isStudentInTeam(studentId, team)) {
+                return team;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a student is in a specific team
+     */
+    private boolean isStudentInTeam(Long studentId, Team team) {
+        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
+            return true;
+        }
+        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
+            return true;
+        }
+        if (team.getDevelopers() != null) {
+            for (User dev : team.getDevelopers()) {
+                if (dev.getId().equals(studentId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Add a student to a team as a developer
+     */
+    public Team addStudentToTeam(Long teamId, Long studentId, User student) {
+        Team team = getTeamById(teamId);
+        
+        // Validate student is not already in a team in this course
+        validateStudentAvailability(student, team.getCourse().getId());
+        
+        // Check if team can accept members
+        if (!team.canAcceptMembers()) {
+            throw new RuntimeException("A equipa está fechada ou completa");
+        }
+        
+        // Add student as developer
+        if (team.getDevelopers() == null) {
+            team.setDevelopers(new java.util.ArrayList<>());
+        }
+        team.getDevelopers().add(student);
+        
+        // Auto-close if now full
+        if (team.isFull()) {
+            team.setClosed(true);
+        }
+        
+        return teamRepository.save(team);
     }
 }

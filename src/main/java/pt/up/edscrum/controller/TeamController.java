@@ -1,6 +1,9 @@
 package pt.up.edscrum.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,17 +15,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Team;
+import pt.up.edscrum.model.User;
+import pt.up.edscrum.repository.EnrollmentRepository;
+import pt.up.edscrum.repository.UserRepository;
 import pt.up.edscrum.service.TeamService;
 
 @RestController
-@RequestMapping("/teams")
+@RequestMapping("/api/teams")
 public class TeamController {
 
     private final TeamService teamService;
+    private final EnrollmentRepository enrollmentRepository;
+    private final UserRepository userRepository;
 
-    public TeamController(TeamService teamService) {
+    public TeamController(TeamService teamService, EnrollmentRepository enrollmentRepository, UserRepository userRepository) {
         this.teamService = teamService;
+        this.enrollmentRepository = enrollmentRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -53,4 +64,79 @@ public class TeamController {
         teamService.deleteTeam(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Get student's team in a specific course
+     */
+    @GetMapping("/student-team/{studentId}/course/{courseId}")
+    public ResponseEntity<Map<String, Object>> getStudentTeamInCourse(
+            @PathVariable Long studentId,
+            @PathVariable Long courseId) {
+        Team team = teamService.getStudentTeamInCourse(studentId, courseId);
+        
+        Map<String, Object> response = new HashMap<>();
+        if (team != null) {
+            response.put("teamId", team.getId());
+            response.put("name", team.getName());
+            response.put("productOwner", team.getProductOwner());
+            response.put("scrumMaster", team.getScrumMaster());
+            response.put("developers", team.getDevelopers());
+            response.put("currentMemberCount", team.getCurrentMemberCount());
+            response.put("maxMembers", team.getMaxMembers());
+            response.put("isClosed", team.isClosed());
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get available teams for a course (open and with slots)
+     */
+    @GetMapping("/available-teams/{courseId}")
+    public ResponseEntity<List<Team>> getAvailableTeamsByCourse(@PathVariable Long courseId) {
+        List<Team> teams = teamService.getAvailableTeamsForStudentByCourse(courseId);
+        return ResponseEntity.ok(teams);
+    }
+
+    /**
+     * Student joins a team
+     */
+    @PostMapping("/{teamId}/join")
+    public ResponseEntity<Map<String, String>> joinTeam(
+            @PathVariable Long teamId,
+            @RequestBody Map<String, Long> payload) {
+        Long studentId = payload.get("studentId");
+        
+        Map<String, String> response = new HashMap<>();
+        try {
+            // Get student user
+            User student = userRepository.findById(studentId)
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+            
+            // Add student to team as developer
+            teamService.addStudentToTeam(teamId, studentId, student);
+            
+            response.put("success", "Juntaste-te à equipa com sucesso!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Erro ao juntar-se à equipa: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Get coursemates for a specific course (only students WITHOUT a team)
+     */
+    @GetMapping("/course-mates/{courseId}")
+    public ResponseEntity<List<User>> getCoursemates(@PathVariable Long courseId) {
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        List<User> students = enrollments.stream()
+                .map(Enrollment::getStudent)
+                .filter(student -> "STUDENT".equals(student.getRole()))
+                // Filter out students who already have a team in this course
+                .filter(student -> teamService.getStudentTeamInCourse(student.getId(), courseId) == null)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(students);
+    }
 }
+

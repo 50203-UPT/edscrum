@@ -253,6 +253,346 @@
 </head>
 <body class="student-bg">
 
+    <script th:inline="javascript">
+        window.currentStudentId = /*[[${student.id}]]*/ null;
+    </script>
+
+    <script>
+        let currentStudentCourseId = null;
+
+        function setupCourseDetailsModal(button) {
+            const courseId = button.getAttribute('data-course-id');
+            const courseName = button.getAttribute('data-course-name');
+            currentStudentCourseId = courseId;
+            
+            console.log('setupCourseDetailsModal called:', { currentStudentId: window.currentStudentId, courseId, courseName });
+            
+            document.getElementById('courseDetailsTitle').textContent = courseName;
+            
+            // Fetch student's team status for this course
+            fetch('/api/teams/student-team/' + window.currentStudentId + '/course/' + courseId)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('HTTP error, status = ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Team data received:', data);
+                    if (data.teamId) {
+                        // Student is in a team - show team details
+                        showTeamDetails(data);
+                    } else {
+                        // Student is not in a team - show create/join options
+                        showNoTeamOptions();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading team info:', error);
+                    showNoTeamOptions();
+                });
+        }
+
+        function showTeamDetails(teamData) {
+            console.log('showTeamDetails called with:', teamData);
+            const detailsSection = document.getElementById('studentTeamDetailsSection');
+            const noTeamSection = document.getElementById('studentNoTeamSection');
+            const teamCard = document.getElementById('teamDetailsCard');
+            
+            if (!detailsSection || !teamCard) {
+                console.error('Missing DOM elements for team details');
+                return;
+            }
+            
+            detailsSection.style.display = 'block';
+            if (noTeamSection) noTeamSection.style.display = 'none';
+            
+            let membersHtml = '';
+            
+            if (teamData.productOwner) {
+                membersHtml += `<div class="d-flex justify-content-between align-items-center py-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; background-color:#0d6efd;">
+                            ${teamData.productOwner.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="small fw-bold">${teamData.productOwner.name}</span>
+                    </div>
+                    <span class="badge-role role-po">Product Owner</span>
+                </div>`;
+            }
+            
+            if (teamData.scrumMaster) {
+                membersHtml += `<div class="d-flex justify-content-between align-items-center py-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px; background-color:#6f42c1;">
+                            ${teamData.scrumMaster.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="small fw-bold">${teamData.scrumMaster.name}</span>
+                    </div>
+                    <span class="badge-role role-sm">Scrum Master</span>
+                </div>`;
+            }
+            
+            if (teamData.developers && teamData.developers.length > 0) {
+                teamData.developers.forEach(dev => {
+                    membersHtml += `<div class="d-flex justify-content-between align-items-center py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center" style="width:24px; height:24px;">
+                                ${dev.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="small fw-bold">${dev.name}</span>
+                        </div>
+                        <span class="badge-role role-dev">Developer</span>
+                    </div>`;
+                });
+            }
+            
+            teamCard.innerHTML = `
+                <h6 class="fw-bold text-dark mb-3">${teamData.name}</h6>
+                <p class="text-muted small mb-3">${teamData.currentMemberCount}/${teamData.maxMembers} membros</p>
+                ${membersHtml}
+            `;
+            console.log('Team details displayed successfully');
+        }
+
+        function showNoTeamOptions() {
+            console.log('showNoTeamOptions called');
+            const detailsSection = document.getElementById('studentTeamDetailsSection');
+            const noTeamSection = document.getElementById('studentNoTeamSection');
+            
+            if (!noTeamSection) {
+                console.error('Missing DOM element: studentNoTeamSection');
+                return;
+            }
+            
+            if (detailsSection) detailsSection.style.display = 'none';
+            noTeamSection.style.display = 'block';
+            console.log('No team options displayed successfully');
+        }
+
+        function setupCreateTeamModal() {
+            document.getElementById('studentTeamCourseId').value = currentStudentCourseId;
+            
+            // Load coursemates for this course
+            loadCoursematesForTeamCreation(currentStudentCourseId);
+        }
+
+        function setupJoinTeamModal() {
+            loadAvailableTeams();
+        }
+
+        function loadAvailableTeams() {
+            fetch('/api/teams/available-teams/' + currentStudentCourseId)
+                .then(response => response.json())
+                .then(teams => {
+                    const container = document.getElementById('availableTeamsContainer');
+                    const noTeamsMsg = document.getElementById('noTeamsMessage');
+                    
+                    if (!teams || teams.length === 0) {
+                        container.innerHTML = '';
+                        noTeamsMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    noTeamsMsg.style.display = 'none';
+                    container.innerHTML = teams.map(team => `
+                        <div class="content-card mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1">${team.name}</h6>
+                                <small class="text-muted">${team.currentMemberCount}/${team.maxMembers} membros</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary rounded-pill px-3" 
+                                    onclick="joinTeam(${team.id})"
+                                    data-bs-dismiss="modal">
+                                Juntar-se
+                            </button>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading teams:', error);
+                });
+        }
+
+        function joinTeam(teamId) {
+            fetch('/api/teams/' + teamId + '/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentId: window.currentStudentId })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Juntaste-te à equipa com sucesso!');
+                    window.location.reload();
+                } else {
+                    return response.json().then(err => { throw new Error(err.message); });
+                }
+            })
+            .catch(error => {
+                alert('Erro ao juntar-se à equipa: ' + error.message);
+            });
+        }
+
+        function addStudentDeveloperField() {
+            const container = document.getElementById('student-developers-container');
+            const rows = container.querySelectorAll('.student-developer-row');
+            
+            if (rows.length >= 8) {
+                alert('Máximo de 8 developers permitidos');
+                return;
+            }
+
+            const firstRow = container.querySelector('.student-developer-row');
+            const newRow = firstRow.cloneNode(true);
+            const select = newRow.querySelector('select');
+            select.value = "";
+
+            if (!newRow.querySelector('.btn-remove')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-light border-0 text-danger ms-2 btn-remove';
+                removeBtn.innerHTML = '<i data-lucide="trash-2" style="width:16px;"></i>';
+                removeBtn.onclick = function() { this.parentElement.remove(); updateStudentTeamOptions(); };
+                newRow.appendChild(removeBtn);
+            }
+            container.appendChild(newRow);
+            lucide.createIcons();
+            updateStudentTeamOptions();
+        }
+
+        function updateStudentTeamOptions() {
+            const form = document.getElementById('studentCreateTeamForm');
+            if (!form) return;
+            
+            const selects = form.querySelectorAll('.student-member-select');
+            const selectedValues = new Set();
+
+            selects.forEach(select => {
+                if (select.value) selectedValues.add(select.value);
+            });
+
+            selects.forEach(select => {
+                const options = select.querySelectorAll('option');
+                const myValue = select.value;
+                options.forEach(opt => {
+                    if (selectedValues.has(opt.value) && opt.value !== myValue) {
+                        opt.disabled = true;
+                    } else {
+                        opt.disabled = false;
+                    }
+                });
+            });
+
+            // Update add developer button state
+            const container = document.getElementById('student-developers-container');
+            const rows = container.querySelectorAll('.student-developer-row');
+            const addBtn = document.getElementById('addStudentDeveloperBtn');
+            if (rows.length >= 8) {
+                addBtn.disabled = true;
+                addBtn.classList.add('opacity-50');
+            } else {
+                addBtn.disabled = false;
+                addBtn.classList.remove('opacity-50');
+            }
+        }
+
+        function loadCoursematesForTeamCreation(courseId) {
+            fetch('/api/teams/course-mates/' + courseId)
+                .then(response => response.json())
+                .then(students => {
+                    const poSelect = document.querySelector('select[name="productOwnerId"]');
+                    const smSelect = document.querySelector('select[name="scrumMasterId"]');
+                    const devSelects = document.querySelectorAll('select[name="developerIds"]');
+                    
+                    // Clear existing options (except the first placeholder)
+                    [poSelect, smSelect].forEach(select => {
+                        while (select.options.length > 1) {
+                            select.remove(1);
+                        }
+                    });
+                    
+                    // Add current student first
+                    const currentStudentOption = document.createElement('option');
+                    currentStudentOption.value = window.currentStudentId;
+                    currentStudentOption.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
+                    poSelect.add(currentStudentOption);
+                    
+                    // Add coursemates
+                    students.forEach(student => {
+                        if (student.id !== window.currentStudentId) {
+                            const option1 = document.createElement('option');
+                            option1.value = student.id;
+                            option1.text = student.studentTag + ' - ' + student.name;
+                            poSelect.add(option1);
+                            
+                            const option2 = document.createElement('option');
+                            option2.value = student.id;
+                            option2.text = student.studentTag + ' - ' + student.name;
+                            smSelect.add(option2);
+                        }
+                    });
+                    
+                    // For developers, add all students
+                    const devSelect = devSelects[0];
+                    const currentDevOption = document.createElement('option');
+                    currentDevOption.value = window.currentStudentId;
+                    currentDevOption.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
+                    devSelect.add(currentDevOption);
+                    
+                    students.forEach(student => {
+                        if (student.id !== window.currentStudentId) {
+                            const option = document.createElement('option');
+                            option.value = student.id;
+                            option.text = student.studentTag + ' - ' + student.name;
+                            devSelect.add(option);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading coursemates:', error);
+                });
+        }
+
+        // Validate student team form before submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('studentCreateTeamForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const poId = form.querySelector('select[name="productOwnerId"]').value;
+                    const smId = form.querySelector('select[name="scrumMasterId"]').value;
+                    const devIds = Array.from(form.querySelectorAll('select[name="developerIds"]'))
+                        .map(s => s.value)
+                        .filter(v => v !== "");
+                    
+                    if (!poId || !smId) {
+                        alert('A equipa deve ter um Product Owner e um Scrum Master!');
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    if (devIds.length === 0) {
+                        alert('A equipa deve ter pelo menos um Developer!');
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    const allMembers = [poId, smId, ...devIds];
+                    if (new Set(allMembers).size !== allMembers.length) {
+                        alert('Não pode haver membros duplicados!');
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    if (allMembers.length > 10) {
+                        alert('A equipa não pode ter mais de 10 membros!');
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    </script>
+
     <nav class="navbar-student d-flex justify-content-between align-items-center p-3 sticky-top">
         <div class="d-flex align-items-center gap-3">
             <div class="bg-success text-white p-2 rounded-3 shadow-sm"><i data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i></div>
@@ -467,7 +807,7 @@
                 <div class="col-md-6" th:each="course : ${student.enrolledCourses}">
                     <div class="content-card h-100 border-start border-4 border-primary">
                         <div class="d-flex justify-content-between align-items-start"><div><h5 class="fw-bold text-dark mb-1" th:text="${course.name}">Nome</h5><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill mb-2" th:text="${course.tag}">TAG</span><p class="text-muted small mb-0" th:text="${course.description}">Desc</p></div><i data-lucide="check-circle" class="text-primary" style="width: 24px; height: 24px;"></i></div>
-                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-bold">Inscrito</small><button class="btn btn-sm btn-outline-primary rounded-pill px-3">Ver Detalhes</button></div>
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-bold">Inscrito</small><button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#courseDetailsModal" th:data-course-id="${course.id}" th:data-course-name="${course.name}" onclick="setupCourseDetailsModal(this)">Ver Detalhes</button></div>
                     </div>
                 </div>
                 <div th:if="${#lists.isEmpty(student.enrolledCourses)}" class="col-12 text-center py-4 bg-white rounded-3 border border-dashed"><p class="text-muted mb-0">Não estás inscrito em nenhum curso.</p></div>
@@ -1918,5 +2258,128 @@
             }
         });
     </script>
+
+    <!-- Modal Detalhes do Curso e Equipa -->
+    <div class="modal fade" id="courseDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold" id="courseDetailsTitle">Detalhes do Curso</h4>
+                        <p class="text-muted small mb-0">Gerir a tua participação em equipas</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Se o aluno está numa equipa -->
+                    <div id="studentTeamDetailsSection" style="display: none;">
+                        <h5 class="fw-bold text-primary mb-3">A Tua Equipa</h5>
+                        <div id="teamDetailsCard" class="content-card border-start border-4 border-success">
+                            <!-- Team details will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Se o aluno NÃO está numa equipa -->
+                    <div id="studentNoTeamSection" style="display: none;">
+                        <h5 class="fw-bold text-secondary mb-3">Não Estás Numa Equipa</h5>
+                        <p class="text-muted mb-4">Podes criar uma nova equipa ou juntar-te a uma equipa existente que tenha vagas disponíveis.</p>
+                        
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-success flex-fill rounded-pill py-2 fw-bold" onclick="setupCreateTeamModal();" data-bs-toggle="modal" data-bs-target="#studentCreateTeamModal">
+                                <i data-lucide="plus" style="width: 18px; height: 18px;" class="me-2"></i>Criar Equipa
+                            </button>
+                            <button class="btn btn-primary flex-fill rounded-pill py-2 fw-bold" onclick="setupJoinTeamModal();" data-bs-toggle="modal" data-bs-target="#studentJoinTeamModal">
+                                <i data-lucide="user-plus" style="width: 18px; height: 18px;" class="me-2"></i>Juntar-se a Equipa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Criar Equipa (Aluno) -->
+    <div class="modal fade" id="studentCreateTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Criar Nova Equipa</h4>
+                        <p class="text-muted small mb-0">Convida os teus colegas para a equipa</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form th:action="@{/teams/create}" method="POST" id="studentCreateTeamForm">
+                        <input type="hidden" name="courseId" id="studentTeamCourseId">
+                        <input type="hidden" name="studentId" th:value="${student.id}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nome da Equipa</label>
+                            <input type="text" name="name" class="form-control bg-light border-0" required placeholder="Ex: Team Alpha">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Product Owner *</label>
+                                <select name="productOwnerId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
+                                    <option value="">Escolher...</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Scrum Master *</label>
+                                <select name="scrumMasterId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
+                                    <option value="">Escolher...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers *
+                                <button type="button" id="addStudentDeveloperBtn" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addStudentDeveloperField()">+ Adicionar outro</button>
+                            </label>
+                            <div id="student-developers-container">
+                                <div class="input-group mb-2 student-developer-row">
+                                    <select name="developerIds" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
+                                        <option value="">Selecionar Developer...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0 px-0 pb-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Criar Equipa</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Juntar-se a Equipa -->
+    <div class="modal fade" id="studentJoinTeamModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold">Juntar-se a uma Equipa</h4>
+                        <p class="text-muted small mb-0">Escolhe uma equipa com vagas disponíveis</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="availableTeamsContainer">
+                        <!-- Available teams will be loaded here -->
+                    </div>
+                    <div id="noTeamsMessage" class="alert alert-info" style="display: none;">
+                        Não há equipas com vagas disponíveis neste curso.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

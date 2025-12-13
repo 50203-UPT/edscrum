@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
 import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
@@ -455,9 +454,15 @@ public class WebController {
             if (developerIds != null && !developerIds.isEmpty()) {
                 List<User> devs = new ArrayList<>();
                 for (Long devId : developerIds) {
-                    devs.add(userService.getUserById(devId));
+                    // Filtrar IDs nulos ou vazios
+                    if (devId != null) {
+                        devs.add(userService.getUserById(devId));
+                    }
                 }
-                team.setDevelopers(devs);
+                // Apenas adicionar se há developers selecionados
+                if (!devs.isEmpty()) {
+                    team.setDevelopers(devs);
+                }
             }
 
             teamService.createTeam(team);
@@ -469,6 +474,7 @@ public class WebController {
         // Redireciona para teacherHome na aba de equipas
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
+
 
     // --- Apagar Equipa ---
     @PostMapping("/teams/delete")
@@ -484,6 +490,23 @@ public class WebController {
             redirectAttributes.addFlashAttribute("successMessage", "Equipa eliminada com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar equipa: " + e.getMessage());
+        }
+
+        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
+    }
+
+    // --- Fechar Equipa ---
+    @PostMapping("/teams/close")
+    public String closeTeamWeb(
+            @RequestParam Long teamId,
+            @RequestParam Long teacherId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            teamService.closeTeam(teamId);
+            redirectAttributes.addFlashAttribute("successMessage", "Equipa fechada com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao fechar equipa: " + e.getMessage());
         }
 
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";

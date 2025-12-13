@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Column;
 
 @Entity
 public class Team {
@@ -49,6 +50,13 @@ public class Team {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> developers;
+
+    // Team closure and capacity management
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isClosed = false;
+    
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 10")
+    private Integer maxMembers = 10; // Default max is 10 (1 PO + 1 SM + 8 Devs)
 
     // Getters e Setters
     public Long getId() {
@@ -105,5 +113,48 @@ public class Team {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+    public void setClosed(boolean closed) {
+        isClosed = closed;
+    }
+
+    public Integer getMaxMembers() {
+        return maxMembers;
+    }
+
+    public void setMaxMembers(Integer maxMembers) {
+        this.maxMembers = maxMembers;
+    }
+
+    /**
+     * Gets the total number of current team members (PO + SM + Developers)
+     */
+    public int getCurrentMemberCount() {
+        int count = 0;
+        if (this.productOwner != null) count++;
+        if (this.scrumMaster != null) count++;
+        if (this.developers != null) {
+            count += this.developers.size();
+        }
+        return count;
+    }
+
+    /**
+     * Checks if team can accept new members
+     */
+    public boolean canAcceptMembers() {
+        return !isClosed && getCurrentMemberCount() < maxMembers;
+    }
+
+    /**
+     * Checks if team is full (equal to max members)
+     */
+    public boolean isFull() {
+        return getCurrentMemberCount() >= maxMembers;
     }
 }
