@@ -6,13 +6,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // IMPORTANTE
+import org.springframework.transaction.annotation.Transactional;
 
 import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
 import pt.up.edscrum.dto.dashboard.ProjectProgressDTO;
 import pt.up.edscrum.dto.dashboard.RankingDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO;
-import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO; // Importar Enum
+import pt.up.edscrum.dto.dashboard.TeacherDashboardDTO;
 import pt.up.edscrum.enums.SprintStatus;
 import pt.up.edscrum.model.Award;
 import pt.up.edscrum.model.Course;
@@ -33,6 +33,11 @@ import pt.up.edscrum.repository.UserRepository;
 import pt.up.edscrum.repository.UserStoryRepository;
 
 @Service
+/**
+ * Serviço responsável por construir os DTOs utilizados nos Dashboards do
+ * Professor e do Estudante. Agrega lógica de leitura de cursos, projetos,
+ * equipas, prémios e ranking para montar DTOs otimizados para a UI.
+ */
 public class DashboardService {
 
     private final CourseRepository courseRepo;
@@ -47,6 +52,9 @@ public class DashboardService {
     private final SprintService sprintService;
     private final UserStoryRepository userStoryRepo;
 
+    /**
+     * Construtor do serviço de dashboard.
+     */
     public DashboardService(CourseRepository courseRepo, ProjectRepository projectRepo, TeamRepository teamRepo, TeamAwardRepository teamAwardRepo, StudentAwardRepository studentAwardRepo, UserRepository userRepo, ScoreRepository scoreRepo, EnrollmentRepository enrollmentRepo, AwardService awardService, SprintService sprintService, UserStoryRepository userStoryRepo) {
         this.courseRepo = courseRepo;
         this.projectRepo = projectRepo;
@@ -62,6 +70,13 @@ public class DashboardService {
     }
 
     // ===================== DASHBOARD PROFESSOR =====================
+    /**
+     * Monta o `TeacherDashboardDTO` para o curso indicado, contendo contagens,
+     * progresso de projetos e estatísticas de prémios.
+     *
+     * @param courseId id do curso
+     * @return `TeacherDashboardDTO` preenchido
+     */
     @Transactional(readOnly = true)
     public TeacherDashboardDTO getTeacherDashboard(Long courseId) {
         Course course = courseRepo.findById(courseId).orElseThrow(() -> new RuntimeException("Curso não encontrado"));
@@ -86,7 +101,7 @@ public class DashboardService {
             } else {
                 long total = p.getSprints().size();
                 long done = p.getSprints().stream()
-                        .filter(s -> s.getStatus() != null && s.getStatus() == SprintStatus.CONCLUIDO) // Comparação segura
+                        .filter(s -> s.getStatus() != null && s.getStatus() == SprintStatus.CONCLUIDO)
                         .count();
                 pp.setCompletionPercentage(total == 0 ? 0 : (done * 100.0 / total));
             }
@@ -97,13 +112,21 @@ public class DashboardService {
         try {
             dto.setAwardStats(studentAwardRepo.countAwardsByCourse(courseId));
         } catch (Exception e) {
-            dto.setAwardStats(new ArrayList<>()); // Fallback seguro
+            dto.setAwardStats(new ArrayList<>());
         }
 
         return dto;
     }
 
-    // ===================== DASHBOARD ESTUDANTE (CORRIGIDO) =====================
+    // ===================== DASHBOARD ESTUDANTE =====================
+    /**
+     * Monta o `StudentDashboardDTO` para o estudante indicado, incluindo
+     * pontos, prémios ganhos/não ganhos, histórico de pontos, cursos inscritos
+     * e projetos com progresso.
+     *
+     * @param studentId id do estudante
+     * @return `StudentDashboardDTO` preenchido
+     */
     @Transactional(readOnly = true)
     public StudentDashboardDTO getStudentDashboard(Long studentId) {
 
@@ -126,7 +149,6 @@ public class DashboardService {
 
         dto.setEarnedAwards(studentAwardRepo.findFullAwardsForStudent(studentId));
 
-        // Calculate unearned awards
         List<StudentDashboardDTO.AwardDisplayDTO> earnedAwards = dto.getEarnedAwards();
         Set<String> earnedAwardNames = earnedAwards.stream().map(a -> a.name).collect(Collectors.toSet());
         List<Award> allAwards = awardService.getAllAwards();
@@ -200,7 +222,16 @@ public class DashboardService {
         return dto;
     }
 
-    // ===================== NOVO MÉTODO: INSCRIÇÃO COM CÓDIGO =====================
+    // ===================== INSCRIÇÃO COM CÓDIGO =====================
+    /**
+     * Inscreve um estudante num curso após validação do código de acesso
+     * (quando aplicável). Dispara prémios automáticos relacionados a número de
+     * inscrições.
+     *
+     * @param studentId id do estudante
+     * @param courseId id do curso
+     * @param accessCode código de acesso do curso (pode ser null)
+     */
     @Transactional
     public void enrollStudentInCourse(Long studentId, Long courseId, String accessCode) {
         // 1. Buscar o Curso
@@ -220,7 +251,6 @@ public class DashboardService {
                 .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado."));
 
         // 4. Verificar se já está inscrito (Defesa extra)
-        // Nota: Certifica-te que atualizaste o EnrollmentRepository como pedido no Passo 1
         if (enrollmentRepo.existsByStudentIdAndCourseId(studentId, courseId)) {
             throw new IllegalArgumentException("Já estás inscrito neste curso.");
         }
@@ -238,11 +268,16 @@ public class DashboardService {
                 awardService.assignAutomaticAwardToStudentByName("Explorador de Cursos", "Inscreveste-te em 3 cursos diferentes.", 40, studentId, null);
             }
         } catch (Exception e) {
-            // Non-fatal
         }
-        // NOTE: daily-activity based awards removed per request
     }
 
+    /**
+     * Retorna um `ProjectDetailsDTO` com informação detalhada do projeto,
+     * incluindo sprints, equipas disponíveis, prémios da equipa e membros.
+     *
+     * @param projectId id do projeto
+     * @return `ProjectDetailsDTO` preenchido
+     */
     @Transactional(readOnly = true)
     public ProjectDetailsDTO getProjectDetails(Long projectId) {
         Project project = projectRepo.findById(projectId)
@@ -250,7 +285,6 @@ public class DashboardService {
 
         ProjectDetailsDTO dto = new ProjectDetailsDTO();
 
-        // Cabeçalho
         dto.setId(project.getId());
         dto.setName(project.getName());
         dto.setDescription(project.getSprintGoals());
@@ -260,7 +294,6 @@ public class DashboardService {
         dto.setEndDate(project.getEndDate());
         dto.setCourseId(project.getCourse().getId());
 
-        // Converter sprints para DTO simples
         List<ProjectDetailsDTO.SprintDTO> sprintDTOs = new ArrayList<>();
         if (project.getSprints() != null) {
             for (Sprint s : project.getSprints()) {
@@ -271,7 +304,6 @@ public class DashboardService {
         }
         dto.setSprints(sprintDTOs);
 
-        // Converter equipas disponíveis para DTO simples
         List<Team> availableTeams = teamRepo.findAvailableTeamsByCourse(project.getCourse().getId());
         List<ProjectDetailsDTO.AvailableTeamDTO> availableTeamDTOs = new ArrayList<>();
         for (Team t : availableTeams) {
@@ -279,7 +311,6 @@ public class DashboardService {
         }
         dto.setAvailableTeams(availableTeamDTOs);
 
-        // Dados da Equipa (Assumindo 1 equipa por projeto para simplificar visualização)
         if (project.getTeams() != null && !project.getTeams().isEmpty()) {
             Team team = project.getTeams().get(0);
             dto.setTeamId(team.getId());
@@ -316,7 +347,6 @@ public class DashboardService {
             dto.setMembers(members);
         }
 
-        // Calcular progresso do projeto (baseado em User Stories) - usando repositório para evitar LazyInit
         int totalStories = 0;
         int completedStories = 0;
         if (project.getSprints() != null) {
@@ -336,11 +366,17 @@ public class DashboardService {
     }
 
     private ProjectDetailsDTO.TeamMemberDTO createMemberDTO(User u, String role) {
-        int xp = calculateTotalPointsForStudent(u.getId()); // Reutiliza método existente
+        int xp = calculateTotalPointsForStudent(u.getId());
         int awardsCount = studentAwardRepo.findAllByStudentId(u.getId()).size();
         return new ProjectDetailsDTO.TeamMemberDTO(u.getId(), u.getName(), role, xp, awardsCount);
     }
 
+    /**
+     * Gera o ranking de estudantes para um curso com base nos `Score`.
+     *
+     * @param courseId id do curso
+     * @return lista de `RankingDTO` ordenada por pontos decrescentes
+     */
     public List<RankingDTO> getStudentRanking(Long courseId) {
         List<RankingDTO> classRanking = new ArrayList<>();
         List<Enrollment> courseEnrollments = enrollmentRepo.findByCourseId(courseId);
@@ -364,11 +400,16 @@ public class DashboardService {
         return (s != null) ? s.getTotalPoints() : 0;
     }
 
+    /**
+     * Retorna o ranking de equipas para um curso.
+     *
+     * @param courseId id do curso
+     * @return lista de `RankingDTO` representando equipas e seus pontos
+     */
     public List<RankingDTO> getTeamRanking(Long courseId) {
         return scoreRepo.getTeamRanking(courseId);
     }
 
-    // ===================== HELPER METHODS =====================
     private String getRoleInTeam(Team team, Long studentId) {
         if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
             return "Scrum Master";
@@ -450,7 +491,7 @@ public class DashboardService {
         List<pt.up.edscrum.dto.dashboard.MemberWithRoleDTO> projectMembers = new ArrayList<>();
         if (project.getTeams() != null) {
             for (Team team : project.getTeams()) {
-                // Adicionar Product Owner primeiro (Azul)
+                // Adicionar Product Owner primeiro
                 if (team.getProductOwner() != null) {
                     User po = team.getProductOwner();
                     int awardsCount = studentAwardRepo.findAllByStudentId(po.getId()).size();
@@ -467,7 +508,7 @@ public class DashboardService {
                         projectMembers.add(poMember);
                     }
                 }
-                // Adicionar Scrum Master segundo (Roxo)
+                // Adicionar Scrum Master segundo
                 if (team.getScrumMaster() != null) {
                     User sm = team.getScrumMaster();
                     int awardsCount = studentAwardRepo.findAllByStudentId(sm.getId()).size();
@@ -484,7 +525,7 @@ public class DashboardService {
                         projectMembers.add(smMember);
                     }
                 }
-                // Adicionar Developers por último (Verde)
+                // Adicionar Developers por último
                 if (team.getDevelopers() != null) {
                     for (User developer : team.getDevelopers()) {
                         int awardsCount = studentAwardRepo.findAllByStudentId(developer.getId()).size();

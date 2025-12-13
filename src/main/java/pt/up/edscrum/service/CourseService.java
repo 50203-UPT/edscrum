@@ -12,13 +12,24 @@ import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.UserRepository;
 
 @Service
+/**
+ * Serviço responsável pela gestão de cursos e ações relacionadas, incluindo
+ * CRUD de cursos, inscrição de estudantes e obtenção de alunos inscritos por
+ * curso.
+ */
 public class CourseService {
 
     private final CourseRepository courseRepository;
-    private final EnrollmentRepository enrollmentRepository; // Novo
-    private final UserRepository userRepository;             // Novo
+    private final EnrollmentRepository enrollmentRepository;
+    private final UserRepository userRepository;
 
-    // Construtor atualizado com as novas dependências
+    /**
+     * Construtor do serviço de cursos.
+     *
+     * @param courseRepository repositório de cursos
+     * @param enrollmentRepository repositório de inscrições
+     * @param userRepository repositório de utilizadores
+     */
     public CourseService(CourseRepository courseRepository,
             EnrollmentRepository enrollmentRepository,
             UserRepository userRepository) {
@@ -27,27 +38,43 @@ public class CourseService {
         this.userRepository = userRepository;
     }
 
-    // --- Métodos Existentes ---
+    /**
+     * Retorna a lista de todos os cursos.
+     *
+     * @return lista de `Course`
+     */
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
 
+    /**
+     * Obtém um curso pelo seu id.
+     *
+     * @param id id do curso
+     * @return `Course` correspondente
+     */
     public Course getCourseById(Long id) {
         return courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
     }
 
+    /**
+     * Obtém a lista de cursos lecionados por um professor, inicializando
+     * colecções necessárias para evitar problemas de lazy loading.
+     *
+     * @param teacherId id do professor
+     * @return lista de `Course`
+     */
     public List<Course> getCoursesByTeacher(Long teacherId) {
         List<Course> courses = courseRepository.findByTeacherIdWithProjects(teacherId);
-        // Initialize collections to avoid lazy loading issues
         courses.forEach(course -> {
             if (course.getProjects() != null) {
                 course.getProjects().forEach(project -> {
                     if (project.getSprints() != null) {
-                        project.getSprints().size(); // Force initialization
+                        project.getSprints().size();
                     }
                     if (project.getTeams() != null) {
-                        project.getTeams().size(); // Force initialization
+                        project.getTeams().size();
                     }
                 });
             }
@@ -55,10 +82,23 @@ public class CourseService {
         return courses;
     }
 
+    /**
+     * Cria um novo curso.
+     *
+     * @param course o objeto `Course` a criar
+     * @return o curso persistido
+     */
     public Course createCourse(Course course) {
         return courseRepository.save(course);
     }
 
+    /**
+     * Atualiza os dados de um curso.
+     *
+     * @param id id do curso a atualizar
+     * @param courseDetails dados de atualização
+     * @return curso atualizado
+     */
     public Course updateCourse(Long id, Course courseDetails) {
         Course course = getCourseById(id);
         course.setName(courseDetails.getName());
@@ -69,11 +109,21 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
+    /**
+     * Elimina um curso por id.
+     *
+     * @param id id do curso a eliminar
+     */
     public void deleteCourse(Long id) {
         courseRepository.deleteById(id);
     }
 
-    // --- NOVO: Método de Inscrição ---
+    /**
+     * Inscreve um estudante num curso.
+     *
+     * @param courseId id do curso
+     * @param studentId id do estudante
+     */
     public void enrollStudent(Long courseId, Long studentId) {
         Course course = getCourseById(courseId);
         User student = userRepository.findById(studentId)
@@ -85,7 +135,12 @@ public class CourseService {
         enrollmentRepository.save(enrollment);
     }
 
-    // --- NOVO: Obter lista de alunos inscritos num curso ---
+    /**
+     * Obtém a lista de estudantes inscritos num curso.
+     *
+     * @param courseId id do curso
+     * @return lista de `User` com role STUDENT
+     */
     public List<User> getEnrolledStudentsByCourse(Long courseId) {
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
         return enrollments.stream()

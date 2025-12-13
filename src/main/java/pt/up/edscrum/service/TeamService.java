@@ -11,6 +11,12 @@ import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.TeamRepository;
 
 @Service
+/**
+ * Serviço que gere operações relacionadas com `Team` (equipas): CRUD,
+ * validações de duplicações, obtenção de membros e listas de equipas
+ * disponíveis por curso. Também integra atribuição de prémios automáticos via
+ * `AwardService` durante eventos de criação de equipa.
+ */
 public class TeamService {
 
     private final TeamRepository teamRepository;
@@ -25,16 +31,33 @@ public class TeamService {
         this.awardService = awardService;
     }
 
+    /**
+     * Retorna todas as equipas existentes.
+     *
+     * @return lista de `Team`
+     */
     public List<Team> getAllTeams() {
         return teamRepository.findAll();
     }
 
+    /**
+     * Obtém uma equipa pelo seu id.
+     *
+     * @param id id da equipa
+     * @return `Team` correspondente
+     */
     public Team getTeamById(Long id) {
         return teamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
     }
 
-    // --- NOVO: Validar duplicações antes da UI ---
+    /**
+     * Retorna o conjunto de IDs de estudantes que já estão ocupados por uma
+     * equipa dentro de um dado curso (usado para evitar duplicações na UI).
+     *
+     * @param courseId id do curso
+     * @return conjunto de ids de estudantes ocupados
+     */
     public Set<Long> getTakenStudentIdsByCourse(Long courseId) {
         List<Team> teams = teamRepository.findByCourseId(courseId);
         Set<Long> takenIds = new HashSet<>();
@@ -60,16 +83,22 @@ public class TeamService {
         return takenIds;
     }
 
-    // Método auxiliar para validar duplicações no SAVE (Backend safety)
+    /**
+     * Valida se um estudante está inscrito no curso e não pertence já a outra
+     * equipa do mesmo curso. Lança `RuntimeException` em caso de violação.
+     *
+     * @param student objeto `User` do estudante (pode ser null)
+     * @param courseId id do curso
+     */
     private void validateStudentAvailability(User student, Long courseId) {
         if (student != null && "STUDENT".equals(student.getRole())) {
-            // NOVA VALIDAÇÃO: Verificar se o aluno está inscrito no curso
+            // Verificar se o aluno está inscrito no curso
             boolean isEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(student.getId(), courseId);
             if (!isEnrolled) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) não está inscrito neste curso!");
             }
 
-            // Validação existente: Verificar duplicações
+            // Verificar duplicações
             long count = teamRepository.countStudentTeamsInCourse(student.getId(), courseId);
             if (count > 0) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) já pertence a uma equipa neste curso!");
@@ -77,6 +106,14 @@ public class TeamService {
         }
     }
 
+    /**
+     * Cria uma nova equipa após validar a disponibilidade dos estudantes.
+     * Atribui um prémio automático por formação de equipa e, opcionalmente,
+     * outros prémios de participação.
+     *
+     * @param team o objeto `Team` a criar
+     * @return a equipa criada e persistida
+     */
     public Team createTeam(Team team) {
         Long courseId = team.getCourse().getId();
 
@@ -95,10 +132,9 @@ public class TeamService {
         try {
             awardService.assignAutomaticAwardToTeamByName("Equipa Formada", "A tua equipa foi formada.", 30, saved.getId(), null);
         } catch (Exception e) {
-            // Non-fatal
         }
 
-        // Após criar equipa, verificar participação em projetos para cada membro (Mentor/Colaborador)
+        // Após criar equipa, verificar participação em projetos para cada membro
         try {
             List<pt.up.edscrum.model.User> members = getTeamMembers(saved.getId());
             for (pt.up.edscrum.model.User u : members) {
@@ -109,12 +145,18 @@ public class TeamService {
                 }
             }
         } catch (Exception e) {
-            // Non-fatal
         }
 
         return saved;
     }
 
+    /**
+     * Atualiza os dados de uma equipa existente.
+     *
+     * @param id id da equipa a atualizar
+     * @param teamDetails objecto com os novos valores
+     * @return a equipa atualizada
+     */
     public Team updateTeam(Long id, Team teamDetails) {
         Team team = getTeamById(id);
         team.setName(teamDetails.getName());
@@ -125,19 +167,42 @@ public class TeamService {
         return teamRepository.save(team);
     }
 
+    /**
+     * Remove uma equipa por id.
+     *
+     * @param id id da equipa a eliminar
+     */
     public void deleteTeam(Long id) {
         teamRepository.deleteById(id);
     }
 
+    /**
+     * Obtém as equipas disponíveis para um dado curso.
+     *
+     * @param courseId id do curso
+     * @return lista de equipas disponíveis
+     */
     public List<Team> getAvailableTeamsByCourse(Long courseId) {
         return teamRepository.findAvailableTeamsByCourse(courseId);
     }
 
+    /**
+     * Procura todas as equipas a que um utilizador pertence.
+     *
+     * @param userId id do utilizador
+     * @return lista de equipas do utilizador
+     */
     public List<Team> findTeamsByUserId(Long userId) {
         return teamRepository.findTeamByUserId(userId);
     }
 
-    // Retorna todos os membros de uma equipa (SM, PO e Developers)
+    /**
+     * Retorna a lista dos membros de uma equipa (Scrum Master, Product Owner e
+     * Developers).
+     *
+     * @param teamId id da equipa
+     * @return lista de `User` membros da equipa
+     */
     public List<User> getTeamMembers(Long teamId) {
         Team team = getTeamById(teamId);
         java.util.List<User> members = new java.util.ArrayList<>();
@@ -155,7 +220,12 @@ public class TeamService {
         return members;
     }
 
-    // Retorna um Mapa: ID do Curso -> Conjunto de IDs de Alunos Ocupados
+    /**
+     * Constrói um mapa de curso -> conjunto de ids de estudantes ocupados por
+     * equipas nesse curso.
+     *
+     * @return mapa com chave cursoId e valor conjunto de studentIds
+     */
     public java.util.Map<Long, java.util.Set<Long>> getTakenStudentsMap() {
         java.util.Map<Long, java.util.Set<Long>> map = new java.util.HashMap<>();
         List<Team> allTeams = teamRepository.findAll();

@@ -31,6 +31,12 @@ public class ExportController {
         this.dashboardService = dashboardService;
     }
 
+    /**
+     * Exporta rankings agregados para um professor em formato CSV.
+     *
+     * @param teacherId ID do professor
+     * @return ResponseEntity com o ficheiro CSV em bytes
+     */
     @GetMapping("/rankings/csv/{teacherId}")
     public ResponseEntity<byte[]> exportRankingsCsv(@PathVariable Long teacherId) {
         List<Course> teacherCourses = courseService.getCoursesByTeacher(teacherId);

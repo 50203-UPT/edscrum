@@ -6,6 +6,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
+/**
+ * Representa um prémio (award) atribuído a estudantes ou equipas. Contém
+ * informação básica como nome, descrição, pontos e tipo.
+ */
 public class Award {
 
     @Id

@@ -11,32 +11,65 @@ import org.springframework.stereotype.Repository;
 import pt.up.edscrum.model.Team;
 
 @Repository
+/**
+ * Repositório para operações sobre `Team` (equipas).
+ */
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
     @Query("SELECT COUNT(t) FROM Team t WHERE t.course.id = :courseId")
     long countByCourseId(@Param("courseId") Long courseId);
 
-    // ALTERAÇÃO DE SEGURANÇA: Mudei o retorno para List<Team>.
-    // Como o aluno pode estar em várias equipas (em cursos diferentes), retornar apenas "Team" causava o erro.
     @Query("SELECT t FROM Team t LEFT JOIN t.developers d WHERE d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId")
+    /**
+     * Encontra todas as equipas onde um utilizador participa (como SM, PO ou
+     * Dev).
+     *
+     * @param userId id do utilizador
+     * @return lista de `Team` onde o utilizador participa
+     */
     List<Team> findTeamByUserId(@Param("userId") Long userId);
 
-    // Equipas disponíveis (sem projeto) num curso
     @Query("SELECT t FROM Team t WHERE t.course.id = :courseId AND t.project IS NULL")
+    /**
+     * Equipas disponíveis (sem projeto) num curso.
+     *
+     * @param courseId id do curso
+     * @return lista de equipas sem projeto
+     */
     List<Team> findAvailableTeamsByCourse(@Param("courseId") Long courseId);
 
-    @Query("SELECT COUNT(t) FROM Team t " +
-           "LEFT JOIN t.developers d " +
-           "WHERE t.course.id = :courseId " +
-           "AND (d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId)")
+    @Query("SELECT COUNT(t) FROM Team t "
+            + "LEFT JOIN t.developers d "
+            + "WHERE t.course.id = :courseId "
+            + "AND (d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId)")
+    /**
+     * Conta quantas equipas de um curso incluem um dado estudante.
+     *
+     * @param userId id do estudante
+     * @param courseId id do curso
+     * @return número de equipas que incluem o estudante no curso
+     */
     long countStudentTeamsInCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
+    /**
+     * Encontra equipes por id de curso.
+     *
+     * @param courseId id do curso
+     * @return lista de equipas pertencentes ao curso
+     */
     List<Team> findByCourseId(Long courseId);
 
-    // ESTE É O MÉTODO CRÍTICO QUE O NOVO DASHBOARD USA
-    @Query("SELECT t FROM Team t " +
-           "LEFT JOIN t.developers d " +
-           "WHERE t.course.id = :courseId " +
-           "AND (d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId)")
+    @Query("SELECT t FROM Team t "
+            + "LEFT JOIN t.developers d "
+            + "WHERE t.course.id = :courseId "
+            + "AND (d.id = :userId OR t.scrumMaster.id = :userId OR t.productOwner.id = :userId)")
+    /**
+     * Encontra a equipa de um dado curso onde o utilizador participa (se
+     * existir).
+     *
+     * @param courseId id do curso
+     * @param userId id do utilizador
+     * @return Optional contendo a `Team` se encontrada
+     */
     Optional<Team> findTeamByCourseAndUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

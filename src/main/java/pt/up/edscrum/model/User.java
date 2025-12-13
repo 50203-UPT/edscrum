@@ -1,6 +1,7 @@
 package pt.up.edscrum.model;
 
 import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,24 +11,25 @@ import jakarta.persistence.Id;
 @Entity
 public class User {
 
+    /**
+     * Representa um utilizador do sistema (professor ou estudante). Contém
+     * dados de autenticação, preferências e informação de recuperação.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-    @Column(unique = true) // Ensure email is unique
+    @Column(unique = true)
     private String email;
     private String password;
     private String role; // TEACHER ou STUDENT
-   
 
-    // Novas colunas para configurações
     private boolean notificationAwards = true;
     private boolean notificationRankings = true;
 
     private String profileImage;
-    
-    // Colunas para recuperação de password
+
     private String resetCode;
     private LocalDateTime resetCodeExpiry;
 
@@ -112,13 +114,24 @@ public class User {
         this.resetCodeExpiry = resetCodeExpiry;
     }
 
-   public String getStudentTag() {
+    /**
+     * Retorna a tag de estudante no formato "{id}-UPT" quando o ID estiver
+     * disponível. Se o ID ainda não foi gerado, devolve "Novo".
+     *
+     * @return tag de estudante ou "Novo"
+     */
+    public String getStudentTag() {
         if (this.id != null) {
             return this.id + "-UPT";
         }
-        return "Novo"; // Mostra "Novo" enquanto o ID ainda não foi gerado
+        return "Novo";
     }
 
+    /**
+     * Representação em string do utilizador (útil para logs e debugging).
+     *
+     * @return String resumida do User
+     */
     @Override
     public String toString() {
         return "User [id=" + id + ", name=" + name + ", email=" + email + ", role=" + role + "]";

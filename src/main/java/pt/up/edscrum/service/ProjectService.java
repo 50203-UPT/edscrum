@@ -5,53 +5,78 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Project;
-import pt.up.edscrum.model.Team; // Importar
+import pt.up.edscrum.model.Team;
 import pt.up.edscrum.repository.ProjectRepository;
-import pt.up.edscrum.repository.TeamRepository; // Importar
+import pt.up.edscrum.repository.TeamRepository;
 
 @Service
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final TeamRepository teamRepository; // NOVO
-    private final pt.up.edscrum.service.AwardService awardService; // Para atribuir prémios automáticos
+    private final TeamRepository teamRepository;
+    private final pt.up.edscrum.service.AwardService awardService;
 
-    // Injeção via construtor (Adicionar TeamRepository)
     public ProjectService(ProjectRepository projectRepository, TeamRepository teamRepository, pt.up.edscrum.service.AwardService awardService) {
         this.projectRepository = projectRepository;
         this.teamRepository = teamRepository;
         this.awardService = awardService;
     }
 
+    /**
+     * Obtém todos os projetos existentes.
+     *
+     * @return Lista de Project
+     */
     public List<Project> getAllProjects() {
         return projectRepository.findAll();
     }
 
+    /**
+     * Obtém um projeto pelo seu ID.
+     *
+     * @param id ID do projeto
+     * @return Project encontrado
+     */
     public Project getProjectById(Long id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
     }
 
+    /**
+     * Cria e persiste um novo projeto.
+     *
+     * @param project Dados do projeto a criar
+     * @return Project criado
+     */
     public Project createProject(Project project) {
         return projectRepository.save(project);
     }
 
+    /**
+     * Atualiza os dados de um projeto existente.
+     *
+     * @param id ID do projeto a atualizar
+     * @param projectDetails Dados atualizados
+     * @return Project atualizado
+     */
     public Project updateProject(Long id, Project projectDetails) {
         Project project = getProjectById(id);
         project.setName(projectDetails.getName());
         project.setSprintGoals(projectDetails.getSprintGoals());
         project.setCourse(projectDetails.getCourse());
-        // Se quiseres atualizar datas aqui também, podes adicionar
         project.setStartDate(projectDetails.getStartDate());
         project.setEndDate(projectDetails.getEndDate());
         return projectRepository.save(project);
     }
 
-    // MÉTODO APAGAR
+    /**
+     * Elimina um projeto, desassociando equipas antes de apagar.
+     *
+     * @param id ID do projeto a eliminar
+     */
     public void deleteProject(Long id) {
         Project project = getProjectById(id);
 
-        // 1. Desassociar equipas antes de apagar
         if (project.getTeams() != null) {
             for (Team team : project.getTeams()) {
                 team.setProject(null);
@@ -59,15 +84,18 @@ public class ProjectService {
             }
         }
 
-        // 2. Apagar o projeto (agora seguro)
         projectRepository.deleteById(id);
     }
 
-    // Completar Projeto (apenas se todos os sprints estiverem concluídos)
+    /**
+     * Marca um projeto como concluído, validando que todos os sprints
+     * associados estão concluídos, e atribui prémios automáticos.
+     *
+     * @param projectId ID do projeto a concluir
+     */
     public void completeProject(Long projectId) {
         Project project = getProjectById(projectId);
 
-        // Verificar se todos os sprints estão concluídos
         if (project.getSprints() != null && !project.getSprints().isEmpty()) {
             boolean allSprintsDone = project.getSprints().stream()
                     .allMatch(sprint -> sprint.getStatus() == pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
@@ -80,7 +108,6 @@ public class ProjectService {
         project.setStatus(pt.up.edscrum.enums.ProjectStatus.CONCLUIDO);
         projectRepository.save(project);
 
-        // Atribuir prémio "Primeiro Projeto Concluído" aos alunos envolvidos (se for a primeira vez)
         if (project.getTeams() != null) {
             for (Team team : project.getTeams()) {
                 if (team.getScrumMaster() != null) {
@@ -95,29 +122,35 @@ public class ProjectService {
                     }
                 }
 
-                // Atribuir prémio de equipa para cada equipa que conclui o projeto
                 try {
                     awardService.assignAutomaticAwardToTeamByName("Conquistadores de Projeto", "A equipa concluiu este projeto com sucesso.", 150, team.getId(), projectId);
                 } catch (Exception e) {
-                    // Non-fatal
                 }
             }
         }
     }
 
-    // Reabrir Projeto
+    /**
+     * Reabre um projeto, definindo o estado para EM_CURSO.
+     *
+     * @param projectId ID do projeto a reabrir
+     */
     public void reopenProject(Long projectId) {
         Project project = getProjectById(projectId);
         project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
         projectRepository.save(project);
     }
 
-    // Remover equipa do projeto
+    /**
+     * Remove a associação de uma equipa a um projeto.
+     *
+     * @param projectId ID do projeto
+     * @param teamId ID da equipa a remover
+     */
     public void removeTeamFromProject(Long projectId, Long teamId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
-        // Verificar se a equipa está associada a este projeto
         if (team.getProject() != null && team.getProject().getId().equals(projectId)) {
             team.setProject(null);
             teamRepository.save(team);

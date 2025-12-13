@@ -68,22 +68,46 @@ public class WebController {
         this.sprintService = sprintService;
     }
 
-    // --- LOGIN & REGISTO ---
+    /**
+     * Página de login.
+     *
+     * @param model Modelo Thymeleaf para a vista
+     * @return Nome da view de login
+     */
     @GetMapping("/")
     public String loginPage(Model model) {
         return "index";
     }
 
+    /**
+     * Página de registo de utilizador.
+     *
+     * @return Nome da view de registo
+     */
     @GetMapping("/register")
     public String registerPage() {
         return "register";
     }
 
+    /**
+     * Efetua logout redireccionando para a página principal.
+     *
+     * @return Redirecionamento para a página inicial
+     */
     @GetMapping("/logout")
     public String logout() {
         return "redirect:/";
     }
 
+    /**
+     * Página para recuperação de password. Se o parâmetro 'success' for true e
+     * o email for fornecido, mostra mensagem de sucesso.
+     *
+     * @param success Flag opcional indicando sucesso do envio do código
+     * @param email Email submetido (opcional)
+     * @param model Modelo para passar atributos à view
+     * @return Nome da view de forgotPassword
+     */
     @GetMapping("/forgotPassword")
     public String forgotPasswordPage(@RequestParam(required = false) String success,
             @RequestParam(required = false) String email,
@@ -95,20 +119,34 @@ public class WebController {
         return "forgotPassword";
     }
 
+    /**
+     * Processa o pedido de recuperação de password (envio de email/código).
+     *
+     * @param email Email do utilizador que solicitou recuperação
+     * @param model Modelo para adicionar mensagens de erro/sucesso
+     * @return View a apresentar (formulário ou redirecionamento)
+     */
     @PostMapping("/forgotPassword")
     public String handleForgotPassword(@RequestParam String email, Model model) {
 
-        // CORREÇÃO: Adicionar .orElse(null)
         User user = userService.getUserByEmail(email).orElse(null);
 
         if (user == null) {
             model.addAttribute("error", "Email não existe na base de dados.");
             return "forgotPassword";
         }
-        // Email exists, redirect to success
         return "redirect:/forgotPassword?success=true&email=" + email;
     }
 
+    /**
+     * Processa o login via web.
+     *
+     * @param email Email do utilizador
+     * @param password Password do utilizador
+     * @param model Modelo para mensagens de erro
+     * @return Redirecionamento para a área do professor ou estudante conforme o
+     * papel
+     */
     @PostMapping("/auth/web/login")
     public String webLogin(@RequestParam String email,
             @RequestParam String password,
@@ -128,20 +166,35 @@ public class WebController {
         }
     }
 
+    /**
+     * Processa o registo de novo utilizador.
+     *
+     * @param user Objeto User preenchido a partir do formulário
+     * @return Redirecionamento para a página inicial com flag de registo
+     */
     @PostMapping("/auth/web/register")
     public String webRegister(@ModelAttribute User user) {
         userService.createUser(user);
         return "redirect:/?registered=true";
     }
 
-    // --- FLUXO DE RECUPERAÇÃO DE PALAVRA-PASSE ---
-    // 1. PÁGINA "ESQUECEU A PALAVRA-PASSE"
+    /**
+     * Mostra a página de esquecimento de password (rota alternativa).
+     *
+     * @return Nome da view forgotPassword
+     */
     @GetMapping("/forgot-password")
     public String showForgotPasswordPage() {
         return "forgotPassword";
     }
 
-    // PROCESSAR ENVIO DE CÓDIGO (E REENVIO)
+    /**
+     * Gera e envia (ou marca) um código de reset para o email indicado.
+     *
+     * @param email Email do utilizador
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a página apropriada conforme sucesso/falha
+     */
     @PostMapping("/auth/web/send-code")
     public String processSendCode(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
         // Gera o código na BD
@@ -158,7 +211,12 @@ public class WebController {
         }
     }
 
-    // 2. PÁGINA "VERIFICAR CÓDIGO"
+    /**
+     * Página para validar o código de recuperação.
+     *
+     * @param model Modelo usado para verificar presença do email
+     * @return Nome da view verifyCode ou redirecionamento para forgot-password
+     */
     @GetMapping("/verify-code")
     public String showVerifyCodePage(Model model) {
         // Se o email não vier do passo anterior, manda voltar ao início
@@ -168,7 +226,14 @@ public class WebController {
         return "verifyCode";
     }
 
-    // PROCESSAR VALIDAÇÃO DO CÓDIGO
+    /**
+     * Processa a validação do código de recuperação.
+     *
+     * @param email Email do utilizador
+     * @param code Código submetido
+     * @param redirectAttributes Flash attributes para mensagens
+     * @return Redirecionamento para a próxima etapa conforme resultado
+     */
     @PostMapping("/auth/web/verify-code")
     public String processVerifyCode(@RequestParam("email") String email,
             @RequestParam("code") String code,
@@ -188,7 +253,12 @@ public class WebController {
         }
     }
 
-    // 3. PÁGINA "REDEFINIR PALAVRA-PASSE"
+    /**
+     * Página para redefinir a password após validação do código.
+     *
+     * @param model Modelo para verificar presença do email
+     * @return Nome da view resetPassword ou redirecionamento caso falte email
+     */
     @GetMapping("/reset-password")
     public String showResetPasswordPage(Model model) {
         if (!model.containsAttribute("email")) {
@@ -197,7 +267,14 @@ public class WebController {
         return "resetPassword";
     }
 
-    // PROCESSAR MUDANÇA DE PASSWORD
+    /**
+     * Processa a alteração de password após reset.
+     *
+     * @param email Email do utilizador
+     * @param newPassword Nova password a definir
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a página de login
+     */
     @PostMapping("/auth/web/change-password")
     public String processChangePassword(@RequestParam("email") String email,
             @RequestParam("newPassword") String newPassword,
@@ -209,8 +286,15 @@ public class WebController {
         return "redirect:/";
     }
 
-    // --- ÁREA DO PROFESSOR ---
     // 1. Dashboard Geral (Home)
+    /**
+     * Exibe a dashboard principal do professor com cursos, equipas, prémios e
+     * rankings.
+     *
+     * @param teacherId ID do professor
+     * @param model Modelo para preencher a view teacherHome
+     * @return Nome da view teacherHome
+     */
     @GetMapping("/view/teacher/home/{teacherId}")
     public String teacherHome(@PathVariable Long teacherId, Model model) {
         User teacher = userService.getUserById(teacherId);
@@ -230,7 +314,6 @@ public class WebController {
                 .collect(Collectors.groupingBy(t -> t.getCourse().getId()));
         model.addAttribute("teamsByCourse", teamsByCourse);
 
-        // --- Lista de Equipas Disponíveis (Agregada) ---
         List<Team> availableTeams = new ArrayList<>();
         if (teacherCourses != null) {
             for (Course c : teacherCourses) {
@@ -240,7 +323,6 @@ public class WebController {
         }
         model.addAttribute("availableTeams", availableTeams); // Envia para o modal
 
-        // --- ESTATÍSTICAS E RANKINGS ---
         List<RankingDTO> rankings = new ArrayList<>();
 
         // Valores padrão (para não dar erro se estiver vazio)
@@ -302,7 +384,6 @@ public class WebController {
         // Necessário para o bloqueio dinâmico no modal de criação
         model.addAttribute("takenMap", teamService.getTakenStudentsMap());
 
-        // NOVO: Criar mapa de alunos inscritos por curso (courseId -> List<User>)
         java.util.Map<Long, List<User>> enrolledStudentsMap = new java.util.HashMap<>();
         for (Course course : teacherCourses) {
             List<User> enrolledStudents = courseService.getEnrolledStudentsByCourse(course.getId());
@@ -310,7 +391,6 @@ public class WebController {
         }
         model.addAttribute("enrolledStudentsMap", enrolledStudentsMap);
 
-        // NOVO: Criar mapa invertido - studentId -> lista de courseIds onde está inscrito
         java.util.Map<Long, String> studentCoursesMap = new java.util.HashMap<>();
         for (java.util.Map.Entry<Long, List<User>> entry : enrolledStudentsMap.entrySet()) {
             Long courseId = entry.getKey();
@@ -330,6 +410,13 @@ public class WebController {
     }
 
     // 2. Dashboard de Curso Específico
+    /**
+     * Mostra dashboard específico de um curso para o professor.
+     *
+     * @param courseId ID do curso
+     * @param model Modelo para a view
+     * @return Nome da view teacherDashboard
+     */
     @GetMapping("/view/teacher/course/{courseId}")
     public String teacherDashboard(@PathVariable Long courseId, Model model) {
         TeacherDashboardDTO data = dashboardService.getTeacherDashboard(courseId);
@@ -339,7 +426,14 @@ public class WebController {
         return "teacherDashboard";
     }
 
-    // --- LÓGICA DE CRIAÇÃO (FORMULÁRIOS) ---
+    /**
+     * Cria um novo curso a partir do formulário web.
+     *
+     * @param course Objeto Course com dados do formulário
+     * @param teacherId ID do professor criador
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/courses/create")
     public String createCourseWeb(
             @ModelAttribute Course course,
@@ -360,6 +454,16 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
+    /**
+     * Cria um novo projeto associado a um curso (e opcionalmente a uma equipa).
+     *
+     * @param project Objeto Project preenchido pelo formulário
+     * @param courseId ID do curso onde o projeto pertence
+     * @param teacherId ID do professor que cria o projeto
+     * @param teamId ID da equipa a associar (opcional)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/projects/create")
     public String createProjectWeb(
             @ModelAttribute Project project, // Recebe name, sprintGoals, startDate, endDate
@@ -395,8 +499,15 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // Apagar Projeto (Web)
     @PostMapping("/projects/delete")
+    /**
+     * Elimina um projeto e desassocia equipas.
+     *
+     * @param projectId ID do projeto a eliminar
+     * @param teacherId ID do professor (para redirecionamento)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     public String deleteProjectWeb(
             @RequestParam Long projectId,
             @RequestParam Long teacherId,
@@ -413,7 +524,16 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // CRIAR SPRINT
+    /**
+     * Cria um sprint para um projeto; se criado por um estudante, pode disparar
+     * prémios.
+     *
+     * @param projectId ID do projeto
+     * @param studentId ID do estudante que cria o sprint (opcional)
+     * @param sprint Objeto Sprint com dados do formulário
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do estudante
+     */
     @PostMapping("/sprints/create")
     public String createSprintWeb(
             @RequestParam Long projectId,
@@ -445,7 +565,19 @@ public class WebController {
         return "redirect:/view/student/home/" + studentId;
     }
 
-// 2. ATUALIZAR CREATE TEAM
+    /**
+     * Cria uma nova equipa, atribui papéis e pode atribuir prémios automáticos.
+     *
+     * @param name Nome da equipa
+     * @param courseId ID do curso
+     * @param teacherId ID do professor (para redirecionamento)
+     * @param projectId ID do projeto associado (opcional)
+     * @param scrumMasterId ID do Scrum Master (opcional)
+     * @param productOwnerId ID do Product Owner (opcional)
+     * @param developerIds Lista de IDs de developers (opcional)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a aba de equipas na home do professor
+     */
     @PostMapping("/teams/create")
     public String createTeamWeb(
             @RequestParam String name,
@@ -516,7 +648,14 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
-    // --- Apagar Equipa ---
+    /**
+     * Elimina uma equipa por ID.
+     *
+     * @param teamId ID da equipa a eliminar
+     * @param teacherId ID do professor (para redirecionamento)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a aba de equipas na home do professor
+     */
     @PostMapping("/teams/delete")
     public String deleteTeamWeb(
             @RequestParam Long teamId,
@@ -535,6 +674,14 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
+    /**
+     * Cria um novo prémio manual definido pelo professor.
+     *
+     * @param award Objeto Award preenchido pelo formulário
+     * @param teacherId ID do professor criador
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a aba de prémios na home do professor
+     */
     @PostMapping("/awards/create")
     public String createAwardWeb(
             @ModelAttribute pt.up.edscrum.model.Award award,
@@ -551,6 +698,16 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId + "?tab=awards";
     }
 
+    /**
+     * Atualiza definições do professor (nome, notificações).
+     *
+     * @param name Nome a definir
+     * @param email Email do professor (usado para identificar o registo)
+     * @param notificationAwards Flag para notificações de prémios
+     * @param notificationRankings Flag para notificações de rankings
+     * @return Redirecionamento para a home do professor ou inicio se não
+     * encontrado
+     */
     @PostMapping("/api/teacher/settings")
     public String updateTeacherSettings(@RequestParam String name,
             @RequestParam String email,
@@ -570,6 +727,22 @@ public class WebController {
         return "redirect:/";
     }
 
+    /**
+     * Atualiza o perfil do professor incluindo nome, email, password e imagem.
+     *
+     * @param teacherId ID do professor
+     * @param name Nome a definir
+     * @param email Email a definir
+     * @param currentPassword Password atual (necessária apenas para mudar
+     * password)
+     * @param newPassword Nova password (opcional)
+     * @param confirmNewPassword Confirmação da nova password
+     * @param imageFile Ficheiro de imagem para atualizar o avatar (opcional)
+     * @param removeImage Flag para remover imagem existente ('true' para
+     * remover)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/teacher/profile/update")
     public String updateTeacherProfile(
             @RequestParam Long teacherId,
@@ -622,6 +795,16 @@ public class WebController {
     }
 
 // 3. ATUALIZAR ASSIGN TEAM
+    /**
+     * Associa uma equipa a um projeto.
+     *
+     * @param projectId ID do projeto
+     * @param teamId ID da equipa
+     * @param userId ID do utilizador para redirecionamento (normalmente
+     * professor)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/projects/assign-team")
     public String assignTeamToProject(
             @RequestParam Long projectId,
@@ -643,6 +826,14 @@ public class WebController {
         return "redirect:/view/teacher/home/" + userId;
     }
 
+    /**
+     * Ação para atribuir um prémio a um estudante.
+     *
+     * @param courseId ID do curso (para redirecionamento)
+     * @param awardId ID do prémio
+     * @param studentId ID do estudante
+     * @return Redirecionamento para a página do curso
+     */
     @PostMapping("/action/assign-award")
     public String assignAwardAction(@RequestParam Long courseId,
             @RequestParam Long awardId,
@@ -655,7 +846,16 @@ public class WebController {
         return "redirect:/view/teacher/course/" + courseId;
     }
 
-    // NOVO: Atribuir prémio a uma equipa
+    /**
+     * Atribui um prémio a uma equipa num projeto.
+     *
+     * @param teamId ID da equipa
+     * @param awardId ID do prémio
+     * @param projectId ID do projeto
+     * @param teacherId ID do professor (para redirecionamento)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/action/assign-award-to-team")
     public String assignAwardToTeamAction(@RequestParam Long teamId,
             @RequestParam Long awardId,
@@ -671,7 +871,16 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId;
     }
 
-    // NOVO: Atribuir prémio a um aluno específico de uma equipa
+    /**
+     * Atribui um prémio a um estudante específico dentro de uma equipa.
+     *
+     * @param studentId ID do estudante
+     * @param awardId ID do prémio
+     * @param projectId ID do projeto
+     * @param teacherId ID do professor (para redirecionamento)
+     * @param redirectAttributes Atributos flash para mensagens
+     * @return Redirecionamento para a home do professor
+     */
     @PostMapping("/action/assign-award-to-student-in-team")
     public String assignAwardToStudentInTeamAction(@RequestParam Long studentId,
             @RequestParam Long awardId,
@@ -688,6 +897,14 @@ public class WebController {
     }
 
     // Rota legacy - redireciona para a home correta (projectDetails foi removido)
+    /**
+     * Rota legacy que redireciona para a home apropriada conforme o papel do
+     * utilizador.
+     *
+     * @param projectId ID do projeto (não usado para exibição direta)
+     * @param userId ID do utilizador
+     * @return Redirecionamento para a home do professor ou estudante
+     */
     @GetMapping("/view/project/{projectId}/user/{userId}")
     public String projectDetailsRedirect(@PathVariable Long projectId, @PathVariable Long userId) {
         try {
@@ -704,6 +921,15 @@ public class WebController {
         }
     }
 
+    /**
+     * Exibe o dashboard de um sprint para um utilizador (professor ou
+     * estudante).
+     *
+     * @param sprintId ID do sprint
+     * @param userId ID do utilizador que visualiza
+     * @param model Modelo para a view
+     * @return Nome da view sprintDashboard ou redirecionamento em caso de erro
+     */
     @GetMapping("/view/sprint/{sprintId}/user/{userId}")
     public String sprintDashboard(@PathVariable Long sprintId, @PathVariable Long userId, Model model) {
         try {
@@ -783,14 +1009,11 @@ public class WebController {
             return "studentHome";
 
         } catch (Exception e) {
-            // ERRO CRÍTICO ENCONTRADO
-            // Imprime o erro na consola para diagnóstico (verifique os logs do seu IDE!)
             System.err.println("==========================================");
             System.err.println("ERRO AO ABRIR DASHBOARD DO ALUNO (ID: " + studentId + ")");
-            e.printStackTrace(); // Mostra a linha exata onde falhou
+            e.printStackTrace();
             System.err.println("==========================================");
 
-            // Redireciona para o login com mensagem de erro, em vez de tela branca
             return "redirect:/?error=erro_interno_consulte_logs";
         }
     }

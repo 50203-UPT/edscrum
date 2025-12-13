@@ -23,13 +23,17 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    // Injeção de dependências (AuthService e UserRepository)
     public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
     }
 
-    // --- LOGIN EXISTENTE ---
+    /**
+     * Autentica um utilizador com email e password.
+     *
+     * @param request Objeto com email e password
+     * @return ResponseEntity com o User autenticado ou erro 401
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
@@ -42,9 +46,12 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
 
-    // --- NOVA LÓGICA DE RECUPERAÇÃO DE PALAVRA-PASSE ---
-
-    // 1. Enviar Código (Chamado pelo HTML)
+    /**
+     * Gera e envia (simulado) um código de recuperação para o email.
+     *
+     * @param email Email do utilizador
+     * @return ResponseEntity com resultado da operação
+     */
     @PostMapping("/send-code")
     public ResponseEntity<?> sendCode(@RequestParam String email) {
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -72,14 +79,24 @@ public class AuthController {
         return ResponseEntity.ok("Código enviado com sucesso.");
     }
 
-    // 2. Reenviar Código
+    /**
+     * Reenvia o código de recuperação (reaproveita a mesma lógica).
+     *
+     * @param email Email do utilizador
+     * @return ResponseEntity com o resultado
+     */
     @PostMapping("/resend-code")
     public ResponseEntity<?> resendCode(@RequestParam String email) {
-        // Reutiliza a lógica de envio
         return sendCode(email);
     }
 
-    // 3. Verificar Código
+    /**
+     * Verifica se o código de recuperação é válido e não expirou.
+     *
+     * @param email Email do utilizador
+     * @param code Código submetido
+     * @return ResponseEntity com resultado da validação
+     */
     @PostMapping("/verify-code")
     public ResponseEntity<?> verifyCode(@RequestParam String email, @RequestParam String code) {
         Optional<User> userOpt = userRepository.findByEmail(email);

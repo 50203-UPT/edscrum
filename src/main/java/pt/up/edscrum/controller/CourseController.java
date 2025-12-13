@@ -1,7 +1,11 @@
 package pt.up.edscrum.controller;
 
-import org.springframework.web.bind.annotation.*;
 import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import pt.up.edscrum.model.Course;
 import pt.up.edscrum.repository.CourseRepository;
 
@@ -15,6 +19,11 @@ public class CourseController {
         this.courseRepository = repo;
     }
 
+    /**
+     * Obtém todos os cursos.
+     *
+     * @return Lista de Course
+     */
     @GetMapping
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
