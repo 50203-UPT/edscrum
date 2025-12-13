@@ -623,9 +623,9 @@
                                     <span th:if="${iter.index == 0}"><i data-lucide="trophy" style="width: 18px;"></i></span>
                                     <span th:if="${iter.index > 0}" th:text="${#strings.substring(studentRank.name,0,1)}">A</span>
                                 </div>
-                                <div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-blue-sem me-2" th:text="'UPT-' + ${studentRank.id}">UPT-45</span>
                                     <h6 class="mb-0 fw-bold text-dark" th:text="${studentRank.name}">Nome</h6>
-                                    <small class="text-muted" th:text="'ID: ' + ${studentRank.id}">ID</small>
                                 </div>
                             </div>
                         </td>
@@ -718,7 +718,7 @@
                         <label class="form-label fw-bold small">Curso</label>
                         <select id="teamCourseSelect" name="courseId" class="form-select bg-light border-0" required onchange="updateTakenStatus()">
                             <option value="">Selecione o curso...</option>
-                            <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name} + ' (' + ${c.code} + ')'"></option>
+                            <option th:each="c : ${courses}" th:value="${c.id}" th:text="${c.name} + ' (' + ${c.tag} + ')'"></option>
                         </select>
                     </div>
 
@@ -907,10 +907,9 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Tipo</label>
-                            <select name="type" class="form-select bg-light border-0 py-2">
-                                <option value="MANUAL">Manual</option>
-                                <option value="AUTOMATIC">Automático</option>
-                            </select>
+                            <!-- Forçar criação apenas de prémios manuais: input oculto + rótulo informativo -->
+                            <input type="hidden" name="type" value="MANUAL" />
+                            <div class="form-control bg-light border-0 py-2 text-muted">Manual</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Destinatário</label>
@@ -2164,11 +2163,13 @@
         fetch(`/awards/available-for-team?teamId=${teamId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                if (awards.length === 0) {
-                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                // Filter to show only manual awards for teacher assignment
+                const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
+                if (manualAwards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
-                    awards.forEach(award => {
+                    manualAwards.forEach(award => {
                         const opt = document.createElement('option');
                         opt.value = award.id;
                         opt.textContent = `${award.name} (${award.points} pts)`;
@@ -2211,11 +2212,13 @@
         fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                if (awards.length === 0) {
-                    awardSelect.innerHTML = '<option value="" disabled>Todos os prémios já foram atribuídos</option>';
+                // Filter to show only manual awards for teacher assignment
+                const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
+                if (manualAwards.length === 0) {
+                    awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
-                    awards.forEach(award => {
+                    manualAwards.forEach(award => {
                         const opt = document.createElement('option');
                         opt.value = award.id;
                         opt.textContent = `${award.name} (${award.points} pts)`;
@@ -2323,7 +2326,10 @@
                             ${student.name ? student.name.charAt(0).toUpperCase() : 'A'}
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">${student.name}</div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge badge-blue-sem me-2">UPT-${student.id}</span>
+                                <div class="fw-bold text-dark">${student.name}</div>
+                            </div>
                             <small class="text-muted">${student.studentTag || student.email}</small>
                         </div>
                     </div>

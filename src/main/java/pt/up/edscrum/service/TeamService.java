@@ -15,11 +15,14 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
+    private final pt.up.edscrum.service.AwardService awardService;
 
     public TeamService(TeamRepository teamRepository,
-                      pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository) {
+            pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository,
+            pt.up.edscrum.service.AwardService awardService) {
         this.teamRepository = teamRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.awardService = awardService;
     }
 
     public List<Team> getAllTeams() {
@@ -65,7 +68,7 @@ public class TeamService {
             if (!isEnrolled) {
                 throw new RuntimeException("O aluno " + student.getName() + " (" + student.getId() + "-UPT) não está inscrito neste curso!");
             }
-            
+
             // Validação existente: Verificar duplicações
             long count = teamRepository.countStudentTeamsInCourse(student.getId(), courseId);
             if (count > 0) {
@@ -86,7 +89,30 @@ public class TeamService {
             }
         }
 
-        return teamRepository.save(team);
+        Team saved = teamRepository.save(team);
+
+        // Atribuir prémio de equipa automático por formação da equipa
+        try {
+            awardService.assignAutomaticAwardToTeamByName("Equipa Formada", "A tua equipa foi formada.", 30, saved.getId(), null);
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        // Após criar equipa, verificar participação em projetos para cada membro (Mentor/Colaborador)
+        try {
+            List<pt.up.edscrum.model.User> members = getTeamMembers(saved.getId());
+            for (pt.up.edscrum.model.User u : members) {
+                List<Team> userTeams = teamRepository.findTeamByUserId(u.getId());
+                long projectCount = userTeams.stream().filter(t -> t.getProject() != null).map(t -> t.getProject().getId()).distinct().count();
+                if (projectCount >= 3) {
+                    awardService.assignAutomaticAwardToStudentByName("Colaborador Estelar", "Participaste activamente em 3 projetos diferentes.", 70, u.getId(), null);
+                }
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        return saved;
     }
 
     public Team updateTeam(Long id, Team teamDetails) {
@@ -107,11 +133,15 @@ public class TeamService {
         return teamRepository.findAvailableTeamsByCourse(courseId);
     }
 
+    public List<Team> findTeamsByUserId(Long userId) {
+        return teamRepository.findTeamByUserId(userId);
+    }
+
     // Retorna todos os membros de uma equipa (SM, PO e Developers)
     public List<User> getTeamMembers(Long teamId) {
         Team team = getTeamById(teamId);
         java.util.List<User> members = new java.util.ArrayList<>();
-        
+
         if (team.getScrumMaster() != null) {
             members.add(team.getScrumMaster());
         }
@@ -121,7 +151,7 @@ public class TeamService {
         if (team.getDevelopers() != null) {
             members.addAll(team.getDevelopers());
         }
-        
+
         return members;
     }
 
@@ -131,7 +161,9 @@ public class TeamService {
         List<Team> allTeams = teamRepository.findAll();
 
         for (Team t : allTeams) {
-            if (t.getCourse() == null) continue;
+            if (t.getCourse() == null) {
+                continue;
+            }
             Long cId = t.getCourse().getId();
             map.putIfAbsent(cId, new java.util.HashSet<>());
 

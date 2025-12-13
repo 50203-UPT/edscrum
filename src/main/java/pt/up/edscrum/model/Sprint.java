@@ -38,6 +38,9 @@ public class Sprint {
     @JsonIgnoreProperties({"sprints", "teams", "course"})
     private Project project;
 
+    @ManyToOne
+    private User createdBy; // Usuário que criou o sprint (pode ser nulo para compatibilidade)
+
     @OneToMany(mappedBy = "sprint", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("sprint")
     private List<UserStory> userStories;
@@ -97,6 +100,14 @@ public class Sprint {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 
     public List<UserStory> getUserStories() {

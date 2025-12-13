@@ -340,7 +340,7 @@
                             <i data-lucide="trending-up" class="text-primary" style="width: 20px;"></i>
                         </div>
                         <h2 class="fw-bold mb-1 text-dark" style="font-size: 2.5rem;" th:text="'#' + ${student.currentRank}">#5</h2>
-                        <small class="text-muted">de 30 estudantes</small>
+                        <small class="text-muted" th:text="'de ' + (${studentCount} ?: 0) + ' estudantes'">de 30 estudantes</small>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -399,7 +399,7 @@
 
                         <div class="comparison-row comp-diff">
                             <span>Diferença</span>
-                            <span class="fw-bold" th:text="'+' + ${#numbers.formatDecimal(student.totalPoints - student.classAverage, 1, 0)} + ' pts'">+40 pts</span>
+                            <span class="fw-bold" th:text="${(student.totalPoints - student.classAverage) >= 0 ? '+' + #numbers.formatDecimal(student.totalPoints - student.classAverage, 1, 0) + ' pts' : #numbers.formatDecimal(student.totalPoints - student.classAverage, 1, 0) + ' pts'}">+40 pts</span>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mt-3 pt-3">
@@ -467,7 +467,23 @@
                 <div class="col-md-6" th:each="course : ${student.enrolledCourses}">
                     <div class="content-card h-100 border-start border-4 border-primary">
                         <div class="d-flex justify-content-between align-items-start"><div><h5 class="fw-bold text-dark mb-1" th:text="${course.name}">Nome</h5><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill mb-2" th:text="${course.tag}">TAG</span><p class="text-muted small mb-0" th:text="${course.description}">Desc</p></div><i data-lucide="check-circle" class="text-primary" style="width: 24px; height: 24px;"></i></div>
-                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-bold">Inscrito</small><button class="btn btn-sm btn-outline-primary rounded-pill px-3">Ver Detalhes</button></div>
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                            <small class="text-muted fw-bold">Inscrito</small>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#courseDetailsModal"
+                                    th:data-id="${course.id}"
+                                    th:data-name="${course.name}"
+                                    th:data-tag="${course.tag}"
+                                    th:data-description="${course.description}"
+                                    th:data-semester="${course.semester}"
+                                    th:data-year="${course.year}"
+                                    th:data-teacher="${course.teacher != null ? course.teacher.name : 'N/D'}"
+                                    th:data-projects="${course.projects != null ? #lists.size(course.projects) : 0}"
+                                    th:data-teams="${course.teams != null ? #lists.size(course.teams) : 0}"
+                                    onclick="setupCourseDetails(this)">Ver Detalhes</button>
+                        </div>
                     </div>
                 </div>
                 <div th:if="${#lists.isEmpty(student.enrolledCourses)}" class="col-12 text-center py-4 bg-white rounded-3 border border-dashed"><p class="text-muted mb-0">Não estás inscrito em nenhum curso.</p></div>
@@ -732,7 +748,7 @@
                         </div>
                         
                         <div th:if="${#lists.isEmpty(project.sprints)}" class="text-muted small text-center py-3">
-                            Nenhuma sprint criada neste projeto. Clique em "Adicionar Sprint" para começar.
+                            Nenhuma sprint criada neste projeto. Clique em "Nova Sprint" para começar.
                         </div>
                     </div>
                 </div>
@@ -953,6 +969,34 @@
         </div>
     </div>
 </div>
+    
+    <!-- Modal Course Details -->
+    <div class="modal fade" id="courseDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h4 class="modal-title fw-bold text-primary" id="courseDetailsTitle">Curso</h4>
+                        <p class="text-muted small mb-0" id="courseDetailsTag">TAG</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="courseDetailsDescription" class="mb-3">Descrição</p>
+                    <div class="row g-2">
+                        <div class="col-6"><strong>Semestre</strong><div id="courseDetailsSemester" class="text-muted">-</div></div>
+                        <div class="col-6"><strong>Ano</strong><div id="courseDetailsYear" class="text-muted">-</div></div>
+                        <div class="col-6 mt-2"><strong>Docente</strong><div id="courseDetailsTeacher" class="text-muted">-</div></div>
+                        <div class="col-6 mt-2"><strong>Projetos</strong><div id="courseDetailsProjects" class="text-muted">0</div></div>
+                        <div class="col-6 mt-2"><strong>Equipas</strong><div id="courseDetailsTeams" class="text-muted">0</div></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="newSprintModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1281,6 +1325,27 @@
             if (sidebar.classList.contains('open')) {
                 fetchNotifications();
             }
+        }
+
+        function setupCourseDetails(button) {
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const tag = button.getAttribute('data-tag');
+            const description = button.getAttribute('data-description');
+            const semester = button.getAttribute('data-semester');
+            const year = button.getAttribute('data-year');
+            const teacher = button.getAttribute('data-teacher');
+            const projects = button.getAttribute('data-projects');
+            const teams = button.getAttribute('data-teams');
+
+            document.getElementById('courseDetailsTitle').textContent = name || 'Curso';
+            document.getElementById('courseDetailsTag').textContent = tag ? tag : '';
+            document.getElementById('courseDetailsDescription').textContent = description ? description : 'Sem descrição.';
+            document.getElementById('courseDetailsSemester').textContent = semester ? semester : '-';
+            document.getElementById('courseDetailsYear').textContent = year ? year : '-';
+            document.getElementById('courseDetailsTeacher').textContent = teacher ? ('Prof. ' + teacher) : 'Prof. N/D';
+            document.getElementById('courseDetailsProjects').textContent = projects ? projects : '0';
+            document.getElementById('courseDetailsTeams').textContent = teams ? teams : '0';
         }
 
         async function fetchNotifications() {

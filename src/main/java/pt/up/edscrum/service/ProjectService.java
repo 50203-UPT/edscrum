@@ -14,11 +14,13 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final TeamRepository teamRepository; // NOVO
+    private final pt.up.edscrum.service.AwardService awardService; // Para atribuir prémios automáticos
 
     // Injeção via construtor (Adicionar TeamRepository)
-    public ProjectService(ProjectRepository projectRepository, TeamRepository teamRepository) {
+    public ProjectService(ProjectRepository projectRepository, TeamRepository teamRepository, pt.up.edscrum.service.AwardService awardService) {
         this.projectRepository = projectRepository;
         this.teamRepository = teamRepository;
+        this.awardService = awardService;
     }
 
     public List<Project> getAllProjects() {
@@ -64,19 +66,43 @@ public class ProjectService {
     // Completar Projeto (apenas se todos os sprints estiverem concluídos)
     public void completeProject(Long projectId) {
         Project project = getProjectById(projectId);
-        
+
         // Verificar se todos os sprints estão concluídos
         if (project.getSprints() != null && !project.getSprints().isEmpty()) {
             boolean allSprintsDone = project.getSprints().stream()
-                .allMatch(sprint -> sprint.getStatus() == pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
-            
+                    .allMatch(sprint -> sprint.getStatus() == pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
+
             if (!allSprintsDone) {
                 throw new IllegalStateException("Todos os sprints devem estar concluídos antes de marcar o projeto como concluído.");
             }
         }
-        
+
         project.setStatus(pt.up.edscrum.enums.ProjectStatus.CONCLUIDO);
         projectRepository.save(project);
+
+        // Atribuir prémio "Primeiro Projeto Concluído" aos alunos envolvidos (se for a primeira vez)
+        if (project.getTeams() != null) {
+            for (Team team : project.getTeams()) {
+                if (team.getScrumMaster() != null) {
+                    awardService.assignAutomaticAwardToStudentByName("Conquistador de Projetos", "Concluíste o teu primeiro projeto.", 100, team.getScrumMaster().getId(), projectId);
+                }
+                if (team.getProductOwner() != null) {
+                    awardService.assignAutomaticAwardToStudentByName("Conquistador de Projetos", "Concluíste o teu primeiro projeto.", 100, team.getProductOwner().getId(), projectId);
+                }
+                if (team.getDevelopers() != null) {
+                    for (pt.up.edscrum.model.User dev : team.getDevelopers()) {
+                        awardService.assignAutomaticAwardToStudentByName("Conquistador de Projetos", "Concluíste o teu primeiro projeto.", 100, dev.getId(), projectId);
+                    }
+                }
+
+                // Atribuir prémio de equipa para cada equipa que conclui o projeto
+                try {
+                    awardService.assignAutomaticAwardToTeamByName("Conquistadores de Projeto", "A equipa concluiu este projeto com sucesso.", 150, team.getId(), projectId);
+                } catch (Exception e) {
+                    // Non-fatal
+                }
+            }
+        }
     }
 
     // Reabrir Projeto
@@ -90,7 +116,7 @@ public class ProjectService {
     public void removeTeamFromProject(Long projectId, Long teamId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
-        
+
         // Verificar se a equipa está associada a este projeto
         if (team.getProject() != null && team.getProject().getId().equals(projectId)) {
             team.setProject(null);

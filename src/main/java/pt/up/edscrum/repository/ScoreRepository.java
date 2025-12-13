@@ -38,4 +38,6 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
             + "AND s.team.project.course.id = :courseId "
             + "ORDER BY s.totalPoints DESC")
     List<RankingDTO> getTeamRanking(Long courseId);
+
+    List<Score> findAllByUserIsNotNullOrderByTotalPointsDesc();
 }
