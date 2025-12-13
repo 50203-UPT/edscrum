@@ -91,21 +91,36 @@ public class TeamController {
 
     /**
      * Get available teams for a course (open and with slots)
+     * Returns detailed info about available roles
      */
     @GetMapping("/available-teams/{courseId}")
-    public ResponseEntity<List<Team>> getAvailableTeamsByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Map<String, Object>>> getAvailableTeamsByCourse(@PathVariable Long courseId) {
         List<Team> teams = teamService.getAvailableTeamsForStudentByCourse(courseId);
-        return ResponseEntity.ok(teams);
+        
+        List<Map<String, Object>> result = teams.stream().map(team -> {
+            Map<String, Object> teamInfo = new HashMap<>();
+            teamInfo.put("id", team.getId());
+            teamInfo.put("name", team.getName());
+            teamInfo.put("currentMemberCount", team.getCurrentMemberCount());
+            teamInfo.put("maxMembers", team.getMaxMembers());
+            teamInfo.put("hasProductOwner", team.getProductOwner() != null);
+            teamInfo.put("hasScrumMaster", team.getScrumMaster() != null);
+            teamInfo.put("developerCount", team.getDevelopers() != null ? team.getDevelopers().size() : 0);
+            return teamInfo;
+        }).collect(Collectors.toList());
+        
+        return ResponseEntity.ok(result);
     }
 
     /**
-     * Student joins a team
+     * Student joins a team with a specific role
      */
     @PostMapping("/{teamId}/join")
     public ResponseEntity<Map<String, String>> joinTeam(
             @PathVariable Long teamId,
-            @RequestBody Map<String, Long> payload) {
-        Long studentId = payload.get("studentId");
+            @RequestBody Map<String, Object> payload) {
+        Long studentId = ((Number) payload.get("studentId")).longValue();
+        String role = (String) payload.getOrDefault("role", "DEVELOPER");
         
         Map<String, String> response = new HashMap<>();
         try {
@@ -113,22 +128,23 @@ public class TeamController {
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
             
-            // Add student to team as developer
-            teamService.addStudentToTeam(teamId, studentId, student);
+            // Add student to team with specified role
+            teamService.addStudentToTeamWithRole(teamId, studentId, student, role);
             
             response.put("success", "Juntaste-te à equipa com sucesso!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            response.put("error", "Erro ao juntar-se à equipa: " + e.getMessage());
+            response.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
 
     /**
      * Get coursemates for a specific course (only students WITHOUT a team)
+     * Also includes the course teacher for Product Owner selection
      */
     @GetMapping("/course-mates/{courseId}")
-    public ResponseEntity<List<User>> getCoursemates(@PathVariable Long courseId) {
+    public ResponseEntity<Map<String, Object>> getCoursemates(@PathVariable Long courseId) {
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
         List<User> students = enrollments.stream()
                 .map(Enrollment::getStudent)
@@ -136,7 +152,18 @@ public class TeamController {
                 // Filter out students who already have a team in this course
                 .filter(student -> teamService.getStudentTeamInCourse(student.getId(), courseId) == null)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(students);
+        
+        // Get the course teacher
+        User teacher = null;
+        if (!enrollments.isEmpty() && enrollments.get(0).getCourse() != null) {
+            teacher = enrollments.get(0).getCourse().getTeacher();
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("students", students);
+        response.put("teacher", teacher);
+        
+        return ResponseEntity.ok(response);
     }
 }
 

@@ -162,7 +162,7 @@
             <a th:if="${teacher != null}" th:href="@{/view/teacher/home/{userId}(userId=${teacher.id})}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
-            <a th:if="${student != null}" th:href="@{/view/student/home/{userId}(userId=${student.id})}" class="btn-back-custom" title="Voltar">
+            <a th:if="${student != null}" th:href="@{'/view/student/home/' + ${student.id} + '?tab=projects'}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
             <div th:class="'text-white p-2 rounded-3 shadow-sm ' + (${teacher != null ? 'bg-primary' : 'bg-success'})">
@@ -863,7 +863,7 @@
                     if (isTeacher) {
                         window.location.href = `/view/teacher/home/${userId}`;
                     } else {
-                        window.location.href = `/view/student/home/${userId}`;
+                        window.location.href = `/view/student/home/${userId}?tab=projects`;
                     }
                 } else {
                     console.error('Erro ao eliminar sprint.');

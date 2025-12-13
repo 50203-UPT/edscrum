@@ -40,4 +40,7 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
     List<RankingDTO> getTeamRanking(Long courseId);
 
     List<Score> findAllByUserIsNotNullOrderByTotalPointsDesc();
+    
+    // Encontrar Scores por Team ID (para eliminar antes de apagar equipa)
+    List<Score> findByTeamId(Long teamId);
 }

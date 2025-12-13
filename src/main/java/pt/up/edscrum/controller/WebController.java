@@ -437,12 +437,14 @@ public class WebController {
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Sprint criada com sucesso!");
+            
+            // Redireciona para o dashboard da nova sprint
+            return "redirect:/view/sprint/" + saved.getId() + "/user/" + studentId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar sprint: " + e.getMessage());
+            // Em caso de erro, volta para a página do aluno
+            return "redirect:/view/student/home/" + studentId;
         }
-
-        // Redireciona de volta para a página do aluno
-        return "redirect:/view/student/home/" + studentId;
     }
 
 // 2. ATUALIZAR CREATE TEAM
@@ -450,7 +452,8 @@ public class WebController {
     public String createTeamWeb(
             @RequestParam String name,
             @RequestParam Long courseId,
-            @RequestParam Long teacherId, // Vamos usar este ID para o redirecionamento
+            @RequestParam(required = false) Long teacherId, // Opcional para estudantes
+            @RequestParam(required = false) Long studentId, // Opcional para professores
             @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) Long scrumMasterId,
             @RequestParam(required = false) Long productOwnerId,
@@ -518,7 +521,10 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
         }
-        // Redireciona para teacherHome na aba de equipas
+        // Redireciona para a página correta dependendo se é professor ou estudante
+        if (studentId != null) {
+            return "redirect:/view/student/home/" + studentId + "?tab=all-courses";
+        }
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 

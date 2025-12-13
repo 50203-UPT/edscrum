@@ -16,6 +16,10 @@ public class ProjectWithProgressDTO {
     private List<SprintWithProgressDTO> sprints;
     private List<MemberWithRoleDTO> members;
 
+    // Add course info for dashboard display
+    private Long courseId;
+    private String courseName;
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -87,5 +91,21 @@ public class ProjectWithProgressDTO {
 
     public void setMembers(List<MemberWithRoleDTO> members) {
         this.members = members;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
     }
 }

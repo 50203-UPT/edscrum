@@ -7,14 +7,20 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.enums.NotificationType; // Importação
+import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.Team;
+import pt.up.edscrum.model.TeamAward;
 import pt.up.edscrum.model.User;
+import pt.up.edscrum.repository.ScoreRepository;
+import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 
 @Service
 public class TeamService {
 
     private final TeamRepository teamRepository;
+    private final TeamAwardRepository teamAwardRepository;
+    private final ScoreRepository scoreRepository;
     private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
     private final pt.up.edscrum.service.AwardService awardService;
     
@@ -22,10 +28,14 @@ public class TeamService {
     private final NotificationService notificationService;
 
     public TeamService(TeamRepository teamRepository,
+            TeamAwardRepository teamAwardRepository,
+            ScoreRepository scoreRepository,
             pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository,
             pt.up.edscrum.service.AwardService awardService,
             NotificationService notificationService) {
         this.teamRepository = teamRepository;
+        this.teamAwardRepository = teamAwardRepository;
+        this.scoreRepository = scoreRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.awardService = awardService;
         this.notificationService = notificationService;
@@ -157,6 +167,18 @@ public class TeamService {
             notifyTeamMembers(team, "Equipa Eliminada", "A equipa '" + team.getName() + "' foi removida.");
         } catch(Exception e) {}
         
+        // Eliminar Scores associados antes de eliminar a equipa (FK constraint)
+        List<Score> scores = scoreRepository.findByTeamId(id);
+        if (scores != null && !scores.isEmpty()) {
+            scoreRepository.deleteAll(scores);
+        }
+        
+        // Eliminar TeamAwards associados antes de eliminar a equipa (FK constraint)
+        List<TeamAward> teamAwards = teamAwardRepository.findByTeamId(id);
+        if (teamAwards != null && !teamAwards.isEmpty()) {
+            teamAwardRepository.deleteAll(teamAwards);
+        }
+        
         teamRepository.deleteById(id);
     }
 
@@ -269,6 +291,13 @@ public class TeamService {
      * Add a student to a team as a developer
      */
     public Team addStudentToTeam(Long teamId, Long studentId, User student) {
+        return addStudentToTeamWithRole(teamId, studentId, student, "DEVELOPER");
+    }
+    
+    /**
+     * Add a student to a team with a specific role
+     */
+    public Team addStudentToTeamWithRole(Long teamId, Long studentId, User student, String role) {
         Team team = getTeamById(teamId);
         
         // Validate student is not already in a team in this course
@@ -279,11 +308,27 @@ public class TeamService {
             throw new RuntimeException("A equipa está fechada ou completa");
         }
         
-        // Add student as developer
-        if (team.getDevelopers() == null) {
-            team.setDevelopers(new java.util.ArrayList<>());
+        switch (role.toUpperCase()) {
+            case "PRODUCT_OWNER":
+                if (team.getProductOwner() != null) {
+                    throw new RuntimeException("A equipa já tem um Product Owner");
+                }
+                team.setProductOwner(student);
+                break;
+            case "SCRUM_MASTER":
+                if (team.getScrumMaster() != null) {
+                    throw new RuntimeException("A equipa já tem um Scrum Master");
+                }
+                team.setScrumMaster(student);
+                break;
+            case "DEVELOPER":
+            default:
+                if (team.getDevelopers() == null) {
+                    team.setDevelopers(new java.util.ArrayList<>());
+                }
+                team.getDevelopers().add(student);
+                break;
         }
-        team.getDevelopers().add(student);
         
         // Auto-close if now full
         if (team.isFull()) {

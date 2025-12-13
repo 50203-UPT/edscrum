@@ -396,42 +396,95 @@
                     }
                     
                     noTeamsMsg.style.display = 'none';
-                    container.innerHTML = teams.map(team => `
-                        <div class="content-card mb-3 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="fw-bold text-dark mb-1">${team.name}</h6>
-                                <small class="text-muted">${team.currentMemberCount}/${team.maxMembers} membros</small>
-                            </div>
-                            <button class="btn btn-sm btn-primary rounded-pill px-3" 
-                                    onclick="joinTeam(${team.id})"
+                    container.innerHTML = teams.map(team => {
+                        // Build available roles
+                        let rolesHtml = '<div class="d-flex gap-2 mt-2">';
+                        
+                        if (!team.hasProductOwner) {
+                            rolesHtml += `<button class="btn btn-sm btn-outline-primary rounded-pill px-2" 
+                                    onclick="joinTeamWithRole(${team.id}, 'PRODUCT_OWNER')"
                                     data-bs-dismiss="modal">
-                                Juntar-se
-                            </button>
-                        </div>
-                    `).join('');
+                                <i data-lucide="user-check" style="width:12px;height:12px;"></i> PO
+                            </button>`;
+                        }
+                        
+                        if (!team.hasScrumMaster) {
+                            rolesHtml += `<button class="btn btn-sm btn-outline-purple rounded-pill px-2" 
+                                    onclick="joinTeamWithRole(${team.id}, 'SCRUM_MASTER')"
+                                    data-bs-dismiss="modal"
+                                    style="border-color: #6f42c1; color: #6f42c1;">
+                                <i data-lucide="shield" style="width:12px;height:12px;"></i> SM
+                            </button>`;
+                        }
+                        
+                        rolesHtml += `<button class="btn btn-sm btn-outline-success rounded-pill px-2" 
+                                onclick="joinTeamWithRole(${team.id}, 'DEVELOPER')"
+                                data-bs-dismiss="modal">
+                            <i data-lucide="code" style="width:12px;height:12px;"></i> Dev
+                        </button>`;
+                        
+                        rolesHtml += '</div>';
+                        
+                        // Show current roles
+                        let statusHtml = '<div class="d-flex gap-1 flex-wrap">';
+                        if (team.hasProductOwner) {
+                            statusHtml += '<span class="badge badge-role role-po" style="font-size:0.65rem;">PO ✓</span>';
+                        }
+                        if (team.hasScrumMaster) {
+                            statusHtml += '<span class="badge badge-role role-sm" style="font-size:0.65rem;">SM ✓</span>';
+                        }
+                        if (team.developerCount > 0) {
+                            statusHtml += `<span class="badge badge-role role-dev" style="font-size:0.65rem;">${team.developerCount} Dev</span>`;
+                        }
+                        statusHtml += '</div>';
+                        
+                        return `
+                            <div class="content-card mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">${team.name}</h6>
+                                        <small class="text-muted">${team.currentMemberCount}/${team.maxMembers} membros</small>
+                                    </div>
+                                    ${statusHtml}
+                                </div>
+                                <div class="border-top pt-2 mt-2">
+                                    <small class="text-muted d-block mb-1">Escolhe o teu role:</small>
+                                    ${rolesHtml}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    lucide.createIcons();
                 })
                 .catch(error => {
                     console.error('Error loading teams:', error);
                 });
         }
 
-        function joinTeam(teamId) {
+        function joinTeamWithRole(teamId, role) {
             fetch('/api/teams/' + teamId + '/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ studentId: window.currentStudentId })
+                body: JSON.stringify({ studentId: window.currentStudentId, role: role })
             })
             .then(response => {
                 if (response.ok) {
-                    alert('Juntaste-te à equipa com sucesso!');
+                    let roleText = role === 'PRODUCT_OWNER' ? 'Product Owner' : (role === 'SCRUM_MASTER' ? 'Scrum Master' : 'Developer');
+                    sessionStorage.setItem('teamSuccessMessage', 'Juntaste-te à equipa como ' + roleText + '!');
                     window.location.reload();
                 } else {
-                    return response.json().then(err => { throw new Error(err.message); });
+                    return response.json().then(err => { throw new Error(err.error || err.message); });
                 }
             })
             .catch(error => {
-                alert('Erro ao juntar-se à equipa: ' + error.message);
+                sessionStorage.setItem('teamErrorMessage', 'Erro ao juntar-se à equipa: ' + error.message);
+                window.location.reload();
             });
+        }
+
+        function joinTeam(teamId) {
+            joinTeamWithRole(teamId, 'DEVELOPER');
         }
 
         function addStudentDeveloperField() {
@@ -500,7 +553,10 @@
         function loadCoursematesForTeamCreation(courseId) {
             fetch('/api/teams/course-mates/' + courseId)
                 .then(response => response.json())
-                .then(students => {
+                .then(data => {
+                    const students = data.students || [];
+                    const teacher = data.teacher;
+                    
                     const poSelect = document.querySelector('select[name="productOwnerId"]');
                     const smSelect = document.querySelector('select[name="scrumMasterId"]');
                     const devSelects = document.querySelectorAll('select[name="developerIds"]');
@@ -512,13 +568,33 @@
                         }
                     });
                     
-                    // Add current student first
-                    const currentStudentOption = document.createElement('option');
-                    currentStudentOption.value = window.currentStudentId;
-                    currentStudentOption.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
-                    poSelect.add(currentStudentOption);
+                    // Clear developer select
+                    const devSelect = devSelects[0];
+                    while (devSelect.options.length > 1) {
+                        devSelect.remove(1);
+                    }
                     
-                    // Add coursemates
+                    // Add teacher first for Product Owner (if available)
+                    if (teacher) {
+                        const teacherOption = document.createElement('option');
+                        teacherOption.value = teacher.id;
+                        teacherOption.text = 'Prof. ' + teacher.name + ' (Professor)';
+                        poSelect.add(teacherOption);
+                    }
+                    
+                    // Add current student to Product Owner
+                    const currentStudentOptionPO = document.createElement('option');
+                    currentStudentOptionPO.value = window.currentStudentId;
+                    currentStudentOptionPO.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
+                    poSelect.add(currentStudentOptionPO);
+                    
+                    // Add current student to Scrum Master
+                    const currentStudentOptionSM = document.createElement('option');
+                    currentStudentOptionSM.value = window.currentStudentId;
+                    currentStudentOptionSM.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
+                    smSelect.add(currentStudentOptionSM);
+                    
+                    // Add coursemates to all selects
                     students.forEach(student => {
                         if (student.id !== window.currentStudentId) {
                             const option1 = document.createElement('option');
@@ -533,13 +609,13 @@
                         }
                     });
                     
-                    // For developers, add all students
-                    const devSelect = devSelects[0];
+                    // For developers, add current student first
                     const currentDevOption = document.createElement('option');
                     currentDevOption.value = window.currentStudentId;
                     currentDevOption.text = /*[[${student.studentTag}]]*/ '' + ' - ' + /*[[${student.name}]]*/ '' + ' (Tu)';
                     devSelect.add(currentDevOption);
                     
+                    // Add other students to developers
                     students.forEach(student => {
                         if (student.id !== window.currentStudentId) {
                             const option = document.createElement('option');
@@ -565,20 +641,11 @@
                         .map(s => s.value)
                         .filter(v => v !== "");
                     
-                    if (!poId || !smId) {
-                        alert('A equipa deve ter um Product Owner e um Scrum Master!');
-                        e.preventDefault();
-                        return;
-                    }
+                    // Collect all selected members (filter out empty values)
+                    const allMembers = [poId, smId, ...devIds].filter(v => v !== "");
                     
-                    if (devIds.length === 0) {
-                        alert('A equipa deve ter pelo menos um Developer!');
-                        e.preventDefault();
-                        return;
-                    }
-                    
-                    const allMembers = [poId, smId, ...devIds];
-                    if (new Set(allMembers).size !== allMembers.length) {
+                    // Check for duplicates only among selected members
+                    if (allMembers.length > 0 && new Set(allMembers).size !== allMembers.length) {
                         alert('Não pode haver membros duplicados!');
                         e.preventDefault();
                         return;
@@ -935,7 +1002,8 @@
                             <p class="text-muted mb-2 small" th:text="${project.sprintGoals}">Plataforma para gestão de estudantes e cursos</p>
                             
                             <div class="d-flex gap-2">
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:text="${student.courseName}">Qualidade de Software</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:if="${project.courseName != null}" th:text="${project.courseName}">Qualidade de Software</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:if="${project.courseName == null}">Curso não disponível</span>
                                 <span class="badge bg-purple-100 text-purple-700 border border-purple-200" style="background-color: #f3e8ff; color: #7e22ce;" th:text="${student.roleInTeam}">Scrum Master</span>
                             </div>
                         </div>
@@ -1037,7 +1105,7 @@
                                     th:if="${project.status.name() != 'CONCLUIDO'}"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#newSprintModal"
-                                    th:data-project-id="${project.id}"
+                                    th:attr="data-project-id=${project.id}"
                                     onclick="setupNewSprintModal(this)">
                                 <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
                                 <span>Nova Sprint</span>
@@ -1638,6 +1706,127 @@
     }
 
     // ==========================================
+    // 3.5 FUNÇÕES DE SPRINT
+    // ==========================================
+
+    // Helper functions for date formatting
+    function formatDateToYMD(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addDaysYMD(ymd, days) {
+        const date = new Date(ymd + 'T00:00:00');
+        date.setDate(date.getDate() + days);
+        return formatDateToYMD(date);
+    }
+
+    function setupNewSprintModal(button) {
+        // Usar dataset para aceder ao data-project-id (Thymeleaf gera como data-project-id)
+        const projectId = button.dataset.projectId || button.getAttribute('data-project-id');
+        console.log('setupNewSprintModal called with projectId:', projectId);
+        
+        if (!projectId) {
+            console.error('projectId is null or undefined!');
+            return;
+        }
+        
+        // Preencher o campo hidden com o projectId
+        const projectIdField = document.getElementById('newSprintProjectId');
+        projectIdField.value = projectId;
+        console.log('Set newSprintProjectId to:', projectIdField.value);
+        
+        // Preencher as datas de validação do projeto
+        const projectStartHidden = document.getElementById('projectStartDateHidden-' + projectId);
+        const projectEndHidden = document.getElementById('projectEndDateHidden-' + projectId);
+        const lastSprintEndHidden = document.getElementById('lastSprintEndHidden-' + projectId);
+        
+        const projectStart = projectStartHidden ? projectStartHidden.value : null;
+        const projectEnd = projectEndHidden ? projectEndHidden.value : null;
+        const lastSprintEnd = lastSprintEndHidden ? lastSprintEndHidden.value : null;
+        
+        if (projectStart) {
+            document.getElementById('currentProjectStart').value = projectStart;
+        }
+        if (projectEnd) {
+            document.getElementById('currentProjectEnd').value = projectEnd;
+        }
+        if (lastSprintEnd) {
+            document.getElementById('currentLastSprintEnd').value = lastSprintEnd;
+        } else {
+            document.getElementById('currentLastSprintEnd').value = '';
+        }
+        
+        // Configurar datas mínimas para os inputs
+        setSprintDateConstraints();
+        
+        // Limpar valores anteriores
+        document.getElementById('sprintStartDate').value = '';
+        document.getElementById('sprintEndDate').value = '';
+        
+        // Atualizar label do sprint (ex: SPRINT 2 se já existe 1)
+        const sprintsContainer = button.closest('.content-card').querySelector('.sprints-container');
+        const sprintCount = sprintsContainer ? sprintsContainer.querySelectorAll('.sprint-item').length : 0;
+        document.getElementById('nextSprintLabel').textContent = 'SPRINT ' + (sprintCount + 1);
+    }
+
+    function setSprintDateConstraints() {
+        const startInput = document.getElementById('sprintStartDate');
+        const endInput = document.getElementById('sprintEndDate');
+        const projectEnd = document.getElementById('currentProjectEnd').value;
+        const lastSprintEnd = document.getElementById('currentLastSprintEnd').value;
+        
+        if (!startInput || !endInput) return;
+        
+        // Data mínima de início: amanhã OU dia seguinte ao fim do último sprint (o que for maior)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        let minStart = formatDateToYMD(tomorrow);
+        
+        // Se existe um sprint anterior, a data mínima é o dia seguinte ao fim desse sprint
+        if (lastSprintEnd) {
+            const dayAfterLastSprint = addDaysYMD(lastSprintEnd, 1);
+            if (dayAfterLastSprint > minStart) {
+                minStart = dayAfterLastSprint;
+            }
+        }
+        
+        startInput.min = minStart;
+        
+        // Data máxima: fim do projeto
+        if (projectEnd) {
+            startInput.max = projectEnd;
+            endInput.max = projectEnd;
+        }
+        
+        // Data mínima de fim: dia seguinte ao início
+        if (startInput.value) {
+            endInput.min = addDaysYMD(startInput.value, 1);
+        } else {
+            endInput.min = addDaysYMD(minStart, 1);
+        }
+    }
+
+    function updateSprintEndDateMin() {
+        const startInput = document.getElementById('sprintStartDate');
+        const endInput = document.getElementById('sprintEndDate');
+        
+        if (!startInput || !endInput) return;
+        
+        // Limpar mensagens de validação
+        startInput.setCustomValidity('');
+        endInput.setCustomValidity('');
+        
+        if (startInput.value) {
+            endInput.min = addDaysYMD(startInput.value, 1);
+        }
+    }
+
+    // ==========================================
     // 4. INICIALIZAÇÃO (DOM CONTENT LOADED)
     // ==========================================
 
@@ -1645,6 +1834,100 @@
         
         // Carrega notificações ao abrir a página para atualizar o badge
         fetchNotifications();
+
+        // --- Validação de Datas do Sprint ---
+        const sprintStartInput = document.getElementById('sprintStartDate');
+        const sprintEndInput = document.getElementById('sprintEndDate');
+        const sprintForm = document.getElementById('newSprintForm');
+
+        if (sprintStartInput) {
+            sprintStartInput.addEventListener('input', updateSprintEndDateMin);
+        }
+        if (sprintEndInput) {
+            sprintEndInput.addEventListener('input', function() { this.setCustomValidity(''); });
+        }
+
+        if (sprintForm) {
+            sprintForm.addEventListener('submit', function(event) {
+                // Limpar mensagens de validação anteriores
+                if (sprintStartInput) sprintStartInput.setCustomValidity('');
+                if (sprintEndInput) sprintEndInput.setCustomValidity('');
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const startVal = sprintStartInput ? sprintStartInput.value : '';
+                const endVal = sprintEndInput ? sprintEndInput.value : '';
+                const projectStart = document.getElementById('currentProjectStart').value;
+                const projectEnd = document.getElementById('currentProjectEnd').value;
+                const lastSprintEnd = document.getElementById('currentLastSprintEnd').value;
+                
+                let isValid = true;
+
+                if (startVal) {
+                    const sDate = new Date(startVal + 'T00:00:00');
+                    
+                    // Validação 1: Data de início deve ser posterior a hoje
+                    if (sDate.getTime() <= today.getTime()) {
+                        sprintStartInput.setCustomValidity('A data de início deve ser posterior à data de hoje.');
+                        isValid = false;
+                    }
+                    
+                    // Validação 2: Data de início deve ser posterior ao fim do último sprint
+                    if (isValid && lastSprintEnd) {
+                        const lastEnd = new Date(lastSprintEnd + 'T00:00:00');
+                        if (sDate.getTime() <= lastEnd.getTime()) {
+                            sprintStartInput.setCustomValidity('A data de início deve ser posterior ao fim do sprint anterior (' + lastSprintEnd + ').');
+                            isValid = false;
+                        }
+                    }
+                    
+                    // Validação 3: Data de início deve estar dentro do período do projeto
+                    if (isValid && projectStart) {
+                        const pStart = new Date(projectStart + 'T00:00:00');
+                        if (sDate.getTime() < pStart.getTime()) {
+                            sprintStartInput.setCustomValidity('A data de início deve ser igual ou posterior ao início do projeto (' + projectStart + ').');
+                            isValid = false;
+                        }
+                    }
+                    
+                    if (isValid && projectEnd) {
+                        const pEnd = new Date(projectEnd + 'T00:00:00');
+                        if (sDate.getTime() > pEnd.getTime()) {
+                            sprintStartInput.setCustomValidity('A data de início deve ser anterior ao fim do projeto (' + projectEnd + ').');
+                            isValid = false;
+                        }
+                    }
+                }
+
+                if (startVal && endVal) {
+                    const sDate = new Date(startVal + 'T00:00:00');
+                    const eDate = new Date(endVal + 'T00:00:00');
+                    
+                    // Validação 4: Data de fim deve ser posterior à data de início
+                    if (sDate.getTime() >= eDate.getTime()) {
+                        sprintStartInput.setCustomValidity('A data de início deve ser anterior à data de fim.');
+                        sprintEndInput.setCustomValidity('A data de fim deve ser posterior à data de início.');
+                        isValid = false;
+                    }
+                    
+                    // Validação 5: Data de fim deve estar dentro do período do projeto
+                    if (isValid && projectEnd) {
+                        const pEnd = new Date(projectEnd + 'T00:00:00');
+                        if (eDate.getTime() > pEnd.getTime()) {
+                            sprintEndInput.setCustomValidity('A data de fim deve ser igual ou anterior ao fim do projeto (' + projectEnd + ').');
+                            isValid = false;
+                        }
+                    }
+                }
+
+                if (!isValid || !sprintForm.checkValidity()) {
+                    // Mostrar validação nativa do browser
+                    sprintForm.reportValidity();
+                    event.preventDefault();
+                }
+            });
+        }
 
         // --- Configuração de Password ---
         const editProfileForm = document.getElementById('editProfileForm');
@@ -1825,6 +2108,39 @@
             }
         }
 
+        // --- Mensagens de Sucesso/Erro de Equipas ---
+        const teamSuccessMsg = sessionStorage.getItem('teamSuccessMessage');
+        if (teamSuccessMsg) {
+            sessionStorage.removeItem('teamSuccessMessage');
+            const alertContainer = document.querySelector('.container.mt-3');
+            if (alertContainer) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show shadow-sm border-0';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.style.cssText = 'background-color: #d1e7dd; color: #0f5132;';
+                alertDiv.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i>' + teamSuccessMsg + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+                lucide.createIcons();
+                setTimeout(function() { new bootstrap.Alert(alertDiv).close(); }, 3000);
+            }
+        }
+
+        const teamErrorMsg = sessionStorage.getItem('teamErrorMessage');
+        if (teamErrorMsg) {
+            sessionStorage.removeItem('teamErrorMessage');
+            const alertContainer = document.querySelector('.container.mt-3');
+            if (alertContainer) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show shadow-sm border-0';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.style.cssText = 'background-color: #f8d7da; color: #842029;';
+                alertDiv.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i>' + teamErrorMsg + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+                lucide.createIcons();
+                setTimeout(function() { new bootstrap.Alert(alertDiv).close(); }, 5000);
+            }
+        }
+
         const successAlert = document.querySelector('.alert-success');
         if (successAlert) {
             setTimeout(function() { new bootstrap.Alert(successAlert).close(); }, 3000);
@@ -1942,28 +2258,28 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Product Owner *</label>
-                                <select name="productOwnerId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
-                                    <option value="">Escolher...</option>
+                                <label class="form-label small text-muted">Product Owner</label>
+                                <select name="productOwnerId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()">
+                                    <option value="">Escolher (opcional)...</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Scrum Master *</label>
-                                <select name="scrumMasterId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
-                                    <option value="">Escolher...</option>
+                                <label class="form-label small text-muted">Scrum Master</label>
+                                <select name="scrumMasterId" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()">
+                                    <option value="">Escolher (opcional)...</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers *
+                            <label class="form-label small text-muted d-flex justify-content-between align-items-center">Developers
                                 <button type="button" id="addStudentDeveloperBtn" class="btn btn-link p-0 text-decoration-none small fw-bold" onclick="addStudentDeveloperField()">+ Adicionar outro</button>
                             </label>
                             <div id="student-developers-container">
                                 <div class="input-group mb-2 student-developer-row">
-                                    <select name="developerIds" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()" required>
-                                        <option value="">Selecionar Developer...</option>
+                                    <select name="developerIds" class="form-select bg-light border-0 student-member-select" onchange="updateStudentTeamOptions()">
+                                        <option value="">Selecionar Developer (opcional)...</option>
                                     </select>
                                 </div>
                             </div>

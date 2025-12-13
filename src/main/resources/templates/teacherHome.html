@@ -463,6 +463,7 @@
                                             <i data-lucide="lock" style="width: 16px; height: 16px;" class="me-1"></i>Fechar
                                         </button>
                                         <button class="btn-delete-team shadow-sm"
+                                                th:if="${!team.isClosed}"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#deleteTeamModal"
                                                 th:data-team-id="${team.id}"
@@ -863,6 +864,29 @@
                     <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-danger rounded-pill flex-fill fw-bold">Sim, Eliminar</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="removeTeamFromProjectModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-warning">Remover Equipa do Projeto</h4>
+                    <p class="text-muted small mb-0">A equipa será desassociada deste projeto.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Tem a certeza que deseja remover esta equipa do projeto? <br>A equipa ficará disponível para ser associada a outro projeto.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill flex-fill fw-bold" onclick="confirmRemoveTeamFromProject()">Sim, Remover</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1724,7 +1748,7 @@
                 <input type="hidden" name="userId" value="${currentTeacherId}">
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Equipas Disponíveis (Fechadas)</label>
+                    <label class="form-label fw-bold small">Equipas Disponíveis</label>
                     <select name="teamId" class="form-select bg-light border-0 py-3" required>
                         ${optionsHtml}
                     </select>
@@ -1745,17 +1769,29 @@
         lucide.createIcons();
     }
     
+    let pendingRemoveProjectId = null;
+    let pendingRemoveTeamId = null;
+    
     function removeTeamFromProject(projectId, teamId) {
-        if (!confirm('Tem a certeza que deseja remover a equipa deste projeto?')) return;
+        pendingRemoveProjectId = projectId;
+        pendingRemoveTeamId = teamId;
+        const removeTeamModal = new bootstrap.Modal(document.getElementById('removeTeamFromProjectModal'));
+        removeTeamModal.show();
+    }
+    
+    function confirmRemoveTeamFromProject() {
+        if (!pendingRemoveProjectId || !pendingRemoveTeamId) return;
         
-        fetch('/projects/' + projectId + '/remove-team/' + teamId, {
+        fetch('/projects/' + pendingRemoveProjectId + '/remove-team/' + pendingRemoveTeamId, {
             method: 'POST'
         })
         .then(response => {
             if (response.ok) {
-                // Fechar modal e recarregar página
-                const modal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
-                if (modal) modal.hide();
+                // Fechar modais e recarregar página
+                const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeTeamFromProjectModal'));
+                if (removeModal) removeModal.hide();
+                const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+                if (projectModal) projectModal.hide();
                 window.location.reload();
             } else {
                 alert('Erro ao remover equipa.');
@@ -2044,12 +2080,12 @@
 
     /**
      * Validates team creation form before submission
+     * Nota: Product Owner, Scrum Master e Developers são opcionais - equipas podem ser criadas incompletas
      */
     function validateTeamForm() {
         const form = document.querySelector('form[action*="/teams/create"]');
         if (!form) return true;
 
-        const courseId = document.getElementById('teamCourseSelect').value;
         const poSelect = form.querySelector('select[name="productOwnerId"]');
         const smSelect = form.querySelector('select[name="scrumMasterId"]');
         const devContainer = document.getElementById('developers-container');
@@ -2061,21 +2097,11 @@
             .map(s => s.value)
             .filter(v => v !== "");
 
-        // Validation: Must have PO and SM
-        if (!poId || !smId) {
-            alert('A equipa deve ter pelo menos um Product Owner e um Scrum Master!');
-            return false;
-        }
+        // Collect all selected members (excluding empty values)
+        const allMembers = [poId, smId, ...devIds].filter(v => v !== "");
 
-        // Validation: Must have at least 1 developer
-        if (devIds.length === 0) {
-            alert('A equipa deve ter pelo menos um Developer!');
-            return false;
-        }
-
-        // Validation: No duplicate members
-        const allMembers = [poId, smId, ...devIds];
-        if (new Set(allMembers).size !== allMembers.length) {
+        // Validation: No duplicate members (only if there are members selected)
+        if (allMembers.length > 0 && new Set(allMembers).size !== allMembers.length) {
             alert('Não pode haver membros duplicados na equipa!');
             return false;
         }

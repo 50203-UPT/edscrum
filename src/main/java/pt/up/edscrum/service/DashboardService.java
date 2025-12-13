@@ -426,6 +426,15 @@ public class DashboardService {
         dto.setEndDate(project.getEndDate());
         dto.setStatus(project.getStatus());
 
+        // Set course info for dashboard display
+        if (project.getCourse() != null) {
+            dto.setCourseId(project.getCourse().getId());
+            dto.setCourseName(project.getCourse().getName());
+        } else {
+            dto.setCourseId(null);
+            dto.setCourseName(null);
+        }
+
         // Converter sprints e calcular progresso do projeto
         List<pt.up.edscrum.dto.dashboard.SprintWithProgressDTO> sprintsWithProgress = new ArrayList<>();
         int totalSprintProgress = 0;
