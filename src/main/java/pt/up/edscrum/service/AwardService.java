@@ -4,7 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import pt.up.edscrum.model.Award;
+import pt.up.edscrum.enums.NotificationType;
+import pt.up.edscrum.model.Award; // Importação adicionada
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.StudentAward;
@@ -39,10 +40,13 @@ public class AwardService {
     private final ProjectRepository projectRepo;
     private final SprintRepository sprintRepo;
 
+    // Serviço de Notificações Injetado
+    private final NotificationService notificationService;
+
     public AwardService(AwardRepository awardRepo, StudentAwardRepository studentAwardRepo,
             TeamAwardRepository teamAwardRepo, UserRepository userRepo,
             ScoreRepository scoreRepo, TeamRepository teamRepo, ProjectRepository projectRepo,
-            SprintRepository sprintRepo) {
+            SprintRepository sprintRepo, NotificationService notificationService) {
         this.awardRepo = awardRepo;
         this.studentAwardRepo = studentAwardRepo;
         this.teamAwardRepo = teamAwardRepo;
@@ -51,6 +55,7 @@ public class AwardService {
         this.teamRepo = teamRepo;
         this.projectRepo = projectRepo;
         this.sprintRepo = sprintRepo;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -96,9 +101,10 @@ public class AwardService {
             return;
         }
 
+        User student = userRepo.findById(studentId).orElseThrow();
         StudentAward sa = new StudentAward();
         sa.setAward(award);
-        sa.setStudent(userRepo.findById(studentId).orElseThrow());
+        sa.setStudent(student);
         if (projectId != null) {
             sa.setProject(projectRepo.findById(projectId).orElse(null));
         }
@@ -106,6 +112,14 @@ public class AwardService {
         studentAwardRepo.save(sa);
 
         updateUserScore(sa.getStudent());
+
+        // --- NOTIFICAÇÃO ---
+        notificationService.createNotification(
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Automático!",
+                "Parabéns! Ganhaste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
+        );
     }
 
     /**
@@ -129,9 +143,10 @@ public class AwardService {
             return;
         }
 
+        Team team = teamRepo.findById(teamId).orElseThrow();
         TeamAward ta = new TeamAward();
         ta.setAward(award);
-        ta.setTeam(teamRepo.findById(teamId).orElseThrow());
+        ta.setTeam(team);
         if (projectId != null) {
             ta.setProject(projectRepo.findById(projectId).orElse(null));
         }
@@ -140,14 +155,27 @@ public class AwardService {
 
         // Atualizar score da equipa e dos membros
         updateTeamScore(ta.getTeam());
-        if (ta.getTeam().getScrumMaster() != null) {
-            updateUserScore(ta.getTeam().getScrumMaster());
+
+        // Notificar e atualizar score dos membros
+        notifyAndUpdateTeamMembers(team, award, true);
+    }
+
+    // Helper para notificar membros da equipa
+    private void notifyAndUpdateTeamMembers(Team team, Award award, boolean isAutomatic) {
+        String title = isAutomatic ? "Prémio de Equipa Automático!" : "Novo Prémio de Equipa!";
+        String msg = "A tua equipa '" + team.getName() + "' ganhou o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP).";
+
+        if (team.getScrumMaster() != null) {
+            updateUserScore(team.getScrumMaster());
+            notificationService.createNotification(team.getScrumMaster(), NotificationType.AWARD, title, msg);
         }
-        if (ta.getTeam().getProductOwner() != null) {
-            updateUserScore(ta.getTeam().getProductOwner());
+        if (team.getProductOwner() != null) {
+            updateUserScore(team.getProductOwner());
+            notificationService.createNotification(team.getProductOwner(), NotificationType.AWARD, title, msg);
         }
-        for (User dev : ta.getTeam().getDevelopers()) {
+        for (User dev : team.getDevelopers()) {
             updateUserScore(dev);
+            notificationService.createNotification(dev, NotificationType.AWARD, title, msg);
         }
     }
 
@@ -286,7 +314,6 @@ public class AwardService {
         User student = userRepo.findById(studentId).orElseThrow();
         Project project = projectRepo.findById(projectId).orElseThrow();
 
-        // Verificar se já existe este prémio para este estudante neste projeto
         if (studentAwardRepo.existsByStudentIdAndAwardIdAndProjectId(studentId, awardId, projectId)) {
             throw new RuntimeException("Este prémio já foi atribuído a este aluno neste projeto.");
         }
@@ -299,6 +326,14 @@ public class AwardService {
         studentAwardRepo.save(sa);
 
         updateUserScore(student);
+
+        // --- NOTIFICAÇÃO ---
+        notificationService.createNotification(
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Conquistado!",
+                "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP) no projeto " + project.getName()
+        );
     }
 
     /**
@@ -319,6 +354,14 @@ public class AwardService {
         studentAwardRepo.save(sa);
 
         updateUserScore(student);
+
+        // --- NOTIFICAÇÃO ---
+        notificationService.createNotification(
+                student,
+                NotificationType.AWARD,
+                "Novo Prémio Conquistado!",
+                "Recebeste o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP)."
+        );
     }
 
     /**
@@ -334,7 +377,6 @@ public class AwardService {
         Team team = teamRepo.findById(teamId).orElseThrow();
         Project project = projectRepo.findById(projectId).orElseThrow();
 
-        // Verificar se já existe este prémio para esta equipa neste projeto
         if (teamAwardRepo.existsByTeamIdAndAwardIdAndProjectId(teamId, awardId, projectId)) {
             throw new RuntimeException("Este prémio já foi atribuído a esta equipa neste projeto.");
         }
@@ -346,27 +388,12 @@ public class AwardService {
         ta.setPointsEarned(award.getPoints());
         teamAwardRepo.save(ta);
 
-        // Atualizar score da equipa
         updateTeamScore(team);
 
-        if (team.getScrumMaster() != null) {
-            updateUserScore(team.getScrumMaster());
-        }
-        if (team.getProductOwner() != null) {
-            updateUserScore(team.getProductOwner());
-        }
-        for (User dev : team.getDevelopers()) {
-            updateUserScore(dev);
-        }
+        // Notificar e atualizar score dos membros
+        notifyAndUpdateTeamMembers(team, award, false);
     }
 
-    /**
-     * Atribui um prémio existente a uma equipa (sem projeto). Mantido por
-     * compatibilidade.
-     *
-     * @param awardId id do prémio
-     * @param teamId id da equipa
-     */
     public void assignAwardToTeam(Long awardId, Long teamId) {
         Award award = getAwardById(awardId);
         Team team = teamRepo.findById(teamId).orElseThrow();
@@ -379,15 +406,8 @@ public class AwardService {
 
         updateTeamScore(team);
 
-        if (team.getScrumMaster() != null) {
-            updateUserScore(team.getScrumMaster());
-        }
-        if (team.getProductOwner() != null) {
-            updateUserScore(team.getProductOwner());
-        }
-        for (User dev : team.getDevelopers()) {
-            updateUserScore(dev);
-        }
+        // Notificar e atualizar score dos membros
+        notifyAndUpdateTeamMembers(team, award, false);
     }
 
     /**
@@ -398,16 +418,13 @@ public class AwardService {
      * @return total de pontos
      */
     public int calculateTotalPoints(Long studentId) {
-        // 1. Pontos Individuais
         int individualPoints = studentAwardRepo.findAllByStudentId(studentId).stream()
                 .mapToInt(StudentAward::getPointsEarned).sum();
 
-        // 2. Pontos vindos da Equipa (CORRIGIDO PARA SUPORTAR MÚLTIPLAS EQUIPAS)
         int teamPoints = 0;
         List<Team> teams = teamRepo.findTeamByUserId(studentId);
 
         if (teams != null && !teams.isEmpty()) {
-            // Itera sobre todas as equipas do aluno e soma os pontos
             for (Team team : teams) {
                 teamPoints += teamAwardRepo.findByTeamId(team.getId()).stream()
                         .mapToInt(TeamAward::getPointsEarned).sum();
@@ -439,6 +456,8 @@ public class AwardService {
         }
         score.setTotalPoints(total);
         scoreRepo.save(score);
+
+        // --- AFTER SAVE: check ranking-based automatic awards ---
         try {
             List<pt.up.edscrum.model.Score> allScores = scoreRepo.findAllByUserIsNotNullOrderByTotalPointsDesc();
             int rank = 0;
@@ -450,15 +469,15 @@ public class AwardService {
             }
 
             if (rank > 0 && rank <= 5) {
-                // Top5 award
                 assignAutomaticAwardToStudentByName("Estrela da Turma (Top 5)", "Entraste no Top 5 do ranking global.", 50, user.getId(), null);
+                // Notificação de Ranking (Opcional, pois o assignAutomaticAward já notifica)
             }
             if (rank > 0 && rank <= 3) {
-                // Top3 award
                 assignAutomaticAwardToStudentByName("Mestre do Podium (Top 3)", "Chegaste ao Top 3 do ranking global.", 120, user.getId(), null);
             }
 
         } catch (Exception e) {
+            // Non-fatal
         }
     }
 

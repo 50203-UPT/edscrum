@@ -608,9 +608,15 @@ public class WebController {
             if (developerIds != null && !developerIds.isEmpty()) {
                 List<User> devs = new ArrayList<>();
                 for (Long devId : developerIds) {
-                    devs.add(userService.getUserById(devId));
+                    // Filtrar IDs nulos ou vazios
+                    if (devId != null) {
+                        devs.add(userService.getUserById(devId));
+                    }
                 }
-                team.setDevelopers(devs);
+                // Apenas adicionar se há developers selecionados
+                if (!devs.isEmpty()) {
+                    team.setDevelopers(devs);
+                }
             }
 
             teamService.createTeam(team);
@@ -648,14 +654,7 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
-    /**
-     * Elimina uma equipa por ID.
-     *
-     * @param teamId ID da equipa a eliminar
-     * @param teacherId ID do professor (para redirecionamento)
-     * @param redirectAttributes Atributos flash para mensagens
-     * @return Redirecionamento para a aba de equipas na home do professor
-     */
+    // --- Apagar Equipa ---
     @PostMapping("/teams/delete")
     public String deleteTeamWeb(
             @RequestParam Long teamId,
@@ -674,14 +673,23 @@ public class WebController {
         return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
     }
 
-    /**
-     * Cria um novo prémio manual definido pelo professor.
-     *
-     * @param award Objeto Award preenchido pelo formulário
-     * @param teacherId ID do professor criador
-     * @param redirectAttributes Atributos flash para mensagens
-     * @return Redirecionamento para a aba de prémios na home do professor
-     */
+    // --- Fechar Equipa ---
+    @PostMapping("/teams/close")
+    public String closeTeamWeb(
+            @RequestParam Long teamId,
+            @RequestParam Long teacherId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            teamService.closeTeam(teamId);
+            redirectAttributes.addFlashAttribute("successMessage", "Equipa fechada com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao fechar equipa: " + e.getMessage());
+        }
+
+        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
+    }
+
     @PostMapping("/awards/create")
     public String createAwardWeb(
             @ModelAttribute pt.up.edscrum.model.Award award,

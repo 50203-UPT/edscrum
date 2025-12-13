@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import pt.up.edscrum.enums.NotificationType; // Importação
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.TeamRepository;
@@ -23,12 +24,17 @@ public class TeamService {
     private final pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository;
     private final pt.up.edscrum.service.AwardService awardService;
 
+    // Serviço de Notificações
+    private final NotificationService notificationService;
+
     public TeamService(TeamRepository teamRepository,
             pt.up.edscrum.repository.EnrollmentRepository enrollmentRepository,
-            pt.up.edscrum.service.AwardService awardService) {
+            pt.up.edscrum.service.AwardService awardService,
+            NotificationService notificationService) {
         this.teamRepository = teamRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.awardService = awardService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -63,15 +69,12 @@ public class TeamService {
         Set<Long> takenIds = new HashSet<>();
 
         for (Team t : teams) {
-            // Verifica Scrum Master (se for aluno)
             if (t.getScrumMaster() != null && "STUDENT".equals(t.getScrumMaster().getRole())) {
                 takenIds.add(t.getScrumMaster().getId());
             }
-            // Verifica Product Owner (se for aluno) - Professores são ignorados aqui!
             if (t.getProductOwner() != null && "STUDENT".equals(t.getProductOwner().getRole())) {
                 takenIds.add(t.getProductOwner().getId());
             }
-            // Verifica Developers
             if (t.getDevelopers() != null) {
                 for (User dev : t.getDevelopers()) {
                     if ("STUDENT".equals(dev.getRole())) {
@@ -126,15 +129,26 @@ public class TeamService {
             }
         }
 
+        // Calculate current member count
+        int memberCount = team.getCurrentMemberCount();
+
+        // Auto-close team if it's full
+        if (memberCount >= team.getMaxMembers()) {
+            team.setClosed(true);
+        }
+
         Team saved = teamRepository.save(team);
 
-        // Atribuir prémio de equipa automático por formação da equipa
+        // --- NOTIFICAÇÕES PARA OS MEMBROS ---
+        notifyTeamMembers(saved, "Bem-vindo à equipa!", "Foste adicionado à equipa '" + saved.getName() + "' no curso " + saved.getCourse().getName() + ".");
+
+        // Atribuir prémio de equipa automático
         try {
             awardService.assignAutomaticAwardToTeamByName("Equipa Formada", "A tua equipa foi formada.", 30, saved.getId(), null);
         } catch (Exception e) {
         }
 
-        // Após criar equipa, verificar participação em projetos para cada membro
+        // Verificar participação em projetos
         try {
             List<pt.up.edscrum.model.User> members = getTeamMembers(saved.getId());
             for (pt.up.edscrum.model.User u : members) {
@@ -148,6 +162,21 @@ public class TeamService {
         }
 
         return saved;
+    }
+
+    // Helper para notificar todos os membros
+    private void notifyTeamMembers(Team team, String title, String message) {
+        if (team.getScrumMaster() != null) {
+            notificationService.createNotification(team.getScrumMaster(), NotificationType.TEAM, title, message);
+        }
+        if (team.getProductOwner() != null) {
+            notificationService.createNotification(team.getProductOwner(), NotificationType.TEAM, title, message);
+        }
+        if (team.getDevelopers() != null) {
+            for (User dev : team.getDevelopers()) {
+                notificationService.createNotification(dev, NotificationType.TEAM, title, message);
+            }
+        }
     }
 
     /**
@@ -173,6 +202,13 @@ public class TeamService {
      * @param id id da equipa a eliminar
      */
     public void deleteTeam(Long id) {
+        // Opcional: Notificar membros que a equipa foi eliminada antes de apagar
+        try {
+            Team team = getTeamById(id);
+            notifyTeamMembers(team, "Equipa Eliminada", "A equipa '" + team.getName() + "' foi removida.");
+        } catch (Exception e) {
+        }
+
         teamRepository.deleteById(id);
     }
 
@@ -237,15 +273,12 @@ public class TeamService {
             Long cId = t.getCourse().getId();
             map.putIfAbsent(cId, new java.util.HashSet<>());
 
-            // SM (se for aluno)
             if (t.getScrumMaster() != null && "STUDENT".equals(t.getScrumMaster().getRole())) {
                 map.get(cId).add(t.getScrumMaster().getId());
             }
-            // PO (se for aluno)
             if (t.getProductOwner() != null && "STUDENT".equals(t.getProductOwner().getRole())) {
                 map.get(cId).add(t.getProductOwner().getId());
             }
-            // Developers
             if (t.getDevelopers() != null) {
                 for (User dev : t.getDevelopers()) {
                     if ("STUDENT".equals(dev.getRole())) {
@@ -255,5 +288,85 @@ public class TeamService {
             }
         }
         return map;
+    }
+
+    /**
+     * Gets available teams for a course (not closed and has slots available)
+     */
+    public List<Team> getAvailableTeamsForStudentByCourse(Long courseId) {
+        List<Team> teams = teamRepository.findByCourseId(courseId);
+        return teams.stream()
+                .filter(t -> !t.isClosed() && t.canAcceptMembers())
+                .toList();
+    }
+
+    /**
+     * Closes a team (prevents new members from joining)
+     */
+    public Team closeTeam(Long teamId) {
+        Team team = getTeamById(teamId);
+        team.setClosed(true);
+        return teamRepository.save(team);
+    }
+
+    /**
+     * Gets the team a student belongs to in a specific course
+     */
+    public Team getStudentTeamInCourse(Long studentId, Long courseId) {
+        List<Team> teams = teamRepository.findByCourseId(courseId);
+        for (Team team : teams) {
+            if (isStudentInTeam(studentId, team)) {
+                return team;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a student is in a specific team
+     */
+    private boolean isStudentInTeam(Long studentId, Team team) {
+        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
+            return true;
+        }
+        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
+            return true;
+        }
+        if (team.getDevelopers() != null) {
+            for (User dev : team.getDevelopers()) {
+                if (dev.getId().equals(studentId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Add a student to a team as a developer
+     */
+    public Team addStudentToTeam(Long teamId, Long studentId, User student) {
+        Team team = getTeamById(teamId);
+
+        // Validate student is not already in a team in this course
+        validateStudentAvailability(student, team.getCourse().getId());
+
+        // Check if team can accept members
+        if (!team.canAcceptMembers()) {
+            throw new RuntimeException("A equipa está fechada ou completa");
+        }
+
+        // Add student as developer
+        if (team.getDevelopers() == null) {
+            team.setDevelopers(new java.util.ArrayList<>());
+        }
+        team.getDevelopers().add(student);
+
+        // Auto-close if now full
+        if (team.isFull()) {
+            team.setClosed(true);
+        }
+
+        return teamRepository.save(team);
     }
 }
