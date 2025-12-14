@@ -1066,14 +1066,16 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-3 align-items-center">
-                                <div class="text-end">
-                                    <div class="small text-muted">Prémios</div>
-                                    <div class="fw-bold text-dark" th:text="${member.awardsCount}">0</div>
-                                </div>
-                                <div class="text-end">
-                                    <div class="small text-muted">XP</div>
-                                    <div class="fw-bold text-primary" th:text="${member.individualXP}">0</div>
-                                </div>
+                                <th:block th:if="${member.userRole != 'TEACHER'}">
+                                    <div class="text-end">
+                                        <div class="small text-muted">Prémios</div>
+                                        <div class="fw-bold text-dark" th:text="${member.awardsCount}">0</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">XP</div>
+                                        <div class="fw-bold text-primary" th:text="${member.individualXP}">0</div>
+                                    </div>
+                                </th:block>
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(project.members)}" class="text-muted small">Nenhum membro na equipa.</div>

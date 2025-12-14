@@ -14,10 +14,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import pt.up.edscrum.model.User;
+import pt.up.edscrum.repository.AwardRepository;
 import pt.up.edscrum.repository.CourseRepository;
+import pt.up.edscrum.repository.EnrollmentRepository;
+import pt.up.edscrum.repository.NotificationRepository;
 import pt.up.edscrum.repository.ProjectRepository;
+import pt.up.edscrum.repository.ScoreRepository;
+import pt.up.edscrum.repository.SprintRepository;
+import pt.up.edscrum.repository.StudentAwardRepository;
+import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
+import pt.up.edscrum.repository.UserStoryRepository;
 import pt.up.edscrum.service.AuthService;
 
 @SpringBootTest
@@ -39,12 +47,44 @@ public class AuthServiceTest {
     @Autowired
     private ProjectRepository projectRepository;
 
+    @Autowired
+    private TeamAwardRepository teamAwardRepository;
+
+    @Autowired
+    private StudentAwardRepository studentAwardRepository;
+
+    @Autowired
+    private ScoreRepository scoreRepository;
+
+    @Autowired
+    private AwardRepository awardRepository;
+
+    @Autowired
+    private SprintRepository sprintRepository;
+
+    @Autowired
+    private UserStoryRepository userStoryRepository;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository; // Inject NotificationRepository
+
     @BeforeEach
     void setUp() {
         // Limpar tabelas na ordem correta para não violar FK
+        notificationRepository.deleteAll(); // Delete notifications first
+        userStoryRepository.deleteAll();
+        sprintRepository.deleteAll();
+        teamAwardRepository.deleteAll();
+        studentAwardRepository.deleteAll();
+        scoreRepository.deleteAll();
+        enrollmentRepository.deleteAll();
         teamRepository.deleteAll();
-        courseRepository.deleteAll();
         projectRepository.deleteAll();
+        awardRepository.deleteAll();
+        courseRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -55,9 +95,10 @@ public class AuthServiceTest {
         user.setPassword(password); // senha em texto para testes
         user.setRole(role);
 
-        // Salvar isoladamente para evitar transient property errors
+        // Salvar isoladamente para evitar transient errors
         return userRepository.save(user);
     }
+
 
     @Test
     void testLogin_withValidCredentials_returnsUser() {

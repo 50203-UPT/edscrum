@@ -15,11 +15,18 @@ import pt.up.edscrum.model.Course;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.User;
+import pt.up.edscrum.repository.AwardRepository;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
+import pt.up.edscrum.repository.NotificationRepository;
+import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.ScoreRepository;
+import pt.up.edscrum.repository.SprintRepository;
+import pt.up.edscrum.repository.StudentAwardRepository;
+import pt.up.edscrum.repository.TeamAwardRepository;
 import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
+import pt.up.edscrum.repository.UserStoryRepository;
 import pt.up.edscrum.service.DashboardService;
 
 @SpringBootTest
@@ -44,18 +51,43 @@ public class DashboardControllerTest {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Autowired
+    private TeamAwardRepository teamAwardRepository;
+
+    @Autowired
+    private StudentAwardRepository studentAwardRepository;
+
+    @Autowired
+    private AwardRepository awardRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private SprintRepository sprintRepository;
+
+    @Autowired
+    private UserStoryRepository userStoryRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository; // Inject NotificationRepository
+
     private Course testCourse;
     private User teacher;
 
     @BeforeEach
     void setUp() {
         // Limpar dados na ordem correta para respeitar as constraints
+        notificationRepository.deleteAll(); // Delete notifications first
+        userStoryRepository.deleteAll();
+        sprintRepository.deleteAll();
+        teamAwardRepository.deleteAll();
+        studentAwardRepository.deleteAll();
         scoreRepository.deleteAll();
-        enrollmentRepository.deleteAll();
-        // Se houver times associados aos cursos, remova-os primeiro
-        if (teamRepository != null) {
-            teamRepository.deleteAll();
-        }
+        enrollmentRepository.deleteAll(); // Enrollment depends on User and Course
+        teamRepository.deleteAll();
+        projectRepository.deleteAll();
+        awardRepository.deleteAll();
         courseRepository.deleteAll();
         userRepository.deleteAll();
 

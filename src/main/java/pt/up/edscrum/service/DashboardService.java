@@ -371,7 +371,15 @@ public class DashboardService {
     }
 
     private ProjectDetailsDTO.TeamMemberDTO createMemberDTO(User u, String role, Long projectId, int teamProjectXp, int teamAwardsCount) {
-        return new ProjectDetailsDTO.TeamMemberDTO(u.getId(), u.getName(), role, u.getRole(), teamProjectXp, teamAwardsCount);
+        int individualXP = 0;
+        int awardsCount = 0;
+
+        if (u != null && !"TEACHER".equals(u.getRole())) {
+            individualXP = studentAwardRepo.sumPointsByStudentAndProjectId(u.getId(), projectId);
+            awardsCount = (int) studentAwardRepo.countByStudentIdAndProjectId(u.getId(), projectId);
+        }
+
+        return new ProjectDetailsDTO.TeamMemberDTO(u.getId(), u.getName(), role, u.getRole(), individualXP, awardsCount);
     }
 
     /**
@@ -506,28 +514,28 @@ public class DashboardService {
                 // Adicionar Product Owner primeiro
                 if (team.getProductOwner() != null) {
                     User po = team.getProductOwner();
-                    pt.up.edscrum.dto.dashboard.MemberWithRoleDTO poMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
-                            po.getId(),
-                            po.getName(),
-                            "Product Owner",
-                            0,
-                            0
-                    );
-                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(poMember.getId()))) {
+                                                pt.up.edscrum.dto.dashboard.MemberWithRoleDTO poMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
+                                                        po.getId(),
+                                                        po.getName(),
+                                                        "Product Owner",
+                                                        po.getRole(),
+                                                        studentAwardRepo.sumPointsByStudentAndProjectId(po.getId(), project.getId()),
+                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(po.getId(), project.getId())
+                                                );                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(poMember.getId()))) {
                         projectMembers.add(poMember);
                     }
                 }
                 // Adicionar Scrum Master segundo
                 if (team.getScrumMaster() != null) {
                     User sm = team.getScrumMaster();
-                    pt.up.edscrum.dto.dashboard.MemberWithRoleDTO smMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
-                            sm.getId(),
-                            sm.getName(),
-                            "Scrum Master",
-                            0,
-                            0
-                    );
-                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(smMember.getId()))) {
+                                                pt.up.edscrum.dto.dashboard.MemberWithRoleDTO smMember = new pt.up.edscrum.dto.dashboard.MemberWithRoleDTO(
+                                                        sm.getId(),
+                                                        sm.getName(),
+                                                        "Scrum Master",
+                                                        sm.getRole(),
+                                                        studentAwardRepo.sumPointsByStudentAndProjectId(sm.getId(), project.getId()),
+                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(sm.getId(), project.getId())
+                                                );                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(smMember.getId()))) {
                         projectMembers.add(smMember);
                     }
                 }
@@ -538,8 +546,9 @@ public class DashboardService {
                                 developer.getId(),
                                 developer.getName(),
                                 "Developer",
-                                0,
-                                0
+                                developer.getRole(),
+                                studentAwardRepo.sumPointsByStudentAndProjectId(developer.getId(), project.getId()),
+                                (int) studentAwardRepo.countByStudentIdAndProjectId(developer.getId(), project.getId())
                         );
                         if (projectMembers.stream().noneMatch(m -> m.getId().equals(devMember.getId()))) {
                             projectMembers.add(devMember);

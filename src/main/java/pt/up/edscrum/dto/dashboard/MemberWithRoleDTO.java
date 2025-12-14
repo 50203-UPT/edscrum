@@ -4,24 +4,27 @@ public class MemberWithRoleDTO {
     private Long id;
     private String name;
     private String role;
+    private String userRole; // Add this field
     private int awardsCount;
     private int individualXP;
 
     public MemberWithRoleDTO() {
     }
 
-    public MemberWithRoleDTO(Long id, String name, String role) {
+    public MemberWithRoleDTO(Long id, String name, String role, String userRole) { // Update constructor
         this.id = id;
         this.name = name;
         this.role = role;
+        this.userRole = userRole; // Set userRole
         this.awardsCount = 0;
         this.individualXP = 0;
     }
 
-    public MemberWithRoleDTO(Long id, String name, String role, int awardsCount, int individualXP) {
+    public MemberWithRoleDTO(Long id, String name, String role, String userRole, int awardsCount, int individualXP) { // Update constructor
         this.id = id;
         this.name = name;
         this.role = role;
+        this.userRole = userRole; // Set userRole
         this.awardsCount = awardsCount;
         this.individualXP = individualXP;
     }
@@ -48,6 +51,14 @@ public class MemberWithRoleDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getUserRole() { // Add getter for userRole
+        return userRole;
+    }
+
+    public void setUserRole(String userRole) { // Add setter for userRole
+        this.userRole = userRole;
     }
 
     public int getAwardsCount() {

@@ -68,4 +68,31 @@ public interface StudentAwardRepository extends JpaRepository<StudentAward, Long
      * @return lista de `StudentAward`
      */
     List<StudentAward> findByStudentIdAndProjectId(Long studentId, Long projectId);
+
+    /**
+     * Conta o número de prémios atribuídos a um estudante.
+     *
+     * @param studentId id do estudante
+     * @return número de prémios
+     */
+    long countByStudentId(Long studentId);
+
+    /**
+     * Soma os pontos ganhos por um estudante em prémios associados a um projeto específico.
+     *
+     * @param studentId id do estudante
+     * @param projectId id do projeto
+     * @return total de pontos do estudante no projeto
+     */
+    @Query("SELECT COALESCE(SUM(sa.pointsEarned), 0) FROM StudentAward sa WHERE sa.student.id = :studentId AND sa.project.id = :projectId")
+    int sumPointsByStudentAndProjectId(Long studentId, Long projectId);
+
+    /**
+     * Conta o número de prémios atribuídos a um estudante num projeto específico.
+     *
+     * @param studentId id do estudante
+     * @param projectId id do projeto
+     * @return número de prémios do estudante no projeto
+     */
+    long countByStudentIdAndProjectId(Long studentId, Long projectId);
 }
