@@ -1282,7 +1282,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/api/student/settings}" method="POST">
+                    <form th:action="@{/api/student/settings(id=${student.id})}" method="POST">
+                        
+                        <input type="hidden" name="id" th:value="${student.id}">
                         
                         <div class="p-3 bg-light rounded-3 mb-3 border">
                             <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
