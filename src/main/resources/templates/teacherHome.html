@@ -1533,13 +1533,84 @@
         // Carregar sprints
         loadProjectSprintsFromData(data.sprints);
         
-        // Carregar equipa
-        loadProjectTeamFromData(data);
+                // Carregar equipa
+                loadProjectTeamFromData(data);
         
-        lucide.createIcons();
-    }
-    
-    function loadProjectSprintsFromData(sprints) {
+                                // Determine if current teacher is the Product Owner
+        
+                                let isTeacherProductOwner = false;
+        
+                                if (data.members) {
+        
+                                    const productOwner = data.members.find(member => member.role === 'Product Owner' && member.userRole === 'TEACHER');
+        
+                                    if (productOwner && productOwner.id === currentTeacherId) {
+        
+                                        isTeacherProductOwner = true;
+        
+                                    }
+        
+                                }
+        
+                        
+        
+                                // Determine if all sprints are completed
+        
+                                let allSprintsCompleted = false;
+        
+                                if (data.sprints && data.sprints.length > 0) {
+        
+                                    allSprintsCompleted = data.sprints.every(sprint => sprint.status === 'CONCLUIDO');
+        
+                                }
+        
+                        
+        
+                                const projectActionsContainer = document.getElementById('projectActionsContainer');
+        
+                                projectActionsContainer.innerHTML = ''; // Clear previous buttons
+        
+                        
+        
+                                if (isTeacherProductOwner) {
+        
+                                    if (data.status !== 'CONCLUIDO' && allSprintsCompleted) {
+        
+                                        const completeButton = document.createElement('button');
+        
+                                        completeButton.type = 'button';
+        
+                                        completeButton.className = 'btn btn-success rounded-pill px-4 fw-bold';
+        
+                                        completeButton.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir Projeto';
+        
+                                        completeButton.onclick = function() { confirmCompleteProjectTeacher(data.id); };
+        
+                                        projectActionsContainer.appendChild(completeButton);
+        
+                                    } else if (data.status === 'CONCLUIDO') {
+        
+                                        const reopenButton = document.createElement('button');
+        
+                                        reopenButton.type = 'button';
+        
+                                        reopenButton.className = 'btn btn-warning rounded-pill px-4 fw-bold';
+        
+                                        reopenButton.innerHTML = '<i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir Projeto';
+        
+                                        reopenButton.onclick = function() { confirmReopenProjectTeacher(data.id); };
+        
+                                        projectActionsContainer.appendChild(reopenButton);
+        
+                                    }
+        
+                                }
+        
+                                
+        
+                                lucide.createIcons();
+        
+                            }    function loadProjectSprintsFromData(sprints) {
         const container = document.getElementById('projectModalSprintsList');
         console.log('loadProjectSprintsFromData chamada, container:', container, 'sprints:', sprints);
         
@@ -1870,6 +1941,50 @@
             const startVal = startInput.value || minStart;
             endInput.min = addDaysYMD(startVal, 1);
         }
+    }
+
+    function confirmCompleteProjectTeacher(projectId) {
+        fetch('/projects/' + projectId + '/complete', {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Atualiza a modal do projeto sem recarregar a página inteira
+                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                // Mensagem de sucesso
+                sessionStorage.setItem('successMessage', 'Projeto concluído com sucesso!');
+            } else {
+                response.text().then(text => {
+                    sessionStorage.setItem('errorMessage', 'Erro ao concluir projeto: ' + text);
+                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                });
+            }
+        })
+        .catch(error => {
+            sessionStorage.setItem('errorMessage', 'Erro de rede ao concluir projeto.');
+            openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+        });
+    }
+
+    function confirmReopenProjectTeacher(projectId) {
+        fetch('/projects/' + projectId + '/reopen', {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (response.ok) {
+                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                sessionStorage.setItem('successMessage', 'Projeto reaberto com sucesso!');
+            } else {
+                response.text().then(text => {
+                    sessionStorage.setItem('errorMessage', 'Erro ao reabrir projeto: ' + text);
+                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                });
+            }
+        })
+        .catch(error => {
+            sessionStorage.setItem('errorMessage', 'Erro de rede ao reabrir projeto.');
+            openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+        });
     }
 
     function updateEndDateMinFromStart() {
@@ -2367,7 +2482,7 @@
                         <label class="form-label fw-bold small">Prémio</label>
                         <select name="awardId" class="form-select bg-light border-0 py-2" required>
                             <option value="">Selecione um prémio...</option>
-                            <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                            <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
 
@@ -2410,7 +2525,7 @@
                         <label class="form-label fw-bold small">Prémio</label>
                         <select name="awardId" class="form-select bg-light border-0 py-2" required>
                             <option value="">Selecione um prémio...</option>
-                            <option th:each="award : ${awards}" th:value="${award.id}" th:text="${award.name} + ' (' + ${award.points} + ' pts)'"></option>
+                            <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
 
@@ -2427,6 +2542,48 @@
 <script th:inline="javascript">
     // ... (existing JavaScript code) ...
 
+    // Interceptar submit dos formulários de atribuição de prémios para reabrir modal do projeto
+    document.addEventListener('DOMContentLoaded', function() {
+        // Equipa
+        const teamAwardForm = document.querySelector('#assignAwardToTeamModal form');
+        if (teamAwardForm) {
+            teamAwardForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(teamAwardForm);
+                const projectId = document.getElementById('assignAwardToTeamProjectId').value;
+                fetch(teamAwardForm.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .finally(() => {
+                    // Fechar modal de prémio (reabrir modal do projeto é feito no evento hidden.bs.modal)
+                    const awardModalEl = document.getElementById('assignAwardToTeamModal');
+                    const awardModal = bootstrap.Modal.getInstance(awardModalEl);
+                    if (awardModal) awardModal.hide();
+                });
+            });
+        }
+        // Aluno da equipa
+        const studentAwardForm = document.querySelector('#assignAwardToStudentInTeamModal form');
+        if (studentAwardForm) {
+            studentAwardForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(studentAwardForm);
+                const projectId = document.getElementById('assignAwardToStudentProjectId').value;
+                fetch(studentAwardForm.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .finally(() => {
+                    const awardModalEl = document.getElementById('assignAwardToStudentInTeamModal');
+                    const awardModal = bootstrap.Modal.getInstance(awardModalEl);
+                    if (awardModal) awardModal.hide();
+                });
+            });
+        }
+        // Não precisa mais de lógica duplicada para reabrir modal aqui, pois já está nos métodos de abertura dos modais de prémio
+    });
+
     // Funções para atribuir prémios a partir do modal de detalhes do projeto
     function openAssignAwardToTeamModal(teamId, teamName, projectId) {
         document.getElementById('assignAwardToTeamId').value = teamId;
@@ -2436,14 +2593,16 @@
         // Carregar prémios disponíveis (não atribuídos) para esta equipa neste projeto
         const awardSelect = document.querySelector('#assignAwardToTeamModal select[name="awardId"]');
         awardSelect.innerHTML = '<option value="">A carregar prémios...</option>';
-        
+        awardSelect.disabled = true;
+        const submitBtn = document.querySelector('#assignAwardToTeamModal button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
         fetch(`/awards/available-for-team?teamId=${teamId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                // Filter to show only manual awards for teacher assignment
                 const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
                 if (manualAwards.length === 0) {
                     awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
+                    awardSelect.disabled = true;
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
                     manualAwards.forEach(award => {
@@ -2452,31 +2611,50 @@
                         opt.textContent = `${award.name} (${award.points} pts)`;
                         awardSelect.appendChild(opt);
                     });
+                    awardSelect.disabled = false;
                 }
+                if (submitBtn) submitBtn.disabled = true;
             })
             .catch(error => {
                 console.error('Erro ao carregar prémios:', error);
                 awardSelect.innerHTML = '<option value="">Erro ao carregar prémios</option>';
+                awardSelect.disabled = true;
+                if (submitBtn) submitBtn.disabled = true;
             });
+        // Ativar/desativar botão submit conforme seleção
+        awardSelect.addEventListener('change', function() {
+            if (submitBtn) submitBtn.disabled = !awardSelect.value;
+        });
         
-        // Fechar o modal de detalhes e abrir o modal de prémios
+        // Fechar o modal de detalhes e só abrir o de prémios após o anterior fechar
         const projectModalEl = document.getElementById('projectDetailsModal');
-        const projectModal = bootstrap.Modal.getInstance(projectModalEl);
-        if (projectModal) projectModal.hide();
-        
         const awardModalEl = document.getElementById('assignAwardToTeamModal');
-        const awardModal = new bootstrap.Modal(awardModalEl);
-
-        // When the award modal is hidden, show the project details modal again.
-        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-            if (projectModal) {
-                projectModal.show();
+        let awardModal = bootstrap.Modal.getInstance(awardModalEl);
+        if (!awardModal) awardModal = new bootstrap.Modal(awardModalEl);
+        if (projectModalEl && projectModalEl.classList.contains('show')) {
+            const projectModal = bootstrap.Modal.getInstance(projectModalEl);
+            if (projectModal && document.body.contains(projectModalEl)) {
+                projectModalEl.addEventListener('hidden.bs.modal', function onProjectHidden() {
+                    if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
+                        awardModal.show();
+                    }
+                    projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
+                }, { once: true });
+                projectModal.hide();
             }
-            // Remove the event listener to avoid multiple firings.
+        } else {
+            if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
+                awardModal.show();
+            }
+        }
+        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto
+        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            const projectModalEl2 = document.getElementById('projectDetailsModal');
+            if (projectModalEl2 && document.body.contains(projectModalEl2)) {
+                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
         });
-
-        awardModal.show();
     }
     
     function openAssignAwardToMemberModal(memberId, memberName, teamId, projectId) {
@@ -2485,26 +2663,26 @@
         document.getElementById('assignAwardToStudentProjectId').value = projectId;
         
         const studentSelect = document.getElementById('assignAwardToStudentInTeamStudentSelect');
-        studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
-        
+        studentSelect.innerHTML = '';
         // Adicionar apenas o membro selecionado
         const option = document.createElement('option');
         option.value = memberId;
         option.textContent = memberName;
         option.selected = true;
         studentSelect.appendChild(option);
-        
         // Carregar prémios disponíveis (não atribuídos) para este estudante neste projeto
         const awardSelect = document.querySelector('#assignAwardToStudentInTeamModal select[name="awardId"]');
         awardSelect.innerHTML = '<option value="">A carregar prémios...</option>';
-        
+        awardSelect.disabled = true;
+        const submitBtn = document.querySelector('#assignAwardToStudentInTeamModal button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
         fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`)
             .then(response => response.json())
             .then(awards => {
-                // Filter to show only manual awards for teacher assignment
                 const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
                 if (manualAwards.length === 0) {
                     awardSelect.innerHTML = '<option value="" disabled>Nenhum prémio manual disponível</option>';
+                    awardSelect.disabled = true;
                 } else {
                     awardSelect.innerHTML = '<option value="">Selecione um prémio...</option>';
                     manualAwards.forEach(award => {
@@ -2513,31 +2691,50 @@
                         opt.textContent = `${award.name} (${award.points} pts)`;
                         awardSelect.appendChild(opt);
                     });
+                    awardSelect.disabled = false;
                 }
+                if (submitBtn) submitBtn.disabled = true;
             })
             .catch(error => {
                 console.error('Erro ao carregar prémios:', error);
                 awardSelect.innerHTML = '<option value="">Erro ao carregar prémios</option>';
+                awardSelect.disabled = true;
+                if (submitBtn) submitBtn.disabled = true;
             });
+        // Ativar/desativar botão submit conforme seleção
+        awardSelect.addEventListener('change', function() {
+            if (submitBtn) submitBtn.disabled = !awardSelect.value;
+        });
         
-        // Fechar o modal de detalhes e abrir o modal de prémios
+        // Fechar o modal de detalhes e só abrir o de prémios após o anterior fechar
         const projectModalEl = document.getElementById('projectDetailsModal');
-        const projectModal = bootstrap.Modal.getInstance(projectModalEl);
-        if (projectModal) projectModal.hide();
-        
         const awardModalEl = document.getElementById('assignAwardToStudentInTeamModal');
-        const awardModal = new bootstrap.Modal(awardModalEl);
-
-        // When the award modal is hidden, show the project details modal again.
-        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-            if (projectModal) {
-                projectModal.show();
+        let awardModal = bootstrap.Modal.getInstance(awardModalEl);
+        if (!awardModal) awardModal = new bootstrap.Modal(awardModalEl);
+        if (projectModalEl && projectModalEl.classList.contains('show')) {
+            const projectModal = bootstrap.Modal.getInstance(projectModalEl);
+            if (projectModal && document.body.contains(projectModalEl)) {
+                projectModalEl.addEventListener('hidden.bs.modal', function onProjectHidden() {
+                    if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
+                        awardModal.show();
+                    }
+                    projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
+                }, { once: true });
+                projectModal.hide();
             }
-            // Remove the event listener to avoid multiple firings.
+        } else {
+            if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
+                awardModal.show();
+            }
+        }
+        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto
+        awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            const projectModalEl2 = document.getElementById('projectDetailsModal');
+            if (projectModalEl2 && document.body.contains(projectModalEl2)) {
+                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
         });
-
-        awardModal.show();
     }
 
     function prepareAssignAwardToTeamModal(button) {
@@ -2726,9 +2923,12 @@
             </div>
             
             <div class="modal-footer border-top pt-3 d-flex justify-content-between">
-                <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="openDeleteProjectConfirmModal()">
-                    <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> Eliminar Projeto
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="openDeleteProjectConfirmModal()">
+                        <i data-lucide="trash-2" class="w-4 h-4 me-1"></i> Eliminar Projeto
+                    </button>
+                    <div id="projectActionsContainer" class="d-flex gap-2"></div>
+                </div>
                 <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
