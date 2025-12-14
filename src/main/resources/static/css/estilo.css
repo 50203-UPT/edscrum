@@ -177,6 +177,11 @@ body.teacher-bg {
     border-color: transparent !important;
 }
 
+/* Remover a seta (caret) do dropdown apenas para o trigger do perfil */
+.profile-trigger.dropdown-toggle::after {
+    display: none !important;
+}
+
 /* Estilos base dos elementos internos */
 .profile-name {
     font-weight: 700;

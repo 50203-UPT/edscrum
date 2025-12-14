@@ -1111,6 +1111,22 @@ public class WebController {
         }
     }
 
+    /**
+     * Compatibilidade: aceita a rota antiga que inclui o ID do utilizador.
+     * Redireciona/valida e reaproveita o mesmo método `sprintDashboard`.
+     */
+    @GetMapping("/view/sprint/{sprintId}/user/{userId}")
+    public String sprintDashboardForUser(@PathVariable Long sprintId, @PathVariable Long userId, Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        if (currentUserId == null) return "redirect:/";
+        // Se o utilizador autenticado não corresponde ao userId na URL, redireciona para a sua vista
+        if (!currentUserId.equals(userId)) {
+            return "redirect:/view/sprint/" + sprintId;
+        }
+        // Delegar para o método principal que popula o modelo
+        return sprintDashboard(sprintId, model, session);
+    }
+
     // --- ÁREA DO ESTUDANTE (CORRIGIDA) ---
     @GetMapping("/view/student/home")
     public String studentHome(Model model, HttpSession session) {
@@ -1339,6 +1355,39 @@ public class WebController {
         }
 
         return "redirect:/view/student/home?tab=all-courses";
+    }
+
+    /**
+     * API endpoint to remove a member from a team. Expects JSON body: { "studentId": 123 }
+     * Only teachers (authenticated in session) may call this.
+     */
+    @PostMapping("/api/teams/{teamId}/remove-member")
+    public org.springframework.http.ResponseEntity<?> removeTeamMemberApi(@PathVariable Long teamId,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, Object> payload,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return org.springframework.http.ResponseEntity.status(403).body("Unauthorized");
+        if (!"TEACHER".equals(currentUserRole)) return org.springframework.http.ResponseEntity.status(403).body("Forbidden");
+
+        if (payload == null || !payload.containsKey("studentId")) {
+            return org.springframework.http.ResponseEntity.badRequest().body("studentId required");
+        }
+
+        try {
+            Object sid = payload.get("studentId");
+            Long studentId;
+            if (sid instanceof Number) studentId = ((Number) sid).longValue();
+            else studentId = Long.parseLong(sid.toString());
+
+            teamService.removeStudentFromTeam(teamId, studentId);
+            return org.springframework.http.ResponseEntity.ok().build();
+        } catch (NumberFormatException nfe) {
+            return org.springframework.http.ResponseEntity.badRequest().body("invalid studentId");
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.status(500).body(e.getMessage());
+        }
     }
 
     @GetMapping("/view/rankings/{courseId}")

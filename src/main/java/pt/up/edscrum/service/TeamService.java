@@ -413,4 +413,45 @@ public class TeamService {
 
         return teamRepository.save(team);
     }
+
+    /**
+     * Remove a student from a team (if present as Scrum Master, Product Owner or Developer).
+     * If the student is not a member of the team, throws RuntimeException.
+     * After removal the team is saved and returned.
+     *
+     * @param teamId id da equipa
+     * @param studentId id do estudante a remover
+     * @return equipa actualizada
+     */
+    public Team removeStudentFromTeam(Long teamId, Long studentId) {
+        Team team = getTeamById(teamId);
+        boolean removed = false;
+
+        if (team.getScrumMaster() != null && team.getScrumMaster().getId().equals(studentId)) {
+            team.setScrumMaster(null);
+            removed = true;
+        }
+
+        if (team.getProductOwner() != null && team.getProductOwner().getId().equals(studentId)) {
+            team.setProductOwner(null);
+            removed = true;
+        }
+
+        if (team.getDevelopers() != null) {
+            int before = team.getDevelopers().size();
+            team.getDevelopers().removeIf(d -> d.getId().equals(studentId));
+            if (team.getDevelopers().size() != before) removed = true;
+        }
+
+        if (!removed) {
+            throw new RuntimeException("Estudante não pertence à equipa");
+        }
+
+        // If team was closed and now has space, allow reopening (teacher may want to add others)
+        if (team.isClosed() && !team.isFull()) {
+            team.setClosed(false);
+        }
+
+        return teamRepository.save(team);
+    }
 }

@@ -53,7 +53,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>EduScrum Awards - Professor</title>
+    <title>EduScrum - Área do Professor</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
@@ -305,7 +305,7 @@
         </div>
         <div class="vr text-muted opacity-25" style="height: 30px;"></div>
         <div class="dropdown">
-            <a href="#" class="profile-trigger text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="profile-trigger dropdown-toggle text-decoration-none d-flex align-items-center gap-3" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                 <div class="text-end d-none d-md-block">
                     <div class="profile-name fw-bold text-dark" th:text="${teacher.name}">Prof. Maria Silva</div>
                     <div class="profile-email small text-muted" th:text="${teacher.email}">maria@upt.pt</div>
@@ -530,6 +530,9 @@
                                     <!-- Product Owner (Azul) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.productOwner != null}">
                                         <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center me-1" style="width:22px; height:22px;" th:if="${!team.isClosed}" th:attr="data-team-id=${team.id},data-member-id=${team.productOwner.id},data-member-name=${team.productOwner.name}" onclick="prepareRemoveMember(this)" title="Remover membro">
+                                                <i data-lucide="trash" style="width:14px; height:14px;"></i>
+                                            </button>
                                             <div th:if="${userProfileImageMap[team.productOwner.id] != null}">
                                                 <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[team.productOwner.id]}}" th:alt="${team.productOwner.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
                                             </div>
@@ -541,6 +544,9 @@
                                     <!-- Scrum Master (Roxo) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:if="${team.scrumMaster != null}">
                                         <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center me-1" style="width:22px; height:22px;" th:if="${!team.isClosed}" th:attr="data-team-id=${team.id},data-member-id=${team.scrumMaster.id},data-member-name=${team.scrumMaster.name}" onclick="prepareRemoveMember(this)" title="Remover membro">
+                                                <i data-lucide="trash" style="width:14px; height:14px;"></i>
+                                            </button>
                                             <div th:if="${userProfileImageMap[team.scrumMaster.id] != null}">
                                                 <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[team.scrumMaster.id]}}" th:alt="${team.scrumMaster.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
                                             </div>
@@ -552,6 +558,9 @@
                                     <!-- Developers (Verde) -->
                                     <div class="d-flex justify-content-between align-items-center py-1" th:each="dev : ${team.developers}">
                                         <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center me-1" style="width:22px; height:22px;" th:if="${!team.isClosed}" th:attr="data-team-id=${team.id},data-member-id=${dev.id},data-member-name=${dev.name}" onclick="prepareRemoveMember(this)" title="Remover membro">
+                                                <i data-lucide="trash" style="width:14px; height:14px;"></i>
+                                            </button>
                                             <div th:if="${userProfileImageMap[dev.id] != null}">
                                                 <img th:src="@{'/uploads/profile-images/' + ${userProfileImageMap[dev.id]}}" th:alt="${dev.name}" class="rounded-circle" style="width:24px; height:24px; object-fit:cover;" />
                                             </div>
@@ -1222,7 +1231,6 @@
     </div>
 </div>
 
-<script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
 <script th:inline="javascript">
     let previewImg = null;
     let hasExistingImage = false;
@@ -1405,6 +1413,77 @@
 
         fetchNotifications();
     });
+</script>
+
+<!-- Modal Remover Membro da Equipa (individual) -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-danger">Remover Membro</h4>
+                    <p class="text-muted small mb-0">Remover este aluno da equipa de forma individual.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Tem a certeza que deseja remover <strong id="removeMemberNameDisplay"></strong> desta equipa?</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmRemoveMemberBtn" class="btn btn-danger rounded-pill flex-fill fw-bold" onclick="confirmRemoveMember()">Sim, Remover</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pendingRemoveMemberTeamId = null;
+    let pendingRemoveMemberId = null;
+
+    function prepareRemoveMember(button) {
+        pendingRemoveMemberTeamId = button.getAttribute('data-team-id');
+        pendingRemoveMemberId = button.getAttribute('data-member-id');
+        const name = button.getAttribute('data-member-name') || '';
+        const display = document.getElementById('removeMemberNameDisplay');
+        if (display) display.textContent = name;
+        const modalEl = document.getElementById('removeMemberModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    function confirmRemoveMember() {
+        if (!pendingRemoveMemberTeamId || !pendingRemoveMemberId) return;
+        const btn = document.getElementById('confirmRemoveMemberBtn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> A remover...'; }
+
+        fetch(`/api/teams/${pendingRemoveMemberTeamId}/remove-member`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ studentId: parseInt(pendingRemoveMemberId) })
+        })
+        .then(response => {
+            if (response.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('removeMemberModal'));
+                if (modal) modal.hide();
+                // refresh teams tab
+                setTimeout(function() { openTab('teams', document.querySelector('.tab-btn[onclick*="openTab(\'teams\'"]')); }, 200);
+                setTimeout(function() { window.location.search = '?tab=teams'; }, 350);
+            } else {
+                return response.text().then(t => { throw new Error(t || 'Erro'); });
+            }
+        })
+        .catch(err => {
+            alert('Erro ao remover membro: ' + err.message);
+        })
+        .finally(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Sim, Remover'; }
+            pendingRemoveMemberTeamId = null; pendingRemoveMemberId = null;
+        });
+    }
 </script>
 <script th:inline="javascript">
     function switchRankingView(type, btn) {
@@ -2158,6 +2237,9 @@
                 const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeTeamFromProjectModal'));
                 if (removeModal) removeModal.hide();
                 const projId = pendingRemoveProjectId;
+                // reset pending ids
+                pendingRemoveProjectId = null;
+                pendingRemoveTeamId = null;
                 pendingRemoveProjectId = null;
                 pendingRemoveTeamId = null;
                 if (projId) {

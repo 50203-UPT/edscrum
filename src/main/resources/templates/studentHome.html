@@ -1335,6 +1335,7 @@
             <form id="enrollForm" th:action="@{/api/student/enroll}" method="POST">
                 <div class="modal-body">
                     <input type="hidden" id="enrollCourseId" name="courseId" />
+                    <input type="hidden" id="enrollStudentId" name="studentId" th:value="${student.id}" />
                     
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 d-flex align-items-center mb-4">
                         <i data-lucide="book-open" class="text-primary me-3"></i>
@@ -2539,3 +2540,51 @@
 
 </body>
 </html>
+
+<script>
+// Intercept create team form to refresh 'Cursos' tab after successful creation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('studentCreateTeamForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const action = form.getAttribute('action') || form.getAttribute('th:action') || '/teams/create';
+        const method = (form.getAttribute('method') || 'POST').toUpperCase();
+        const formData = new FormData(form);
+
+        try {
+            const resp = await fetch(action, {
+                method: method,
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            if (resp.redirected) {
+                // Server redirected (probably to home); preserve tab param
+                let url = new URL(resp.url, window.location.origin);
+                url.searchParams.set('tab', 'all-courses');
+                window.location.href = url.toString();
+                return;
+            }
+
+            if (resp.ok) {
+                // close modal if open
+                const modalEl = document.getElementById('studentCreateTeamModal');
+                try { const m = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); m.hide(); } catch(err){}
+
+                // Navigate to same page with tab=all-courses to refresh and show courses
+                const base = window.location.pathname;
+                window.location.href = base + '?tab=all-courses';
+                return;
+            }
+
+            const text = await resp.text();
+            alert('Erro ao criar equipa: ' + text);
+        } catch (err) {
+            console.error('Create team failed, falling back to normal submit', err);
+            form.submit();
+        }
+    });
+});
+</script>
