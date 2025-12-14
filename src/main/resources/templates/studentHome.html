@@ -1018,12 +1018,7 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-<<<<<<< HEAD
-                        <!-- Botão Concluir: aparece quando status NÃO é CONCLUIDO e todos os sprints estão concluídos -->
-                        <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints) and student.roleInTeam == 'Product Owner'}" 
-=======
                         <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints)}" 
->>>>>>> 8b09f5a707aa402ed843aaa4f0256f110aedb5d6
                                 class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#completeProjectModal"
@@ -1034,12 +1029,7 @@
                             <span>Concluir Projeto</span>
                         </button>
                         
-<<<<<<< HEAD
-                        <!-- Botão Reabrir: aparece quando status É CONCLUIDO -->
-                        <button th:if="${project.status.name() == 'CONCLUIDO' and student.roleInTeam == 'Product Owner'}" 
-=======
                         <button th:if="${project.status.name() == 'CONCLUIDO'}" 
->>>>>>> 8b09f5a707aa402ed843aaa4f0256f110aedb5d6
                                 class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#reopenProjectModal"
