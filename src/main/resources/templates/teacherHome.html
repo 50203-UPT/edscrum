@@ -1,54 +1,3 @@
-<!-- Modal para Confirmar Concluir Projeto -->
-<div class="modal fade" id="completeProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-            <div class="modal-header border-0 pb-0">
-                <div>
-                    <h4 class="modal-title fw-bold text-success">Concluir Projeto</h4>
-                    <p class="text-muted small mb-0">Tem certeza que deseja marcar este projeto como concluído?</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0 text-dark">Todos os sprints devem estar concluídos para completar o projeto.</p>
-            </div>
-            <div class="modal-footer border-0 pt-2 px-0 pb-0">
-                <div class="w-100 d-flex gap-2">
-                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success rounded-pill flex-fill fw-bold" id="confirmCompleteProjectTeacherBtn">
-                        <i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Confirmar Reabrir Projeto -->
-<div class="modal fade" id="reopenProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-            <div class="modal-header border-0 pb-0">
-                <div>
-                    <h4 class="modal-title fw-bold text-warning">Reabrir Projeto</h4>
-                    <p class="text-muted small mb-0">Tem certeza que deseja reabrir este projeto?</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0 text-dark">O projeto voltará ao estado EM_CURSO.</p>
-            </div>
-            <div class="modal-footer border-0 pt-2 px-0 pb-0">
-                <div class="w-100 d-flex gap-2">
-                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning rounded-pill flex-fill fw-bold" id="confirmReopenProjectTeacherBtn">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -1414,6 +1363,58 @@
         fetchNotifications();
     });
 </script>
+
+<!-- Modal para Confirmar Concluir Projeto -->
+<div class="modal fade" id="completeProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-success">Concluir Projeto</h4>
+                    <p class="text-muted small mb-0">Tem certeza que deseja marcar este projeto como concluído?</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Todos os sprints devem estar concluídos para completar o projeto.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success rounded-pill flex-fill fw-bold" id="confirmCompleteProjectTeacherBtn">
+                        <i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Confirmar Reabrir Projeto -->
+<div class="modal fade" id="reopenProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-warning">Reabrir Projeto</h4>
+                    <p class="text-muted small mb-0">Tem certeza que deseja reabrir este projeto?</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">O projeto voltará ao estado EM_CURSO.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill flex-fill fw-bold" id="confirmReopenProjectTeacherBtn">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Remover Membro da Equipa (individual) -->
 <div class="modal fade" id="removeMemberModal" tabindex="-1" aria-hidden="true">
@@ -3251,6 +3252,51 @@
     }
 </script>
 
+<!-- Modal para Adicionar Membro à Equipa -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold">Adicionar Membro à Equipa</h4>
+                    <p class="text-muted small mb-0">Selecione um aluno e um papel para adicionar à equipa.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <input type="hidden" name="teamId" id="addMemberTeamId">
+                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Aluno</label>
+                        <select name="studentId" id="addMemberStudentSelect" class="form-select bg-light border-0 py-2" required>
+                            <option value="">A carregar alunos...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Papel</label>
+                        <select name="role" id="addMemberRoleSelect" class="form-select bg-light border-0 py-2" required>
+                            <option value="">Selecione um papel...</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                            <option value="SCRUM_MASTER">Scrum Master</option>
+                            <option value="DEVELOPER">Developer</option>
+                        </select>
+                    </div>
+
+                    <div id="addMemberError" class="alert alert-danger" style="display:none;"></div>
+
+                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Adicionar Membro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de Detalhes do Projeto -->
 <div class="modal fade" id="projectDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -3392,7 +3438,7 @@
 
     // Obtém o ID do utilizador atual (seja Professor ou Estudante) via Thymeleaf
     /*<![CDATA[*/
-    const currentUserId = /*[[${teacher != null ? teacher.id : (student != null ? student.id : 0)}]]*/ 0;
+    //const currentUserId = /*[[${teacher != null ? teacher.id : (student != null ? student.id : 0)}]]*/ 0;
     /*]]>*/
 
     /* ==========================================
@@ -3526,9 +3572,7 @@
             }
         }
     }
-
- 
-
+    
     // Inicialização ao carregar a página
     document.addEventListener('DOMContentLoaded', function() {
         // Carrega notificações inicialmente para atualizar o badge (sino)
@@ -3640,49 +3684,5 @@
         });
     });
 </script>
-<!-- Modal para Adicionar Membro à Equipa -->
-<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
-            <div class="modal-header border-0 pb-0">
-                <div>
-                    <h4 class="modal-title fw-bold">Adicionar Membro à Equipa</h4>
-                    <p class="text-muted small mb-0">Selecione um aluno e um papel para adicionar à equipa.</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addMemberForm">
-                    <input type="hidden" name="teamId" id="addMemberTeamId">
-                    <input type="hidden" name="teacherId" th:value="${teacher.id}">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">Aluno</label>
-                        <select name="studentId" id="addMemberStudentSelect" class="form-select bg-light border-0 py-2" required>
-                            <option value="">A carregar alunos...</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">Papel</label>
-                        <select name="role" id="addMemberRoleSelect" class="form-select bg-light border-0 py-2" required>
-                            <option value="">Selecione um papel...</option>
-                            <option value="PRODUCT_OWNER">Product Owner</option>
-                            <option value="SCRUM_MASTER">Scrum Master</option>
-                            <option value="DEVELOPER">Developer</option>
-                        </select>
-                    </div>
-
-                    <div id="addMemberError" class="alert alert-danger" style="display:none;"></div>
-
-                    <div class="modal-footer border-0 pt-4 px-0 pb-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Adicionar Membro</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>
