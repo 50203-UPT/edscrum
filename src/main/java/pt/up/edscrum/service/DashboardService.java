@@ -519,8 +519,8 @@ public class DashboardService {
                                                         po.getName(),
                                                         "Product Owner",
                                                         po.getRole(),
-                                                        studentAwardRepo.sumPointsByStudentAndProjectId(po.getId(), project.getId()),
-                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(po.getId(), project.getId())
+                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(po.getId(), project.getId()),
+                                                        studentAwardRepo.sumPointsByStudentAndProjectId(po.getId(), project.getId())
                                                 );                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(poMember.getId()))) {
                         projectMembers.add(poMember);
                     }
@@ -533,8 +533,8 @@ public class DashboardService {
                                                         sm.getName(),
                                                         "Scrum Master",
                                                         sm.getRole(),
-                                                        studentAwardRepo.sumPointsByStudentAndProjectId(sm.getId(), project.getId()),
-                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(sm.getId(), project.getId())
+                                                        (int) studentAwardRepo.countByStudentIdAndProjectId(sm.getId(), project.getId()),
+                                                        studentAwardRepo.sumPointsByStudentAndProjectId(sm.getId(), project.getId())
                                                 );                    if (projectMembers.stream().noneMatch(m -> m.getId().equals(smMember.getId()))) {
                         projectMembers.add(smMember);
                     }
@@ -547,8 +547,8 @@ public class DashboardService {
                                 developer.getName(),
                                 "Developer",
                                 developer.getRole(),
-                                studentAwardRepo.sumPointsByStudentAndProjectId(developer.getId(), project.getId()),
-                                (int) studentAwardRepo.countByStudentIdAndProjectId(developer.getId(), project.getId())
+                                (int) studentAwardRepo.countByStudentIdAndProjectId(developer.getId(), project.getId()),
+                                studentAwardRepo.sumPointsByStudentAndProjectId(developer.getId(), project.getId())
                         );
                         if (projectMembers.stream().noneMatch(m -> m.getId().equals(devMember.getId()))) {
                             projectMembers.add(devMember);

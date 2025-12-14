@@ -238,16 +238,17 @@
                         <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
                     </div>
                     <div class="d-flex gap-2 justify-content-end">
-                        <button th:if="${student != null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
+                        <!-- Apenas estudantes que NÃO são Product Owner e NÃO são professores podem ver os botões de ação -->
+                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
                             <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova User Story
                         </button>
-                        <button th:if="${canComplete and student != null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
+                        <button th:if="${canComplete and student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
                             <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir Sprint
                         </button>
-                        <button th:if="${student != null and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
+                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Sprint
                         </button>
-                        <button th:if="${student != null}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
+                        <button th:if="${student != null and teacher == null and student.id != productOwnerId}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
                             <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Sprint
                         </button>
                     </div>
