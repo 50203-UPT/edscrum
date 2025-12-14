@@ -843,6 +843,8 @@
                         </div>
                     </div>
 
+                    <div id="newTeamError" class="alert alert-danger" style="display:none; margin-top:10px;"></div>
+
                     <div class="modal-footer border-0 px-0 pb-0">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Equipa</button>
@@ -2731,15 +2733,36 @@
         // Collect all selected members (excluding empty values)
         const allMembers = [poId, smId, ...devIds].filter(v => v !== "");
 
+        // Find or create inline error container inside the modal
+        const modal = document.getElementById('newTeamModal');
+        const errorDiv = modal ? modal.querySelector('#newTeamError') : null;
+        function showError(msg) {
+            if (errorDiv) {
+                errorDiv.textContent = msg;
+                errorDiv.style.display = 'block';
+            } else {
+                alert(msg);
+            }
+        }
+
+        // Clear previous error
+        if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
+
         // Validation: No duplicate members (only if there are members selected)
         if (allMembers.length > 0 && new Set(allMembers).size !== allMembers.length) {
-            alert('Não pode haver membros duplicados na equipa!');
+            showError('Não pode haver membros duplicados na equipa!');
             return false;
         }
 
         // Validation: Max 10 members total (1 PO + 1 SM + 8 Devs)
         if (allMembers.length > 10) {
-            alert('A equipa não pode ter mais de 10 membros!');
+            showError('A equipa não pode ter mais de 10 membros!');
+            return false;
+        }
+
+        // Require at least one member selected when creating a team
+        if (allMembers.length === 0) {
+            showError('Por favor selecione pelo menos um membro (PO, SM ou Developer) ao criar a equipa.');
             return false;
         }
 
@@ -2851,6 +2874,10 @@
             const studentCoursesMap = /*[[${studentCoursesMap}]]*/ {};
             const courseTakenIds = (takenMap[courseId] || []);
 
+            // Teachers (if any) - include so a teacher can be added as Product Owner
+            const availableTeachers = allStudents.filter(s => s.role === 'TEACHER');
+
+            // Students enrolled in the course and not already taken
             const availableStudents = allStudents.filter(s => {
                 const studentCourseList = studentCoursesMap[s.id] ? String(studentCoursesMap[s.id]).split(',') : [];
                 const isEnrolled = studentCourseList.includes(String(courseId));
@@ -2858,17 +2885,79 @@
                 return s.role === 'STUDENT' && isEnrolled && !isTaken;
             });
 
-            if (availableStudents.length === 0) {
-                studentSelect.innerHTML = '<option value="">Nenhum aluno disponível.</option>';
+            // Build options: prefer showing a placeholder, then teachers (labelled), then students
+            studentSelect.innerHTML = '<option value="">Selecione um aluno ou professor...</option>';
+
+            // Add teachers first (they are not constrained by course enrollment)
+            availableTeachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher.id;
+                option.textContent = `${teacher.name} (Professor)`;
+                option.setAttribute('data-role', 'TEACHER');
+                studentSelect.appendChild(option);
+            });
+
+            // Then add available students
+            if (availableStudents.length === 0 && availableTeachers.length === 0) {
+                studentSelect.innerHTML = '<option value="">Nenhum aluno ou professor disponível.</option>';
             } else {
-                studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
                 availableStudents.forEach(student => {
                     const option = document.createElement('option');
                     option.value = student.id;
                     option.textContent = `${student.name} (${student.studentTag})`;
+                    option.setAttribute('data-role', 'STUDENT');
+                    // preserve courses attribute if needed
+                    if (studentCoursesMap && studentCoursesMap[student.id]) {
+                        option.setAttribute('data-courses', studentCoursesMap[student.id]);
+                    }
                     studentSelect.appendChild(option);
                 });
             }
+
+            // When selection changes, restrict allowed roles if a teacher is chosen
+            studentSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                const roleSelectElem = document.getElementById('addMemberRoleSelect');
+                errorDiv.style.display = 'none';
+
+                // Re-enable all role options by default
+                Array.from(roleSelectElem.options).forEach(o => o.disabled = false);
+
+                if (!selected || !selected.value) {
+                    // Re-apply taken-role disables
+                    if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                    if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                    roleSelectElem.value = '';
+                    return;
+                }
+
+                const selRole = selected.getAttribute('data-role');
+                if (selRole === 'TEACHER') {
+                    // Teacher can only be Product Owner
+                    if (poId && poId !== '') {
+                        errorDiv.textContent = 'Esta equipa já tem um Product Owner atribuído; não é possível adicionar outro professor como PO.';
+                        errorDiv.style.display = 'block';
+                        // Reset selection
+                        this.value = '';
+                        roleSelectElem.value = '';
+                        // Re-apply taken-role disables
+                        if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                        if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                        return;
+                    }
+
+                    // Set role to PRODUCT_OWNER and disable others
+                    roleSelectElem.value = 'PRODUCT_OWNER';
+                    Array.from(roleSelectElem.options).forEach(o => {
+                        if (o.value === '' ) { o.disabled = false; return; }
+                        o.disabled = o.value !== 'PRODUCT_OWNER';
+                    });
+                } else {
+                    // Student selected: re-apply taken-role disables
+                    if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                    if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                }
+            });
         } catch (error) {
             console.error('Error loading students for modal:', error);
             studentSelect.innerHTML = '<option value="">Erro ao carregar alunos.</option>';

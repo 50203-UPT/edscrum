@@ -2514,6 +2514,7 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="studentCreateTeamError" class="alert alert-danger" style="display:none; margin-top:10px;"></div>
 
                         <div class="modal-footer border-0 px-0 pb-0">
                             <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
@@ -2559,6 +2560,29 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const action = form.getAttribute('action') || form.getAttribute('th:action') || '/teams/create';
         const method = (form.getAttribute('method') || 'POST').toUpperCase();
+
+        // Inline error element in modal
+        const modalEl = document.getElementById('studentCreateTeamModal');
+        const errorDiv = modalEl ? modalEl.querySelector('#studentCreateTeamError') : null;
+        function showError(msg) { if (errorDiv) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; } else alert(msg); }
+        function clearError() { if (errorDiv) { errorDiv.textContent = ''; errorDiv.style.display = 'none'; } }
+
+        // Validate that the creating student selected at least themselves
+        const po = form.querySelector('select[name="productOwnerId"]') ? form.querySelector('select[name="productOwnerId"]').value : '';
+        const sm = form.querySelector('select[name="scrumMasterId"]') ? form.querySelector('select[name="scrumMasterId"]').value : '';
+        const devSelects = form.querySelectorAll('select[name="developerIds"]');
+        const selected = new Set();
+        if (po) selected.add(String(po));
+        if (sm) selected.add(String(sm));
+        devSelects.forEach(s => { if (s.value) selected.add(String(s.value)); });
+
+        const me = String(window.currentStudentId || window.currentUserId || '');
+        if (!me || !selected.has(me)) {
+            showError('Por favor selecione pelo menos a tua própria entrada (escolhe-te como PO, SM ou Developer).');
+            return;
+        }
+
+        clearError();
         const formData = new FormData(form);
 
         try {
@@ -2578,7 +2602,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (resp.ok) {
                 // close modal if open
-                const modalEl = document.getElementById('studentCreateTeamModal');
                 try { const m = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); m.hide(); } catch(err){}
 
                 // Navigate to same page with tab=all-courses to refresh and show courses
@@ -2588,7 +2611,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const text = await resp.text();
-            alert('Erro ao criar equipa: ' + text);
+            showError(text || 'Erro ao criar equipa.');
         } catch (err) {
             console.error('Create team failed, falling back to normal submit', err);
             form.submit();
