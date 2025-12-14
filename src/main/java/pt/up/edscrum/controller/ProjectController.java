@@ -108,9 +108,19 @@ public class ProjectController {
      * @return ResponseEntity 200 OK se concluído ou erro apropriado
      */
     @PutMapping("/{id}/complete")
-    public ResponseEntity<?> completeProject(@PathVariable Long id, @RequestParam Long studentId) {
+    public ResponseEntity<?> completeProject(@PathVariable Long id, @RequestParam(required = false) Long studentId, jakarta.servlet.http.HttpSession session) {
         try {
-            if (!projectService.isUserProductOwner(studentId, id)) {
+            Long currentUserId = (Long) session.getAttribute("currentUserId");
+            String currentUserRole = (String) session.getAttribute("currentUserRole");
+            if (currentUserId == null) return ResponseEntity.status(401).body("Unauthorized");
+
+            // Ensure the acting user is the one in session (or teacher)
+            if (studentId != null && !currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
+                return ResponseEntity.status(403).body("Forbidden");
+            }
+
+            // Use the session user id to verify Product Owner role
+            if (!projectService.isUserProductOwner(currentUserId, id)) {
                 return ResponseEntity.status(403).body("Apenas o Product Owner pode concluir o projeto.");
             }
             projectService.completeProject(id);
@@ -129,9 +139,17 @@ public class ProjectController {
      * @return ResponseEntity 200 OK se reaberto ou erro 500 em falha
      */
     @PutMapping("/{id}/reopen")
-    public ResponseEntity<?> reopenProject(@PathVariable Long id, @RequestParam Long studentId) {
+    public ResponseEntity<?> reopenProject(@PathVariable Long id, @RequestParam(required = false) Long studentId, jakarta.servlet.http.HttpSession session) {
         try {
-            if (!projectService.isUserProductOwner(studentId, id)) {
+            Long currentUserId = (Long) session.getAttribute("currentUserId");
+            String currentUserRole = (String) session.getAttribute("currentUserRole");
+            if (currentUserId == null) return ResponseEntity.status(401).body("Unauthorized");
+
+            if (studentId != null && !currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
+                return ResponseEntity.status(403).body("Forbidden");
+            }
+
+            if (!projectService.isUserProductOwner(currentUserId, id)) {
                 return ResponseEntity.status(403).body("Apenas o Product Owner pode reabrir o projeto.");
             }
             projectService.reopenProject(id);

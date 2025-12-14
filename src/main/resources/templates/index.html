@@ -248,9 +248,9 @@
             return;
           }
           if (user.role === 'TEACHER') {
-            window.location.href = '/view/teacher/home/' + user.id;
+            window.location.href = '/view/teacher/home';
           } else if (user.role === 'STUDENT') {
-            window.location.href = '/view/student/home/' + user.id;
+            window.location.href = '/view/student/home';
           } else {
             const msg = 'Role desconhecido.';
             if(errorMessage.querySelector('.error-text')) errorMessage.querySelector('.error-text').textContent = msg;

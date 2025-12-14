@@ -53,6 +53,10 @@ public class NotificationService {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
+    public java.util.Optional<Notification> getNotificationById(Long id) {
+        return notificationRepository.findById(id);
+    }
+
     public void markAsRead(Long notificationId) {
         notificationRepository.findById(notificationId).ifPresent(n -> {
             n.setRead(true);

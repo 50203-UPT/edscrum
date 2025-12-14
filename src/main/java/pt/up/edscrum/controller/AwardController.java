@@ -101,7 +101,11 @@ public class AwardController {
      * @return Lista de Award disponíveis
      */
     @GetMapping("/available-for-student")
-    public List<Award> getAvailableAwardsForStudent(@RequestParam Long studentId, @RequestParam Long projectId) {
+    public List<Award> getAvailableAwardsForStudent(@RequestParam Long studentId, @RequestParam Long projectId, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return List.of();
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return List.of();
         return awardService.getAvailableAwardsForStudent(studentId, projectId);
     }
 
@@ -112,10 +116,16 @@ public class AwardController {
      * @param studentId ID do estudante
      */
     @PostMapping("/assign/{awardId}/to/{studentId}")
-    public void assignAwardToStudent(
+        public org.springframework.http.ResponseEntity<?> assignAwardToStudent(
             @PathVariable Long awardId,
-            @PathVariable Long studentId) {
+            @PathVariable Long studentId,
+            jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return org.springframework.http.ResponseEntity.status(401).build();
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return org.springframework.http.ResponseEntity.status(403).build();
         awardService.assignAwardToStudent(awardId, studentId);
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
     /**
@@ -138,7 +148,12 @@ public class AwardController {
      * @return Total de pontos
      */
     @GetMapping("/points/{studentId}")
-    public int getTotalPoints(@PathVariable Long studentId) {
-        return awardService.calculateTotalPoints(studentId);
+    public org.springframework.http.ResponseEntity<Integer> getTotalPoints(@PathVariable Long studentId, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return org.springframework.http.ResponseEntity.status(401).build();
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return org.springframework.http.ResponseEntity.status(403).build();
+        int pts = awardService.calculateTotalPoints(studentId);
+        return org.springframework.http.ResponseEntity.ok(pts);
     }
 }

@@ -25,7 +25,11 @@ public class NotificationController {
      * /api/notifications/{userId}
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<List<Notification>> getUserNotifications(@PathVariable Long userId) {
+    public ResponseEntity<List<Notification>> getUserNotifications(@PathVariable Long userId, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(userId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         List<Notification> notifications = notificationService.getUserNotifications(userId);
         return ResponseEntity.ok(notifications);
     }
@@ -35,7 +39,15 @@ public class NotificationController {
      * /api/notifications/{id}/read
      */
     @PostMapping("/{id}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        // Check ownership: fetch notification
+        java.util.Optional<Notification> opt = notificationService.getNotificationById(id);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        Notification n = opt.get();
+        if (!n.getUser().getId().equals(currentUserId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         notificationService.markAsRead(id);
         return ResponseEntity.ok().build();
     }
@@ -45,7 +57,11 @@ public class NotificationController {
      * /api/notifications/user/{userId}/read-all
      */
     @PostMapping("/user/{userId}/read-all")
-    public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId) {
+    public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(userId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         notificationService.markAllAsRead(userId);
         return ResponseEntity.ok().build();
     }

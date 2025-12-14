@@ -148,11 +148,8 @@ public class ProjectService {
             return false;
         }
 
-        User user = new User();
-        user.setId(userId);
-
         for (Team team : project.getTeams()) {
-            if (team.getProductOwner() != null && team.getProductOwner().equals(user)) {
+            if (team.getProductOwner() != null && team.getProductOwner().getId() != null && team.getProductOwner().getId().equals(userId)) {
                 return true;
             }
         }

@@ -105,10 +105,10 @@
 
     <nav th:class="'d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top ' + (${teacher != null ? 'navbar-teacher' : 'navbar-student'})" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-3">
-            <a th:if="${teacher != null}" th:href="@{/view/teacher/home/{userId}(userId=${teacher.id})}" class="btn-back-custom" title="Voltar">
+            <a th:if="${teacher != null}" th:href="@{/view/teacher/home}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
-            <a th:if="${student != null}" th:href="@{'/view/student/home/' + ${student.id} + '?tab=projects'}" class="btn-back-custom" title="Voltar">
+            <a th:if="${student != null}" th:href="@{/view/student/home(tab='projects')}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
             <div th:class="'text-white p-2 rounded-3 shadow-sm ' + (${teacher != null ? 'bg-primary' : 'bg-success'})">
@@ -177,7 +177,7 @@
                         <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Sprint
                         </button>
-                        <button th:if="${student != null and teacher == null and student.id != productOwnerId}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
+                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'PLANEAMENTO'}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
                             <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Sprint
                         </button>
                     </div>
@@ -832,9 +832,9 @@
                 if (response.ok) {
                     // Redirecionar para a home correta
                     if (isTeacher) {
-                        window.location.href = `/view/teacher/home/${userId}`;
+                        window.location.href = '/view/teacher/home';
                     } else {
-                        window.location.href = `/view/student/home/${userId}?tab=projects`;
+                        window.location.href = '/view/student/home?tab=projects';
                     }
                 } else {
                     console.error('Erro ao eliminar sprint.');

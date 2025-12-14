@@ -86,7 +86,11 @@ public class ExportController {
      * @return ResponseEntity com o ficheiro CSV em bytes
      */
     @GetMapping("/rankings/csv/{teacherId}")
-    public ResponseEntity<byte[]> exportRankingsCsv(@PathVariable Long teacherId) {
+    public ResponseEntity<byte[]> exportRankingsCsv(@PathVariable Long teacherId, jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(teacherId) || !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         List<Course> teacherCourses = courseService.getCoursesByTeacher(teacherId);
 
         Map<Long, RankingDTO> byStudent = new HashMap<>();

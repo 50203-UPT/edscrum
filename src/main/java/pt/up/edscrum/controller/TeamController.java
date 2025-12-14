@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import pt.up.edscrum.model.Enrollment;
@@ -99,9 +100,14 @@ public class TeamController {
      * Get student's team in a specific course
      */
     @GetMapping("/student-team/{studentId}/course/{courseId}")
-    public ResponseEntity<Map<String, Object>> getStudentTeamInCourse(
+        public ResponseEntity<?> getStudentTeamInCourse(
             @PathVariable Long studentId,
-            @PathVariable Long courseId) {
+            @PathVariable Long courseId,
+            jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         Team team = teamService.getStudentTeamInCourse(studentId, courseId);
         
         Map<String, Object> response = new HashMap<>();
@@ -116,6 +122,39 @@ public class TeamController {
             response.put("isClosed", team.isClosed());
         }
         
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Session-based variant: get the calling student's team for a course.
+     * Teachers may pass an optional `studentId` query param to act on behalf of a student.
+     */
+    @GetMapping("/student-team/course/{courseId}")
+    public ResponseEntity<?> getStudentTeamInCourseSession(
+            @PathVariable Long courseId,
+            @RequestParam(required = false) Long studentId,
+            jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+
+        Long targetStudentId = studentId != null ? studentId : currentUserId;
+        if (!targetStudentId.equals(currentUserId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+
+        Team team = teamService.getStudentTeamInCourse(targetStudentId, courseId);
+
+        Map<String, Object> response = new HashMap<>();
+        if (team != null) {
+            response.put("teamId", team.getId());
+            response.put("name", team.getName());
+            response.put("productOwner", team.getProductOwner());
+            response.put("scrumMaster", team.getScrumMaster());
+            response.put("developers", team.getDevelopers());
+            response.put("currentMemberCount", team.getCurrentMemberCount());
+            response.put("maxMembers", team.getMaxMembers());
+            response.put("isClosed", team.isClosed());
+        }
+
         return ResponseEntity.ok(response);
     }
 
@@ -146,11 +185,28 @@ public class TeamController {
      * Student joins a team with a specific role
      */
     @PostMapping("/{teamId}/join")
-    public ResponseEntity<Map<String, String>> joinTeam(
+        public ResponseEntity<Map<String, String>> joinTeam(
             @PathVariable Long teamId,
-            @RequestBody Map<String, Object> payload) {
-        Long studentId = ((Number) payload.get("studentId")).longValue();
+            @RequestBody Map<String, Object> payload,
+            jakarta.servlet.http.HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+
+        Long studentId = null;
+        if (payload.get("studentId") != null) {
+            studentId = ((Number) payload.get("studentId")).longValue();
+        }
         String role = (String) payload.getOrDefault("role", "DEVELOPER");
+        if (studentId == null) {
+            studentId = currentUserId;
+        }
+
+        if (currentUserId == null) {
+            Map<String, String> resp = new HashMap<>(); resp.put("error", "Unauthorized"); return ResponseEntity.status(401).body(resp);
+        }
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
+            Map<String, String> resp = new HashMap<>(); resp.put("error", "Forbidden"); return ResponseEntity.status(403).body(resp);
+        }
         
         Map<String, String> response = new HashMap<>();
         try {
@@ -174,6 +230,14 @@ public class TeamController {
         try {
             Long studentId = Long.valueOf(payload.get("studentId").toString());
             String role = (String) payload.get("role");
+
+            // Validate that the caller is a teacher
+            jakarta.servlet.http.HttpSession session = null;
+            try { session = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest().getSession(false); } catch (Exception e) { session = null; }
+            if (session == null) return ResponseEntity.status(401).body("Unauthorized");
+            Long currentUserId = (Long) session.getAttribute("currentUserId");
+            String currentUserRole = (String) session.getAttribute("currentUserRole");
+            if (!"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).body("Forbidden");
 
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));

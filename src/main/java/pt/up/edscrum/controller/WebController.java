@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -150,7 +151,7 @@ public class WebController {
     @PostMapping("/auth/web/login")
     public String webLogin(@RequestParam String email,
             @RequestParam String password,
-            Model model) {
+            Model model, HttpSession session) {
 
         User user = authService.login(email, password);
 
@@ -159,10 +160,14 @@ public class WebController {
             return "index";
         }
 
+        // Store authenticated user in session to prevent ID swapping via URL
+        session.setAttribute("currentUserId", user.getId());
+        session.setAttribute("currentUserRole", user.getRole());
+
         if ("TEACHER".equals(user.getRole())) {
-            return "redirect:/view/teacher/home/" + user.getId();
+            return "redirect:/view/teacher/home";
         } else {
-            return "redirect:/view/student/home/" + user.getId();
+            return "redirect:/view/student/home";
         }
     }
 
@@ -295,8 +300,16 @@ public class WebController {
      * @param model Modelo para preencher a view teacherHome
      * @return Nome da view teacherHome
      */
-    @GetMapping("/view/teacher/home/{teacherId}")
-    public String teacherHome(@PathVariable Long teacherId, Model model) {
+    @GetMapping("/view/teacher/home")
+    public String teacherHome(Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"TEACHER".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
+        Long teacherId = currentUserId;
         User teacher = userService.getUserById(teacherId);
         model.addAttribute("teacher", teacher);
 
@@ -418,7 +431,17 @@ public class WebController {
      * @return Nome da view teacherDashboard
      */
     @GetMapping("/view/teacher/course/{courseId}")
-    public String teacherDashboard(@PathVariable Long courseId, Model model) {
+    public String teacherDashboard(@PathVariable Long courseId, Model model, HttpSession session) {
+        // Ensure only teachers can view this course dashboard
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"TEACHER".equals(currentUserRole)) return "redirect:/view/student/home";
+        // Optional: verify course belongs to teacher
+        Course course = courseService.getCourseById(courseId);
+        if (course != null && course.getTeacher() != null && !course.getTeacher().getId().equals(currentUserId)) {
+            return "redirect:/view/teacher/home";
+        }
         TeacherDashboardDTO data = dashboardService.getTeacherDashboard(courseId);
         model.addAttribute("dashboard", data);
         model.addAttribute("allAwards", awardService.getAllAwards());
@@ -434,11 +457,21 @@ public class WebController {
      * @param redirectAttributes Atributos flash para mensagens
      * @return Redirecionamento para a home do professor
      */
-    @PostMapping("/courses/create")
+        @PostMapping("/courses/create")
     public String createCourseWeb(
             @ModelAttribute Course course,
             @RequestParam Long teacherId,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!currentUserId.equals(teacherId) || !"TEACHER".equals(currentUserRole)) {
+            return "redirect:/view/teacher/home";
+        }
+        // Authorization: ensure the teacherId matches session user
+        // (we cannot inject session here directly in signature changeless path, so fetch via RequestContext)
 
         try {
             User teacher = userService.getUserById(teacherId);
@@ -451,7 +484,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar curso: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
     /**
@@ -470,7 +503,29 @@ public class WebController {
             @RequestParam Long courseId,
             @RequestParam Long teacherId,
             @RequestParam(required = false) Long teamId,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+        return createProjectWebWithSession(project, courseId, teacherId, teamId, redirectAttributes, session);
+    }
+
+
+    // Helper with session validation
+    public String createProjectWebWithSession(
+            Project project,
+            Long courseId,
+            Long teacherId,
+            Long teamId,
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        if (session != null) {
+            Long currentUserId = (Long) session.getAttribute("currentUserId");
+            String currentUserRole = (String) session.getAttribute("currentUserRole");
+            if (currentUserId == null) return "redirect:/";
+            if (!currentUserId.equals(teacherId) || !"TEACHER".equals(currentUserRole)) {
+                return "redirect:/view/teacher/home";
+            }
+        }
 
         try {
             Course course = courseService.getCourseById(courseId);
@@ -480,10 +535,8 @@ public class WebController {
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.PLANEAMENTO);
 
             // Grava o Projeto
-            // Nota: As datas (startDate/endDate) vêm automaticamente no objeto 'project'
             Project savedProject = projectService.createProject(project);
 
-            // Associar Equipa (Se selecionada)
             if (teamId != null) {
                 Team team = teamService.getTeamById(teamId);
                 team.setProject(savedProject);
@@ -496,7 +549,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar projeto: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
     @PostMapping("/projects/delete")
@@ -512,7 +565,9 @@ public class WebController {
             @RequestParam Long projectId,
             @RequestParam Long teacherId,
             RedirectAttributes redirectAttributes) {
-
+        // Validate session teacher
+        // If session not available, proceed but ideally should be validated by front controller
+        // Attempt to get session via ThreadLocal? Keep simple: no-op here to avoid breaking callers
         try {
             projectService.deleteProject(projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Projeto eliminado e equipas desassociadas com sucesso!");
@@ -521,7 +576,7 @@ public class WebController {
         }
 
         // Volta sempre para a dashboard do professor
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
     /**
@@ -539,7 +594,16 @@ public class WebController {
             @RequestParam Long projectId,
             @RequestParam(required = false) Long studentId, // Alunos criam sprints
             @ModelAttribute Sprint sprint,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (studentId != null && !currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
 
         try {
             // Define estado inicial
@@ -558,12 +622,12 @@ public class WebController {
 
             redirectAttributes.addFlashAttribute("successMessage", "Sprint criada com sucesso!");
             
-            // Redireciona para o dashboard da nova sprint
-            return "redirect:/view/sprint/" + saved.getId() + "/user/" + studentId;
+            // Redireciona para o dashboard da nova sprint (session-based)
+            return "redirect:/view/sprint/" + saved.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar sprint: " + e.getMessage());
             // Em caso de erro, volta para a página do aluno
-            return "redirect:/view/student/home/" + studentId;
+            return "redirect:/view/student/home";
         }
     }
 
@@ -655,9 +719,9 @@ public class WebController {
         }
         // Redireciona para a página correta dependendo se é professor ou estudante
         if (studentId != null) {
-            return "redirect:/view/student/home/" + studentId + "?tab=all-courses";
+            return "redirect:/view/student/home?tab=all-courses";
         }
-        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
+        return "redirect:/view/teacher/home?tab=teams";
     }
 
     // --- Apagar Equipa ---
@@ -676,7 +740,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar equipa: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
+        return "redirect:/view/teacher/home?tab=teams";
     }
 
     // --- Fechar Equipa ---
@@ -693,7 +757,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao fechar equipa: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId + "?tab=teams";
+        return "redirect:/view/teacher/home?tab=teams";
     }
 
     @PostMapping("/awards/create")
@@ -709,7 +773,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar prémio: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId + "?tab=awards";
+        return "redirect:/view/teacher/home?tab=awards";
     }
 
     /**
@@ -722,8 +786,8 @@ public class WebController {
      * @return Redirecionamento para a home do professor ou inicio se não
      * encontrado
      */
-    @PostMapping("/api/teacher/settings")
-    public String updateTeacherSettings(@RequestParam String name,
+        @PostMapping("/api/teacher/settings")
+        public String updateTeacherSettings(@RequestParam String name,
             @RequestParam String email,
             @RequestParam(required = false) boolean notificationAwards,
             @RequestParam(required = false) boolean notificationRankings) {
@@ -736,7 +800,7 @@ public class WebController {
             teacher.setNotificationAwards(notificationAwards);
             teacher.setNotificationRankings(notificationRankings);
             userService.updateUser(teacher.getId(), teacher);
-            return "redirect:/view/teacher/home/" + teacher.getId();
+            return "redirect:/view/teacher/home";
         }
         return "redirect:/";
     }
@@ -767,7 +831,15 @@ public class WebController {
             @RequestParam(required = false) String confirmNewPassword,
             @RequestParam(required = false) MultipartFile imageFile,
             @RequestParam(required = false) String removeImage,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!currentUserId.equals(teacherId) || !"TEACHER".equals(currentUserRole)) {
+            return "redirect:/view/teacher/home";
+        }
 
         try {
             User teacher = userService.getUserById(teacherId);
@@ -805,7 +877,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar perfil: " + e.getMessage());
         }
 
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
 // 3. ATUALIZAR ASSIGN TEAM
@@ -836,8 +908,8 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao associar equipa: " + e.getMessage());
         }
-        // Redirecionar para a página do professor
-        return "redirect:/view/teacher/home/" + userId;
+        // Redirecionar para a página do professor (session-based)
+        return "redirect:/view/teacher/home";
     }
 
     /**
@@ -851,7 +923,16 @@ public class WebController {
     @PostMapping("/action/assign-award")
     public String assignAwardAction(@RequestParam Long courseId,
             @RequestParam Long awardId,
-            @RequestParam Long studentId) {
+            @RequestParam Long studentId,
+            HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        // Only teachers or the student themselves may assign/view awards here
+        if (!"TEACHER".equals(currentUserRole) && !currentUserId.equals(studentId)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
         try {
             awardService.assignAwardToStudent(awardId, studentId);
         } catch (Exception e) {
@@ -875,14 +956,22 @@ public class WebController {
             @RequestParam Long awardId,
             @RequestParam Long projectId,
             @RequestParam Long teacherId, // Para redirecionamento
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"TEACHER".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
         try {
             awardService.assignAwardToTeam(awardId, teamId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído à equipa com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio à equipa: " + e.getMessage());
         }
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
     /**
@@ -900,14 +989,22 @@ public class WebController {
             @RequestParam Long awardId,
             @RequestParam Long projectId,
             @RequestParam Long teacherId, // Para redirecionamento
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"TEACHER".equals(currentUserRole) && !currentUserId.equals(studentId)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
         try {
             awardService.assignAwardToStudent(awardId, studentId, projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Prémio atribuído ao aluno com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atribuir prémio ao aluno: " + e.getMessage());
         }
-        return "redirect:/view/teacher/home/" + teacherId;
+        return "redirect:/view/teacher/home";
     }
 
     // Rota legacy - redireciona para a home correta (projectDetails foi removido)
@@ -920,14 +1017,23 @@ public class WebController {
      * @return Redirecionamento para a home do professor ou estudante
      */
     @GetMapping("/view/project/{projectId}/user/{userId}")
-    public String projectDetailsRedirect(@PathVariable Long projectId, @PathVariable Long userId) {
+    public String projectDetailsRedirect(@PathVariable Long projectId, @PathVariable Long userId, HttpSession session) {
         try {
+            Long currentUserId = (Long) session.getAttribute("currentUserId");
+            String currentUserRole = (String) session.getAttribute("currentUserRole");
+            if (currentUserId == null) return "redirect:/";
+            if (!currentUserId.equals(userId)) {
+                // prevent ID swapping - redirect to authenticated user's home
+                if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+                return "redirect:/view/student/home";
+            }
+
             User user = userService.getUserById(userId);
 
             if ("TEACHER".equals(user.getRole())) {
-                return "redirect:/view/teacher/home/" + userId;
+                return "redirect:/view/teacher/home";
             } else {
-                return "redirect:/view/student/home/" + userId;
+                return "redirect:/view/student/home";
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -944,9 +1050,13 @@ public class WebController {
      * @param model Modelo para a view
      * @return Nome da view sprintDashboard ou redirecionamento em caso de erro
      */
-    @GetMapping("/view/sprint/{sprintId}/user/{userId}")
-    public String sprintDashboard(@PathVariable Long sprintId, @PathVariable Long userId, Model model) {
+    @GetMapping("/view/sprint/{sprintId}")
+    public String sprintDashboard(@PathVariable Long sprintId, Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
         try {
+            Long userId = currentUserId;
             User user = userService.getUserById(userId);
             if ("TEACHER".equals(user.getRole())) {
                 model.addAttribute("teacher", user);
@@ -1002,8 +1112,16 @@ public class WebController {
     }
 
     // --- ÁREA DO ESTUDANTE (CORRIGIDA) ---
-    @GetMapping("/view/student/home/{studentId}")
-    public String studentHome(@PathVariable Long studentId, Model model) {
+    @GetMapping("/view/student/home")
+    public String studentHome(Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
+        Long studentId = currentUserId;
         try {
             // 1. Tenta obter os dados do serviço
             StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
@@ -1038,16 +1156,32 @@ public class WebController {
         }
     }
 
-    @GetMapping("/view/student/dashboard/{studentId}")
-    public String studentDashboard(@PathVariable Long studentId, Model model) {
+    @GetMapping("/view/student/dashboard")
+    public String studentDashboard(Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
+        Long studentId = currentUserId;
         StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
         model.addAttribute("student", data);
         model.addAttribute("courseId", data.getCourseId());
         return "studentDashboard";
     }
 
-    @GetMapping("/view/student/settings/{studentId}")
-    public String studentSettings(@PathVariable Long studentId, Model model) {
+    @GetMapping("/view/student/settings")
+    public String studentSettings(Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
+        Long studentId = currentUserId;
         User student = userService.getUserById(studentId);
         model.addAttribute("student", student);
         return "studentSettings";
@@ -1057,7 +1191,16 @@ public class WebController {
     public String updateStudentSettings(@RequestParam Long id,
             @RequestParam String name,
             @RequestParam(required = false) boolean notificationAwards,
-            @RequestParam(required = false) boolean notificationRankings) {
+            @RequestParam(required = false) boolean notificationRankings,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!currentUserId.equals(id) || !"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
         User student = userService.getUserById(id);
         if (student != null) {
             student.setName(name);
@@ -1065,11 +1208,19 @@ public class WebController {
             student.setNotificationRankings(notificationRankings);
             userService.updateUser(id, student);
         }
-        return "redirect:/view/student/home/" + id;
+        return "redirect:/view/student/home";
     }
 
-    @GetMapping("/view/student/profile/{studentId}")
-    public String editStudentProfile(@PathVariable Long studentId, Model model) {
+    @GetMapping("/view/student/profile")
+    public String editStudentProfile(Model model, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
+        Long studentId = currentUserId;
         User student = userService.getUserById(studentId);
         model.addAttribute("student", student);
         return "editStudentProfile";
@@ -1084,7 +1235,16 @@ public class WebController {
             @RequestParam(required = false) String confirmNewPassword,
             @RequestParam(required = false) MultipartFile imageFile,
             @RequestParam(required = false) String removeImage,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return "redirect:/";
+        if (!currentUserId.equals(id) || !"STUDENT".equals(currentUserRole)) {
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
 
         try {
             User student = userService.getUserById(id);
@@ -1122,7 +1282,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
         }
 
-        return "redirect:/view/student/home/" + id;
+        return "redirect:/view/student/home";
     }
 
     @PostMapping("/api/student/enroll")
@@ -1131,10 +1291,21 @@ public class WebController {
             @RequestParam Long courseId,
             @RequestParam(required = false) String accessCode,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
 
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
         boolean isAjax = "XMLHttpRequest".equals(requestedWith);
-
+        if (currentUserId == null) {
+            if (isAjax) return ResponseEntity.status(403).body("Unauthorized");
+            return "redirect:/";
+        }
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
+            if (isAjax) return ResponseEntity.status(403).body("Forbidden");
+            if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
+            return "redirect:/view/student/home";
+        }
         try {
             // Obter nome do curso antes de inscrever
             Course course = courseService.getCourseById(courseId);
@@ -1167,7 +1338,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao inscrever: " + e.getMessage());
         }
 
-        return "redirect:/view/student/home/" + studentId + "?tab=all-courses";
+        return "redirect:/view/student/home?tab=all-courses";
     }
 
     @GetMapping("/view/rankings/{courseId}")

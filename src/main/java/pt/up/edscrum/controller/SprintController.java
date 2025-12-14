@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpSession;
 
 import pt.up.edscrum.model.Sprint;
 import pt.up.edscrum.service.SprintService;
@@ -33,8 +35,10 @@ public class SprintController {
      * @return Lista de Sprint
      */
     @GetMapping("/project/{projectId}")
-    public List<Sprint> getSprints(@PathVariable Long projectId) {
-        return sprintService.getSprintsByProject(projectId);
+    public ResponseEntity<List<Sprint>> getSprints(@PathVariable Long projectId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(sprintService.getSprintsByProject(projectId));
     }
 
     /**
@@ -45,8 +49,15 @@ public class SprintController {
      * @return Sprint criado
      */
     @PostMapping("/project/{projectId}")
-    public Sprint createSprint(@PathVariable Long projectId, @RequestBody Sprint sprint) {
-        return sprintService.createSprint(projectId, sprint);
+    public ResponseEntity<Sprint> createSprint(@PathVariable Long projectId, @RequestBody Sprint sprint, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (sprint.getCreatedBy() != null && sprint.getCreatedBy().getId() != null && !currentUserId.equals(sprint.getCreatedBy().getId()) && !"TEACHER".equals(currentUserRole)) {
+            return ResponseEntity.status(403).build();
+        }
+        Sprint created = sprintService.createSprint(projectId, sprint);
+        return ResponseEntity.status(201).body(created);
     }
 
     /**
@@ -57,8 +68,19 @@ public class SprintController {
      * @return Sprint atualizado
      */
     @PutMapping("/{sprintId}")
-    public Sprint updateSprint(@PathVariable Long sprintId, @RequestBody Sprint sprint) {
-        return sprintService.updateSprint(sprintId, sprint);
+    public ResponseEntity<Sprint> updateSprint(@PathVariable Long sprintId, @RequestBody Sprint sprint, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        Sprint existing = sprintService.getSprintById(sprintId);
+        Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
+        Long courseTeacherId = null;
+        try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
+        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
+            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        }
+        Sprint updated = sprintService.updateSprint(sprintId, sprint);
+        return ResponseEntity.ok(updated);
     }
 
     /**
@@ -68,8 +90,19 @@ public class SprintController {
      * @return Sprint após conclusão
      */
     @PostMapping("/{sprintId}/complete")
-    public Sprint completeSprint(@PathVariable Long sprintId) {
-        return sprintService.completeSprint(sprintId);
+    public ResponseEntity<Sprint> completeSprint(@PathVariable Long sprintId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        Sprint existing = sprintService.getSprintById(sprintId);
+        Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
+        Long courseTeacherId = null;
+        try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
+        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
+            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        }
+        Sprint s = sprintService.completeSprint(sprintId);
+        return ResponseEntity.ok(s);
     }
 
     /**
@@ -79,8 +112,19 @@ public class SprintController {
      * @return Sprint reaberto
      */
     @PostMapping("/{sprintId}/reopen")
-    public Sprint reopenSprint(@PathVariable Long sprintId) {
-        return sprintService.reopenSprint(sprintId);
+    public ResponseEntity<Sprint> reopenSprint(@PathVariable Long sprintId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        Sprint existing = sprintService.getSprintById(sprintId);
+        Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
+        Long courseTeacherId = null;
+        try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
+        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
+            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        }
+        Sprint s = sprintService.reopenSprint(sprintId);
+        return ResponseEntity.ok(s);
     }
 
     /**
@@ -89,7 +133,18 @@ public class SprintController {
      * @param sprintId ID do sprint a eliminar
      */
     @DeleteMapping("/{sprintId}")
-    public void deleteSprint(@PathVariable Long sprintId) {
+    public ResponseEntity<Void> deleteSprint(@PathVariable Long sprintId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        Sprint existing = sprintService.getSprintById(sprintId);
+        Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
+        Long courseTeacherId = null;
+        try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
+        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
+            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        }
         sprintService.deleteSprint(sprintId);
+        return ResponseEntity.noContent().build();
     }
 }

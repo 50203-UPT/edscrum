@@ -263,8 +263,8 @@
             
             document.getElementById('courseDetailsTitle').textContent = courseName;
             
-            // Fetch student's team status for this course
-            fetch('/api/teams/student-team/' + window.currentStudentId + '/course/' + courseId)
+            // Fetch student's team status for this course (server derives student from session)
+            fetch('/api/teams/student-team/course/' + courseId)
                 .then(response => {
                     console.log('Response status:', response.status);
                     if (!response.ok) {
@@ -460,7 +460,7 @@
             fetch('/api/teams/' + teamId + '/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ studentId: window.currentStudentId, role: role })
+                body: JSON.stringify({ role: role })
             })
             .then(response => {
                 if (response.ok) {
@@ -1125,7 +1125,7 @@
                         <div th:each="sprint, iterStat : ${project.sprints}" class="sprint-item d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border-start border-4 hover-shadow transition cursor-pointer"
                              th:classappend="${sprint.status?.name() == 'CONCLUIDO'} ? 'border-success' : 'border-primary'"
                              th:data-status="${sprint.status?.name()}"
-                             th:onclick="|window.location.href='/view/sprint/${sprint.id}/user/${student.id}'|">
+                             th:onclick="|window.location.href='/view/sprint/${sprint.id}'|">
                             
                             <div class="d-flex align-items-center gap-3 flex-grow-1">
                                 <i th:if="${sprint.status?.name() == 'CONCLUIDO'}" data-lucide="check-circle-2" class="text-success w-5 h-5"></i>
@@ -1283,7 +1283,6 @@
                 </div>
                 <div class="modal-body">
                     <form th:action="@{/api/student/settings}" method="POST">
-                        <input type="hidden" name="id" th:value="${student.id}">
                         
                         <div class="p-3 bg-light rounded-3 mb-3 border">
                             <h6 class="fw-bold small mb-3 text-dark">Aparência</h6>
@@ -1335,7 +1334,6 @@
             
             <form id="enrollForm" th:action="@{/api/student/enroll}" method="POST">
                 <div class="modal-body">
-                    <input type="hidden" name="studentId" th:value="${student.id}" />
                     <input type="hidden" id="enrollCourseId" name="courseId" />
                     
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 d-flex align-items-center mb-4">
@@ -1387,7 +1385,6 @@
                 <div class="modal-body">
                     <form id="newSprintForm" th:action="@{/sprints/create}" method="POST">
                         <input type="hidden" id="newSprintProjectId" name="projectId">
-                        <input type="hidden" name="studentId" th:value="${student.id}">
                         <input type="hidden" id="currentProjectStart" value="">
                         <input type="hidden" id="currentProjectEnd" value="">
                         <input type="hidden" id="currentLastSprintEnd" value="">
@@ -1762,13 +1759,28 @@
 
     function setupCompleteProjectModal(button) {
         currentProjectId = button.getAttribute('data-project-id');
+        // If a project details modal is open, hide it while the confirm modal shows
+        try {
+            const projectModalEl = document.getElementById('projectDetailsModal');
+            const confirmModalEl = document.getElementById('completeProjectModal');
+            if (projectModalEl && confirmModalEl) {
+                const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                if (projectModalInstance) projectModalInstance.hide();
+                const onHidden = function() {
+                    if (projectModalInstance) projectModalInstance.show();
+                    confirmModalEl.removeEventListener('hidden.bs.modal', onHidden);
+                };
+                confirmModalEl.addEventListener('hidden.bs.modal', onHidden);
+            }
+        } catch (e) { /* ignore if bootstrap not available */ }
     }
 
     function confirmCompleteProject() {
         if (!currentProjectId) return;
 
-        fetch('/projects/' + currentProjectId + '/complete?studentId=' + window.currentStudentId, {
-            method: 'PUT'
+        fetch('/projects/' + currentProjectId + '/complete', {
+            method: 'PUT',
+            credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
@@ -1789,13 +1801,28 @@
 
     function setupReopenProjectModal(button) {
         currentProjectId = button.getAttribute('data-project-id');
+        // Hide project details modal while reopen confirm is open, restore after
+        try {
+            const projectModalEl = document.getElementById('projectDetailsModal');
+            const confirmModalEl = document.getElementById('reopenProjectModal');
+            if (projectModalEl && confirmModalEl) {
+                const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                if (projectModalInstance) projectModalInstance.hide();
+                const onHidden = function() {
+                    if (projectModalInstance) projectModalInstance.show();
+                    confirmModalEl.removeEventListener('hidden.bs.modal', onHidden);
+                };
+                confirmModalEl.addEventListener('hidden.bs.modal', onHidden);
+            }
+        } catch (e) { /* ignore if bootstrap not available */ }
     }
 
     function confirmReopenProject() {
         if (!currentProjectId) return;
 
-        fetch('/projects/' + currentProjectId + '/reopen?studentId=' + window.currentStudentId, {
-            method: 'PUT'
+        fetch('/projects/' + currentProjectId + '/reopen', {
+            method: 'PUT',
+            credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
@@ -2419,9 +2446,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form th:action="@{/teams/create}" method="POST" id="studentCreateTeamForm">
+                        <form th:action="@{/teams/create}" method="POST" id="studentCreateTeamForm">
                         <input type="hidden" name="courseId" id="studentTeamCourseId">
-                        <input type="hidden" name="studentId" th:value="${student.id}">
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Nome da Equipa</label>

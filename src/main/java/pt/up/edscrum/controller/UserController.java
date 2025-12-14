@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpSession;
 
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.service.UserService;
@@ -31,8 +33,9 @@ public class UserController {
      * @return Utilizador criado
      */
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        User created = userService.createUser(user);
+        return ResponseEntity.status(201).body(created);
     }
 
     /**
@@ -41,8 +44,12 @@ public class UserController {
      * @return Lista de Users
      */
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<List<User>> getAllUsers(HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     /**
@@ -52,8 +59,12 @@ public class UserController {
      * @return User encontrado
      */
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<User> getUserById(@PathVariable Long id, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(id) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     /**
@@ -64,8 +75,13 @@ public class UserController {
      * @return Utilizador atualizado
      */
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        return userService.updateUser(id, updatedUser);
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(id) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        User u = userService.updateUser(id, updatedUser);
+        return ResponseEntity.ok(u);
     }
 
     /**
@@ -74,7 +90,12 @@ public class UserController {
      * @param id ID do utilizador a eliminar
      */
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(id) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

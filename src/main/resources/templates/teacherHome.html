@@ -1,3 +1,54 @@
+<!-- Modal para Confirmar Concluir Projeto -->
+<div class="modal fade" id="completeProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-success">Concluir Projeto</h4>
+                    <p class="text-muted small mb-0">Tem certeza que deseja marcar este projeto como concluído?</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">Todos os sprints devem estar concluídos para completar o projeto.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success rounded-pill flex-fill fw-bold" id="confirmCompleteProjectTeacherBtn">
+                        <i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Confirmar Reabrir Projeto -->
+<div class="modal fade" id="reopenProjectConfirmationModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-warning">Reabrir Projeto</h4>
+                    <p class="text-muted small mb-0">Tem certeza que deseja reabrir este projeto?</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-dark">O projeto voltará ao estado EM_CURSO.</p>
+            </div>
+            <div class="modal-footer border-0 pt-2 px-0 pb-0">
+                <div class="w-100 d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill flex-fill fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-pill flex-fill fw-bold" id="confirmReopenProjectTeacherBtn">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -1518,6 +1569,97 @@
         statusBadge.className = 'badge rounded-pill ' + 
             (status === 'CONCLUIDO' ? 'bg-success' : 
              status === 'EM_CURSO' ? 'bg-warning text-dark' : 'bg-secondary');
+
+        // Hide/show award and delete buttons based on project status
+        // Award buttons: only visible if status === 'EM_CURSO'
+        setTimeout(() => {
+            document.querySelectorAll('.btn-outline-primary.rounded-pill').forEach(btn => {
+                if (btn.textContent.includes('Atribuir')) {
+                    btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
+                }
+            });
+            document.querySelectorAll('.btn-outline-success.rounded-pill').forEach(btn => {
+                if (btn.title === 'Atribuir Prémio') {
+                    btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
+                }
+            });
+            const deleteBtn = document.querySelector('#projectDetailsModal .btn-danger');
+            if (deleteBtn && deleteBtn.textContent.includes('Eliminar Projeto')) {
+                // Only show delete when project is in PLANEAMENTO
+                deleteBtn.style.display = (status === 'PLANEAMENTO') ? '' : 'none';
+            }
+            // Adiciona botões de ação (concluir/reabrir) com modal de confirmação
+            const projectActionsContainer = document.getElementById('projectActionsContainer');
+            if (!projectActionsContainer) return;
+            projectActionsContainer.innerHTML = '';
+            if (status === 'EM_CURSO') {
+                const completeBtn = document.createElement('button');
+                completeBtn.type = 'button';
+                completeBtn.className = 'btn btn-success rounded-pill px-4 fw-bold';
+                completeBtn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir Projeto';
+                completeBtn.onclick = function() {
+                    window.pendingCompleteProjectId = data.id;
+                    const projectModalEl = document.getElementById('projectDetailsModal');
+                    const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                    if (projectModalInstance) projectModalInstance.hide();
+
+                    const confirmModalEl = document.getElementById('completeProjectConfirmationModal');
+                    const confirmModal = new bootstrap.Modal(confirmModalEl);
+                    confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                        if (projectModalInstance) projectModalInstance.show();
+                    }, { once: true });
+
+                    confirmModal.show();
+                };
+                projectActionsContainer.appendChild(completeBtn);
+            } else if (status === 'CONCLUIDO') {
+                const reopenBtn = document.createElement('button');
+                reopenBtn.type = 'button';
+                reopenBtn.className = 'btn btn-warning rounded-pill px-4 fw-bold';
+                reopenBtn.innerHTML = '<i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir Projeto';
+                reopenBtn.onclick = function() {
+                    window.pendingReopenProjectId = data.id;
+                    const projectModalEl = document.getElementById('projectDetailsModal');
+                    const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                    if (projectModalInstance) projectModalInstance.hide();
+
+                    const confirmModalEl = document.getElementById('reopenProjectConfirmationModal');
+                    const confirmModal = new bootstrap.Modal(confirmModalEl);
+                    confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                        if (projectModalInstance) projectModalInstance.show();
+                    }, { once: true });
+
+                    confirmModal.show();
+                };
+                projectActionsContainer.appendChild(reopenBtn);
+            }
+            lucide.createIcons();
+        }, 200);
+        // Lógica para os modais de confirmação de concluir/reabrir projeto
+        document.addEventListener('DOMContentLoaded', function() {
+            const completeBtn = document.getElementById('confirmCompleteProjectTeacherBtn');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', function() {
+                    if (window.pendingCompleteProjectId) {
+                        confirmCompleteProjectTeacher(window.pendingCompleteProjectId);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectConfirmationModal'));
+                        if (modal) modal.hide();
+                        window.pendingCompleteProjectId = null;
+                    }
+                });
+            }
+            const reopenBtn = document.getElementById('confirmReopenProjectTeacherBtn');
+            if (reopenBtn) {
+                reopenBtn.addEventListener('click', function() {
+                    if (window.pendingReopenProjectId) {
+                        confirmReopenProjectTeacher(window.pendingReopenProjectId);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+                        if (modal) modal.hide();
+                        window.pendingReopenProjectId = null;
+                    }
+                });
+            }
+        });
         
         // Preencher progresso
         const totalStories = data.totalStories || 0;
@@ -1584,7 +1726,20 @@
         
                                         completeButton.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir Projeto';
         
-                                        completeButton.onclick = function() { confirmCompleteProjectTeacher(data.id); };
+                                        completeButton.onclick = function() {
+                                            window.pendingCompleteProjectId = data.id;
+                                            const projectModalEl = document.getElementById('projectDetailsModal');
+                                            const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                                            if (projectModalInstance) projectModalInstance.hide();
+
+                                            const confirmModalEl = document.getElementById('completeProjectConfirmationModal');
+                                            const confirmModal = new bootstrap.Modal(confirmModalEl);
+                                            confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                                                if (projectModalInstance) projectModalInstance.show();
+                                            }, { once: true });
+
+                                            confirmModal.show();
+                                        };
         
                                         projectActionsContainer.appendChild(completeButton);
         
@@ -1598,7 +1753,20 @@
         
                                         reopenButton.innerHTML = '<i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir Projeto';
         
-                                        reopenButton.onclick = function() { confirmReopenProjectTeacher(data.id); };
+                                        reopenButton.onclick = function() {
+                                            window.pendingReopenProjectId = data.id;
+                                            const projectModalEl = document.getElementById('projectDetailsModal');
+                                            const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+                                            if (projectModalInstance) projectModalInstance.hide();
+
+                                            const confirmModalEl = document.getElementById('reopenProjectConfirmationModal');
+                                            const confirmModal = new bootstrap.Modal(confirmModalEl);
+                                            confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                                                if (projectModalInstance) projectModalInstance.show();
+                                            }, { once: true });
+
+                                            confirmModal.show();
+                                        };
         
                                         projectActionsContainer.appendChild(reopenButton);
         
@@ -1641,7 +1809,7 @@
                                 <small class="text-muted">${sprint.startDate || '?'} até ${sprint.endDate || '?'}</small>
                             </div>
                         </div>
-                        <a href="/view/sprint/${sprint.id}/user/${currentTeacherId}" 
+                        <a href="/view/sprint/${sprint.id}" 
                            class="btn btn-outline-primary rounded-pill px-3 btn-sm fw-bold">
                             <i data-lucide="layout-grid" class="w-4 h-4 me-1"></i>Ver Board
                         </a>
@@ -1945,7 +2113,8 @@
 
     function confirmCompleteProjectTeacher(projectId) {
         fetch('/projects/' + projectId + '/complete', {
-            method: 'PUT'
+            method: 'PUT',
+            credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
@@ -1968,21 +2137,28 @@
 
     function confirmReopenProjectTeacher(projectId) {
         fetch('/projects/' + projectId + '/reopen', {
-            method: 'PUT'
+            method: 'PUT',
+            credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+                if (modal) modal.hide();
                 openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
                 sessionStorage.setItem('successMessage', 'Projeto reaberto com sucesso!');
             } else {
                 response.text().then(text => {
                     sessionStorage.setItem('errorMessage', 'Erro ao reabrir projeto: ' + text);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+                    if (modal) modal.hide();
                     openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
                 });
             }
         })
         .catch(error => {
             sessionStorage.setItem('errorMessage', 'Erro de rede ao reabrir projeto.');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+            if (modal) modal.hide();
             openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
         });
     }
@@ -2631,27 +2807,35 @@
         const awardModalEl = document.getElementById('assignAwardToTeamModal');
         let awardModal = bootstrap.Modal.getInstance(awardModalEl);
         if (!awardModal) awardModal = new bootstrap.Modal(awardModalEl);
+
+        // Keep a reference to the project modal instance (if any) so we can re-open it later
+        let projectModalInstance = null;
         if (projectModalEl && projectModalEl.classList.contains('show')) {
-            const projectModal = bootstrap.Modal.getInstance(projectModalEl);
-            if (projectModal && document.body.contains(projectModalEl)) {
+            projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+            if (projectModalInstance && document.body.contains(projectModalEl)) {
                 projectModalEl.addEventListener('hidden.bs.modal', function onProjectHidden() {
                     if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
                         awardModal.show();
                     }
                     projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
                 }, { once: true });
-                projectModal.hide();
+                projectModalInstance.hide();
             }
         } else {
             if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
                 awardModal.show();
             }
         }
-        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto
+        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto (prefer reabrir a mesma instância se houver)
         awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-            const projectModalEl2 = document.getElementById('projectDetailsModal');
-            if (projectModalEl2 && document.body.contains(projectModalEl2)) {
-                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            if (projectModalInstance) {
+                try { projectModalInstance.show(); }
+                catch (e) { openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`)); }
+            } else {
+                const projectModalEl2 = document.getElementById('projectDetailsModal');
+                if (projectModalEl2 && document.body.contains(projectModalEl2)) {
+                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                }
             }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
         });
@@ -2676,7 +2860,9 @@
         awardSelect.disabled = true;
         const submitBtn = document.querySelector('#assignAwardToStudentInTeamModal button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
-        fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`)
+        fetch(`/awards/available-for-student?projectId=${projectId}`, {
+            credentials: 'same-origin'
+        })
             .then(response => response.json())
             .then(awards => {
                 const manualAwards = (awards || []).filter(a => a.type === 'MANUAL');
@@ -2711,27 +2897,35 @@
         const awardModalEl = document.getElementById('assignAwardToStudentInTeamModal');
         let awardModal = bootstrap.Modal.getInstance(awardModalEl);
         if (!awardModal) awardModal = new bootstrap.Modal(awardModalEl);
+
+        // Keep a reference to the project modal instance (if any) so we can re-open it later
+        let projectModalInstance = null;
         if (projectModalEl && projectModalEl.classList.contains('show')) {
-            const projectModal = bootstrap.Modal.getInstance(projectModalEl);
-            if (projectModal && document.body.contains(projectModalEl)) {
+            projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
+            if (projectModalInstance && document.body.contains(projectModalEl)) {
                 projectModalEl.addEventListener('hidden.bs.modal', function onProjectHidden() {
                     if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
                         awardModal.show();
                     }
                     projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
                 }, { once: true });
-                projectModal.hide();
+                projectModalInstance.hide();
             }
         } else {
             if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
                 awardModal.show();
             }
         }
-        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto
+        // Quando o modal de prémio fechar, reabrir o de detalhes do projeto (prefer reabrir a mesma instância se houver)
         awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-            const projectModalEl2 = document.getElementById('projectDetailsModal');
-            if (projectModalEl2 && document.body.contains(projectModalEl2)) {
-                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            if (projectModalInstance) {
+                try { projectModalInstance.show(); }
+                catch (e) { openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`)); }
+            } else {
+                const projectModalEl2 = document.getElementById('projectDetailsModal');
+                if (projectModalEl2 && document.body.contains(projectModalEl2)) {
+                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                }
             }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
         });
@@ -3141,6 +3335,29 @@
         if(themeSwitcher && localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
             themeSwitcher.checked = true;
+        }
+        // Bind confirmações dos modais de concluir/reabrir projeto
+        const confirmCompleteBtn = document.getElementById('confirmCompleteProjectTeacherBtn');
+        if (confirmCompleteBtn) {
+            confirmCompleteBtn.addEventListener('click', function() {
+                if (window.pendingCompleteProjectId) {
+                    confirmCompleteProjectTeacher(window.pendingCompleteProjectId);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('completeProjectConfirmationModal'));
+                    if (modal) modal.hide();
+                    window.pendingCompleteProjectId = null;
+                }
+            });
+        }
+        const confirmReopenBtn = document.getElementById('confirmReopenProjectTeacherBtn');
+        if (confirmReopenBtn) {
+            confirmReopenBtn.addEventListener('click', function() {
+                if (window.pendingReopenProjectId) {
+                    confirmReopenProjectTeacher(window.pendingReopenProjectId);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+                    if (modal) modal.hide();
+                    window.pendingReopenProjectId = null;
+                }
+            });
         }
     });
 </script>

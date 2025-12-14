@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,8 +31,13 @@ public class DashboardController {
      * @return TeacherDashboardDTO com dados do dashboard
      */
     @GetMapping("/teacher/{courseId}")
-    public TeacherDashboardDTO getTeacherDashboard(@PathVariable Long courseId) {
-        return dashboardService.getTeacherDashboard(courseId);
+    public ResponseEntity<TeacherDashboardDTO> getTeacherDashboard(@PathVariable Long courseId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        TeacherDashboardDTO dto = dashboardService.getTeacherDashboard(courseId);
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -40,8 +47,13 @@ public class DashboardController {
      * @return StudentDashboardDTO com dados do estudante
      */
     @GetMapping("/student/{studentId}")
-    public StudentDashboardDTO getStudentDashboard(@PathVariable Long studentId) {
-        return dashboardService.getStudentDashboard(studentId);
+    public ResponseEntity<StudentDashboardDTO> getStudentDashboard(@PathVariable Long studentId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        StudentDashboardDTO dto = dashboardService.getStudentDashboard(studentId);
+        return ResponseEntity.ok(dto);
     }
 
     /**

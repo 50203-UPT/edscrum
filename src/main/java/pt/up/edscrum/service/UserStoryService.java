@@ -80,6 +80,14 @@ public class UserStoryService {
     }
 
     /**
+     * Recupera uma UserStory pelo seu id.
+     */
+    public UserStory getUserStoryById(Long storyId) {
+        return userStoryRepository.findById(storyId)
+                .orElseThrow(() -> new RuntimeException("User Story não encontrada"));
+    }
+
+    /**
      * Atualiza os campos editáveis de uma user story (nome, descrição,
      * prioridade, story points e assignee).
      *

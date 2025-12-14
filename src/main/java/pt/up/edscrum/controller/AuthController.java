@@ -35,13 +35,17 @@ public class AuthController {
      * @return ResponseEntity com o User autenticado ou erro 401
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, jakarta.servlet.http.HttpSession session) {
 
         User user = authService.login(request.getEmail(), request.getPassword());
 
         if (user == null) {
             return ResponseEntity.status(401).body("Credenciais inválidas");
         }
+
+        // Store authenticated user in session for REST logins
+        session.setAttribute("currentUserId", user.getId());
+        session.setAttribute("currentUserRole", user.getRole());
 
         return ResponseEntity.ok(user);
     }
