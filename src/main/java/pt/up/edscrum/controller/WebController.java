@@ -178,7 +178,16 @@ public class WebController {
      * @return Redirecionamento para a página inicial com flag de registo
      */
     @PostMapping("/auth/web/register")
-    public String webRegister(@ModelAttribute User user) {
+    public String webRegister(@ModelAttribute User user, Model model) {
+        // Check if email already exists to avoid DB constraint exception
+        if (user.getEmail() != null && userService.getUserByEmail(user.getEmail()).isPresent()) {
+            model.addAttribute("error", "Email já registado. Inicie sessão ou use outro email.");
+            model.addAttribute("submittedName", user.getName());
+            model.addAttribute("submittedEmail", user.getEmail());
+            model.addAttribute("submittedRole", user.getRole());
+            return "register";
+        }
+
         userService.createUser(user);
         return "redirect:/?registered=true";
     }
@@ -609,9 +618,14 @@ public class WebController {
             // Define estado inicial
             sprint.setStatus(pt.up.edscrum.enums.SprintStatus.PLANEAMENTO);
 
-            // Associa quem criou (se fornecido) e chama o serviço
+            // Associa quem criou (se fornecido) ou utiliza o utilizador autenticado
             if (studentId != null) {
                 sprint.setCreatedBy(userService.getUserById(studentId));
+            } else {
+                // Se não foi fornecido studentId (remoção de IDs na URL), usar o currentUser
+                if (currentUserId != null) {
+                    sprint.setCreatedBy(userService.getUserById(currentUserId));
+                }
             }
             Sprint saved = sprintService.createSprint(projectId, sprint);
 

@@ -35,6 +35,9 @@
         </div>
 
         <form id="registerForm" th:action="@{/auth/web/register}" method="post" class="space-y-4">
+          <div th:if="${error}" class="bg-red-50 border border-red-200 rounded-md p-3 text-red-800">
+            <strong th:text="${error}"></strong>
+          </div>
           <div class="space-y-2">
             <label for="name" class="block text-sm font-medium">Nome Completo *</label>
             <input
@@ -42,6 +45,7 @@
               name="name"
               type="text"
               placeholder="Ex: João Costa"
+              th:value="${submittedName}"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -55,6 +59,7 @@
               name="email"
               type="email"
               placeholder="example@upt.pt"
+              th:value="${submittedEmail}"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -66,10 +71,11 @@
             <select
               id="role"
               name="role"
+              th:value="${submittedRole}"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="STUDENT">Estudante</option>
-              <option value="TEACHER">Professor</option>
+              <option value="STUDENT" th:selected="${submittedRole == null or submittedRole == 'STUDENT'}">Estudante</option>
+              <option value="TEACHER" th:selected="${submittedRole == 'TEACHER'}">Professor</option>
             </select>
           </div>
 

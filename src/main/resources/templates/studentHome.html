@@ -1013,31 +1013,37 @@
                             <div class="d-flex gap-2">
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:if="${project.courseName != null}" th:text="${project.courseName}">Qualidade de Software</span>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" th:if="${project.courseName == null}">Curso não disponível</span>
-                                <span class="badge bg-purple-100 text-purple-700 border border-purple-200" style="background-color: #f3e8ff; color: #7e22ce;" th:text="${student.roleInTeam}">Scrum Master</span>
+                                  <span th:each="m : ${project.members}" th:if="${m.id == student.id}" class="badge bg-purple-100 text-purple-700 border border-purple-200" style="background-color: #f3e8ff; color: #7e22ce;"
+                                      th:classappend="${m.role == 'Product Owner'} ? 'role-po' : (${m.role == 'Scrum Master'} ? 'role-sm' : 'role-dev')"
+                                      th:text="${m.role}">Scrum Master</span>
                             </div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints) and student.roleInTeam == 'Product Owner'}"
-                                class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
-                                data-bs-toggle="modal"
-                                data-bs-target="#completeProjectModal"
-                                th:data-project-id="${project.id}"
-                                onclick="setupCompleteProjectModal(this)"
-                                style="display: none;">
-                            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
-                            <span>Concluir Projeto</span>
-                        </button>
+                        <th:block th:each="m : ${project.members}">
+                            <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints) and m.id == student.id and m.role == 'Product Owner'}"
+                                    class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#completeProjectModal"
+                                    th:data-project-id="${project.id}"
+                                    onclick="setupCompleteProjectModal(this)"
+                                    style="display: none;">
+                                <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                                <span>Concluir Projeto</span>
+                            </button>
+                        </th:block>
 
-                        <button th:if="${project.status.name() == 'CONCLUIDO' and student.roleInTeam == 'Product Owner'}"
-                                class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-                                data-bs-toggle="modal"
-                                data-bs-target="#reopenProjectModal"
-                                th:data-project-id="${project.id}"
-                                onclick="setupReopenProjectModal(this)">
-                            <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
-                            <span>Reabrir Projeto</span>
-                        </button>
+                        <th:block th:each="m : ${project.members}">
+                            <button th:if="${project.status.name() == 'CONCLUIDO' and m.id == student.id and m.role == 'Product Owner'}"
+                                    class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#reopenProjectModal"
+                                    th:data-project-id="${project.id}"
+                                    onclick="setupReopenProjectModal(this)">
+                                <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
+                                <span>Reabrir Projeto</span>
+                            </button>
+                        </th:block>
                         
                         <span class="badge text-white px-3 py-2 rounded-pill"
                               th:classappend="${project.status.name() == 'CONCLUIDO' ? 'bg-success' : (project.status.name() == 'EM_CURSO' ? 'bg-warning' : 'bg-secondary')}"
