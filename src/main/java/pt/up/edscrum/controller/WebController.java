@@ -729,7 +729,7 @@ public class WebController {
             redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com sucesso!");
 
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erro: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("profileErrorMessage", e.getMessage());
         }
         // Redireciona para a página correta dependendo se é professor ou estudante
         if (studentId != null) {
@@ -888,7 +888,7 @@ public class WebController {
                 throw new Exception("Professor não encontrado.");
             }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar perfil: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("profileErrorMessage", e.getMessage());
         }
 
         return "redirect:/view/teacher/home";
