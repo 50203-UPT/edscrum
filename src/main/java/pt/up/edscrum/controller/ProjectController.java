@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import pt.up.edscrum.dto.dashboard.ProjectDetailsDTO;
@@ -107,8 +108,11 @@ public class ProjectController {
      * @return ResponseEntity 200 OK se concluído ou erro apropriado
      */
     @PutMapping("/{id}/complete")
-    public ResponseEntity<?> completeProject(@PathVariable Long id) {
+    public ResponseEntity<?> completeProject(@PathVariable Long id, @RequestParam Long studentId) {
         try {
+            if (!projectService.isUserProductOwner(studentId, id)) {
+                return ResponseEntity.status(403).body("Apenas o Product Owner pode concluir o projeto.");
+            }
             projectService.completeProject(id);
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
@@ -125,8 +129,11 @@ public class ProjectController {
      * @return ResponseEntity 200 OK se reaberto ou erro 500 em falha
      */
     @PutMapping("/{id}/reopen")
-    public ResponseEntity<?> reopenProject(@PathVariable Long id) {
+    public ResponseEntity<?> reopenProject(@PathVariable Long id, @RequestParam Long studentId) {
         try {
+            if (!projectService.isUserProductOwner(studentId, id)) {
+                return ResponseEntity.status(403).body("Apenas o Product Owner pode reabrir o projeto.");
+            }
             projectService.reopenProject(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {

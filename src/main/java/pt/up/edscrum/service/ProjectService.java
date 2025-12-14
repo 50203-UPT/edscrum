@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Team;
+import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository;
 
@@ -139,6 +140,24 @@ public class ProjectService {
         Project project = getProjectById(projectId);
         project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);
         projectRepository.save(project);
+    }
+
+    public boolean isUserProductOwner(Long userId, Long projectId) {
+        Project project = getProjectById(projectId);
+        if (project.getTeams() == null) {
+            return false;
+        }
+
+        User user = new User();
+        user.setId(userId);
+
+        for (Team team : project.getTeams()) {
+            if (team.getProductOwner() != null && team.getProductOwner().equals(user)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

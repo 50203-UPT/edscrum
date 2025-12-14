@@ -1018,9 +1018,9 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints)}" 
+                        <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints) and student.roleInTeam == 'Product Owner'}"
                                 class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
-                                data-bs-toggle="modal" 
+                                data-bs-toggle="modal"
                                 data-bs-target="#completeProjectModal"
                                 th:data-project-id="${project.id}"
                                 onclick="setupCompleteProjectModal(this)"
@@ -1028,10 +1028,10 @@
                             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
                             <span>Concluir Projeto</span>
                         </button>
-                        
-                        <button th:if="${project.status.name() == 'CONCLUIDO'}" 
+
+                        <button th:if="${project.status.name() == 'CONCLUIDO' and student.roleInTeam == 'Product Owner'}"
                                 class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-                                data-bs-toggle="modal" 
+                                data-bs-toggle="modal"
                                 data-bs-target="#reopenProjectModal"
                                 th:data-project-id="${project.id}"
                                 onclick="setupReopenProjectModal(this)">
@@ -1767,7 +1767,7 @@
     function confirmCompleteProject() {
         if (!currentProjectId) return;
 
-        fetch('/projects/' + currentProjectId + '/complete', {
+        fetch('/projects/' + currentProjectId + '/complete?studentId=' + window.currentStudentId, {
             method: 'PUT'
         })
         .then(response => {
@@ -1794,7 +1794,7 @@
     function confirmReopenProject() {
         if (!currentProjectId) return;
 
-        fetch('/projects/' + currentProjectId + '/reopen', {
+        fetch('/projects/' + currentProjectId + '/reopen?studentId=' + window.currentStudentId, {
             method: 'PUT'
         })
         .then(response => {
