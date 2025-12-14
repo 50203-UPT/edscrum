@@ -85,6 +85,23 @@
         font-weight: bold;
     }
 
+    /* ABAS (match teacher layout) */
+    .tabs-container {
+        display: flex; gap: 10px; padding: 0 20px; background: white;
+        border-bottom: 1px solid #dee2e6; margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+        background: transparent !important; border: none; border-bottom: 3px solid transparent;
+        padding: 12px 20px; font-weight: 500; color: #6c757d; outline: none !important;
+        position: relative; top: 1px; transition: all 0.2s ease;
+    }
+    .tab-btn:hover { color: #0d6efd; background-color: rgba(13, 110, 253, 0.05) !important; }
+    .tab-btn.active { border-bottom: 3px solid #0d6efd; color: #0d6efd !important; font-weight: 700; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     /* Estilos para a foto de perfil */
     #removeImageBtn:hover,
     label[for="imageUploadStudent"]:hover {
@@ -104,137 +121,114 @@
         transition: all 0.3s ease;
     }
 
-    /* Notification Sidebar Styles */
+    /* ================================================================= */
+    /* NOVA BARRA LATERAL DE NOTIFICAÇÕES (ESTILO SHADCN) */
+    /* Substitui os estilos antigos da .notification-sidebar por estes */
+    /* ================================================================= */
+
     .notification-sidebar {
         position: fixed;
         top: 0;
-        right: -400px; /* Hidden by default */
+        right: -400px; /* Escondido por defeito */
         width: 400px;
-        height: 100%;
-        background-color: #f8f9fa; /* Matching the body background */
-        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 1050;
-        transition: right 0.3s ease-in-out;
+        height: 100vh;
+        background-color: white;
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+        z-index: 1060 !important; /* Importante para ficar acima de modais */
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
         border-left: 1px solid #e9ecef;
     }
 
     .notification-sidebar.open {
-        right: 0; /* Visible */
+        right: 0; /* Torna visível */
     }
 
     .notification-sidebar-header {
         padding: 1.5rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 1px solid #e5e7eb;
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        background-color: #ffffff; /* White header for better contrast */
-    }
-
-    .notification-sidebar-header h5 {
-        color: var(--bs-body-color);
-        cursor: pointer;
+        align-items: flex-start;
+        background-color: #ffffff;
     }
 
     .notification-sidebar-body {
         flex-grow: 1;
         padding: 1.5rem;
         overflow-y: auto;
-        background-color: #f8f9fa;
+        background-color: #fff;
     }
 
-    .notification-item {
-        background-color: transparent;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
+    /* Estilos dos Cartões */
+    .notification-card {
         padding: 1rem;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid;
+        cursor: pointer;
         transition: all 0.2s ease;
-        color: #212529;
-    }
-
-    .notification-item:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        border-color: rgba(0, 0, 0, 0.2);
-    }
-
-    .notification-item.unread {
-        background-color: rgba(13, 110, 253, 0.1);
-        border-color: rgba(13, 110, 253, 0.2);
-    }
-
-    .notification-item.unread:hover {
-        background-color: rgba(13, 110, 253, 0.15);
-        border-color: rgba(13, 110, 253, 0.3);
-    }
-
-    .notification-content h6 {
-        color: inherit;
-        margin: 0 0 4px 0;
-        font-weight: 600;
-    }
-
-    .notification-content p {
-        color: inherit;
-        opacity: 0.9;
-        margin: 0 0 8px 0;
-    }
-
-    .notification-time {
-        font-size: 0.8rem;
-        opacity: 0.8;
-        color: inherit;
-    }
-
-    .notification-icon {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
+        gap: 0.75rem;
+        text-align: left;
+        position: relative;
+        background: white;
+        margin-bottom: 0.75rem;
     }
 
-    .notification-content {
-        flex-grow: 1;
+    .notification-card.unread {
+        background-color: #eff6ff; /* Azul claro */
+        border-color: #bfdbfe;
+    }
+    .notification-card.unread:hover {
+        background-color: #dbeafe; 
     }
 
-    .notification-content h6 {
-        font-size: 0.95rem;
-        font-weight: 600;
+    .notification-card.read {
+        background-color: #ffffff;
+        border-color: #e5e7eb;
+    }
+    .notification-card.read:hover {
+        background-color: #f9fafb; 
+    }
+
+    .notif-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 0.25rem;
-        color: var(--bs-body-color);
     }
 
-    .notification-content p {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-bottom: 0.5rem;
+    .notif-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
+    }
+    .notification-card.read .notif-title {
+        color: #6b7280;
+        font-weight: 500;
     }
 
-    .notification-time {
+    .notif-message {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+    }
+
+    .notif-date {
         font-size: 0.75rem;
-        color: #adb5bd;
-        text-align: right;
+        color: #9ca3af;
+    }
+
+    .notif-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #2563eb;
+        border-radius: 50%;
+        margin-top: 6px;
         flex-shrink: 0;
-    }
-
-    .notification-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .notification-actions .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
     }
     
     .cursor-pointer {
@@ -695,20 +689,36 @@
     </nav>
 
     <div id="notificationSidebar" class="notification-sidebar">
-        <div class="notification-sidebar-header">
-            <h5 class="fw-bold mb-0" onclick="toggleNotificationSidebar()">Notificações</h5>
-            <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
+    <div class="notification-sidebar-header">
+        <div>
+            <h5 class="fw-bold mb-1">Notificações</h5>
+            <p class="text-muted small mb-0">Mantenha-se atualizado sobre prémios e projetos</p>
         </div>
-        <div class="notification-sidebar-body">
-            <div id="notificationsContainer">
-                <div class="text-center text-muted mt-4" id="noNotifications" style="display: none;">
-                    <i data-lucide="bell-off" class="w-8 h-8 mb-2"></i>
-                    <p>Nenhuma notificação nova.</p>
-                </div>
-            </div>
-        </div>
+        <button type="button" class="btn-close" aria-label="Close" onclick="toggleNotificationSidebar()"></button>
     </div>
 
+    <div class="notification-sidebar-body d-flex flex-column">
+        <div id="notificationActions" class="px-1 pb-3" style="display: none;">
+            <button class="btn btn-outline-secondary btn-sm w-100" onclick="markAllNotificationsAsRead()">
+                Marcar todas como lidas
+            </button>
+        </div>
+
+        <div id="notificationsContainer" class="notification-list flex-grow-1">
+            <div class="text-center text-muted mt-5">
+                <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                <p class="mt-2 small">A carregar notificações...</p>
+            </div>
+        </div>
+
+        <div id="noNotifications" class="text-center mt-5" style="display: none;">
+            <div class="mb-3 opacity-25">
+                <i data-lucide="bell-off" style="width: 48px; height: 48px;"></i>
+            </div>
+            <p class="text-muted">Sem notificações</p>
+        </div>
+    </div>
+</div>
     <div class="container mt-3" style="max-width: 1200px;">
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="background-color: #d1e7dd; color: #0f5132;">
             <i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span th:text="${successMessage}">Sucesso!</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -952,7 +962,6 @@
                 </div>
             </div>
 
-            <!-- Prémios que podem ser obtidos -->
             <div class="mt-4">
                 <h5 class="fw-bold mb-3">Prémios que podem ser obtidos</h5>
                 <div class="row g-3">
@@ -1009,7 +1018,6 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <!-- Botão Concluir: aparece quando status NÃO é CONCLUIDO e todos os sprints estão concluídos -->
                         <button th:if="${project.status.name() != 'CONCLUIDO' and project.sprints != null and !#lists.isEmpty(project.sprints)}" 
                                 class="btn btn-sm btn-success rounded-pill px-3 align-items-center gap-1 complete-project-btn"
                                 data-bs-toggle="modal" 
@@ -1021,7 +1029,6 @@
                             <span>Concluir Projeto</span>
                         </button>
                         
-                        <!-- Botão Reabrir: aparece quando status É CONCLUIDO -->
                         <button th:if="${project.status.name() == 'CONCLUIDO'}" 
                                 class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
                                 data-bs-toggle="modal" 
@@ -1038,7 +1045,6 @@
                     </div>
                 </div>
                 
-                <!-- Hidden inputs com datas do projeto e último sprint para validação JS -->
                 <input type="hidden" th:id="'projectStartDateHidden-' + ${project.id}" th:value="${project.startDate}" />
                 <input type="hidden" th:id="'projectEndDateHidden-' + ${project.id}" th:value="${project.endDate}" />
                 <input type="hidden" th:if="${project.sprints != null and !#lists.isEmpty(project.sprints)}" th:id="'lastSprintEndHidden-' + ${project.id}" th:value="${project.sprints[#lists.size(project.sprints) - 1].endDate}" />
@@ -1340,7 +1346,6 @@
                         </div>
                     </div>
                     
-                    <!-- Mensagem de erro -->
                     <div id="enrollErrorMessage" class="alert alert-danger d-flex align-items-center mb-3" style="display: none !important;">
                         <i data-lucide="alert-circle" class="w-4 h-4 me-2"></i>
                         <span id="enrollErrorText">O código de acesso está incorreto.</span>
@@ -1369,7 +1374,6 @@
     </div>
 </div>
     
-    <!-- Modal Course Details -->
     <div class="modal fade" id="newSprintModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -1384,7 +1388,6 @@
                     <form id="newSprintForm" th:action="@{/sprints/create}" method="POST">
                         <input type="hidden" id="newSprintProjectId" name="projectId">
                         <input type="hidden" name="studentId" th:value="${student.id}">
-                        <!-- Hidden inputs para validação de datas -->
                         <input type="hidden" id="currentProjectStart" value="">
                         <input type="hidden" id="currentProjectEnd" value="">
                         <input type="hidden" id="currentLastSprintEnd" value="">
@@ -1420,7 +1423,6 @@
         </div>
     </div>
 
-    <!-- Modal Concluir Projeto -->
     <div class="modal fade" id="completeProjectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -1444,7 +1446,6 @@
         </div>
     </div>
 
-    <!-- Modal Reabrir Projeto -->
     <div class="modal fade" id="reopenProjectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -1489,60 +1490,144 @@
     // ==========================================
     // 2. SISTEMA DE NOTIFICAÇÕES (ATUALIZADO)
     // ==========================================
+/* ==========================================
+       LÓGICA DE NOTIFICAÇÕES (ESTUDANTE - DESIGN ATUALIZADO)
+       ========================================== */
 
-    async function fetchNotifications() {
-        const notificationsContainer = document.getElementById('notificationsContainer');
-        const notificationCountBadge = document.getElementById('notificationCount');
-        const notificationBellIcon = document.getElementById('notificationBellIcon');
-        const noNotificationsMessage = document.getElementById('noNotifications');
-
-        // Estado de Loading
-        notificationsContainer.innerHTML = '<div class="text-center text-muted mt-4"><div class="spinner-border text-primary spinner-border-sm" role="status"></div><p class="mt-2 small">A carregar...</p></div>';
-        
-        try {
-            // Chamada à API Real criada no passo 4
-            const response = await fetch(`/api/notifications/${currentUserId}`);
-            
-            if (!response.ok) {
-                // Fallback para log se a API falhar (ex: user logout)
-                console.log('API returned ' + response.status);
-                throw new Error("Falha ao buscar notificações");
-            }
-            
-            const notifications = await response.json();
-            
-            // Limpa o container
-            notificationsContainer.innerHTML = '';
-
-            if (notifications.length === 0) {
-                noNotificationsMessage.style.display = 'block';
-                notificationsContainer.appendChild(noNotificationsMessage);
-                updateBadge(0);
-            } else {
-                noNotificationsMessage.style.display = 'none';
-                
-                notifications.forEach(notification => {
-                    const el = createNotificationElement(notification);
-                    notificationsContainer.appendChild(el);
-                });
-                
-                // Contar não lidas
-                const unreadCount = notifications.filter(n => !n.read).length;
-                updateBadge(unreadCount);
-            }
-            
-            lucide.createIcons();
-
-        } catch (error) {
-            console.error('Erro notificações:', error);
-            // Em caso de erro, limpa o loading e mostra mensagem
-            notificationsContainer.innerHTML = '';
-            if(noNotificationsMessage) {
-                noNotificationsMessage.style.display = 'block';
-                notificationsContainer.appendChild(noNotificationsMessage);
+    function toggleNotificationSidebar() {
+        const sidebar = document.getElementById('notificationSidebar');
+        if(sidebar) {
+            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                fetchNotifications();
             }
         }
     }
+
+    async function fetchNotifications() {
+        const container = document.getElementById('notificationsContainer');
+        const actionsDiv = document.getElementById('notificationActions');
+        const noNotifs = document.getElementById('noNotifications');
+        
+        // Reset loading apenas se vazio ou erro
+        if(container && (container.children.length === 0 || container.querySelector('.text-danger'))) {
+             container.innerHTML = '<div class="text-center text-muted mt-4"><div class="spinner-border text-primary spinner-border-sm" role="status"></div><p class="mt-2 small">A carregar...</p></div>';
+        }
+        
+        try {
+            // Usa currentUserId (student.id) definido no topo do script
+            const response = await fetch(`/api/notifications/${currentUserId}`);
+            if (!response.ok) return; 
+            
+            const notifications = await response.json();
+            renderNotifications(notifications);
+            
+        } catch (error) {
+            console.error('Erro notificações:', error);
+            if(container) container.innerHTML = '';
+            if(noNotifs) noNotifs.style.display = 'block';
+        }
+    }
+
+    function renderNotifications(notifications) {
+        const container = document.getElementById('notificationsContainer');
+        const actionsDiv = document.getElementById('notificationActions');
+        const noNotifs = document.getElementById('noNotifications');
+        
+        if(!container) return;
+        container.innerHTML = ''; 
+        
+        const unreadCount = notifications.filter(n => !n.read).length;
+        updateBellBadge(unreadCount);
+
+        if (actionsDiv) actionsDiv.style.display = unreadCount > 0 ? 'block' : 'none';
+
+        if (notifications.length === 0) {
+            if (noNotifs) noNotifs.style.display = 'block';
+            if (actionsDiv) actionsDiv.style.display = 'none';
+        } else {
+            if (noNotifs) noNotifs.style.display = 'none';
+            
+            notifications.forEach(notification => {
+                const card = document.createElement('div');
+                const isReadClass = notification.read ? 'read' : 'unread';
+                card.className = `notification-card ${isReadClass}`;
+                
+                card.onclick = () => { 
+                    if(!notification.read) markAsRead(notification.id);
+                };
+
+                const iconHtml = getIconHtml(notification.type);
+                const timeAgo = formatTimeAgo(notification.createdAt);
+
+                card.innerHTML = `
+                    <div class="flex-shrink-0 mt-1">${iconHtml}</div>
+                    <div class="flex-grow-1">
+                        <div class="notif-header">
+                            <h4 class="notif-title">${notification.title}</h4>
+                            ${!notification.read ? '<div class="notif-dot"></div>' : ''}
+                        </div>
+                        <p class="notif-message">${notification.message}</p>
+                        <p class="notif-date">${timeAgo}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            if(window.lucide) lucide.createIcons();
+        }
+    }
+
+    async function markAsRead(id) {
+        try {
+            await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+            fetchNotifications(); 
+        } catch (e) { console.error(e); }
+    }
+
+    async function markAllNotificationsAsRead() {
+        try {
+            await fetch(`/api/notifications/user/${currentUserId}/read-all`, { method: 'POST' });
+            fetchNotifications();
+        } catch (e) { console.error(e); }
+    }
+
+    function getIconHtml(type) {
+        switch (type) {
+            case 'AWARD': return `<i data-lucide="trophy" class="text-warning" style="width: 20px; height: 20px;"></i>`;
+            case 'TEAM': return `<i data-lucide="users" class="text-primary" style="width: 20px; height: 20px;"></i>`;
+            case 'PROJECT': return `<i data-lucide="check-circle" class="text-success" style="width: 20px; height: 20px;"></i>`;
+            default: return `<i data-lucide="bell" class="text-secondary" style="width: 20px; height: 20px;"></i>`;
+        }
+    }
+
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const diffMs = new Date() - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) return "agora mesmo";
+        if (diffMins < 60) return `há ${diffMins} min`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `há ${diffHours} h`;
+        return date.toLocaleDateString('pt-PT');
+    }
+
+    function updateBellBadge(count) {
+        const badge = document.getElementById('notificationCount');
+        const icon = document.getElementById('notificationBellIcon');
+        if (badge && icon) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'block' : 'none';
+            if (count > 0) {
+                icon.classList.remove('text-secondary');
+                icon.classList.add('text-danger');
+            } else {
+                icon.classList.remove('text-danger');
+                icon.classList.add('text-secondary');
+            }
+        }
+    }
+    
 
     function updateBadge(count) {
         const badge = document.getElementById('notificationCount');
@@ -1620,6 +1705,15 @@
         }
     }
 
+    async function markAllNotificationsAsRead() {
+        try {
+            await fetch(`/api/notifications/user/${currentUserId}/read-all`, { method: 'POST' });
+            fetchNotifications();
+        } catch (error) {
+            console.error('Erro ao marcar todas como lidas:', error);
+        }
+    }
+
     function timeAgo(dateString) {
         const now = new Date();
         const date = new Date(dateString);
@@ -1638,13 +1732,7 @@
         return "agora mesmo";
     }
 
-    function toggleNotificationSidebar() {
-        const sidebar = document.getElementById('notificationSidebar');
-        sidebar.classList.toggle('open');
-        if (sidebar.classList.contains('open')) {
-            fetchNotifications();
-        }
-    }
+    
 
     function checkAllSprintsCompleted() {
         const projectCards = document.querySelectorAll('#projects .content-card');
@@ -2280,7 +2368,6 @@
     });
     </script>
 
-    <!-- Modal Detalhes do Curso e Equipa -->
     <div class="modal fade" id="courseDetailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -2292,15 +2379,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Se o aluno está numa equipa -->
                     <div id="studentTeamDetailsSection" style="display: none;">
                         <h5 class="fw-bold text-primary mb-3">A Tua Equipa</h5>
                         <div id="teamDetailsCard" class="content-card border-start border-4 border-success">
-                            <!-- Team details will be populated here -->
-                        </div>
+                            </div>
                     </div>
 
-                    <!-- Se o aluno NÃO está numa equipa -->
                     <div id="studentNoTeamSection" style="display: none;">
                         <h5 class="fw-bold text-secondary mb-3">Não Estás Numa Equipa</h5>
                         <p class="text-muted mb-4">Podes criar uma nova equipa ou juntar-te a uma equipa existente que tenha vagas disponíveis.</p>
@@ -2319,7 +2403,6 @@
         </div>
     </div>
 
-    <!-- Modal Criar Equipa (Aluno) -->
     <div class="modal fade" id="studentCreateTeamModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -2379,7 +2462,6 @@
         </div>
     </div>
 
-    <!-- Modal Juntar-se a Equipa -->
     <div class="modal fade" id="studentJoinTeamModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-4 border-0 shadow-lg" style="padding: 20px;">
@@ -2392,8 +2474,7 @@
                 </div>
                 <div class="modal-body">
                     <div id="availableTeamsContainer">
-                        <!-- Available teams will be loaded here -->
-                    </div>
+                        </div>
                     <div id="noTeamsMessage" class="alert alert-info" style="display: none;">
                         Não há equipas com vagas disponíveis neste curso.
                     </div>
