@@ -102,12 +102,15 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // For now, allow deletion if teacher or assignee
-        // Fetch story to check assignee
-        // (Service lacks getter; assume repository filled by service methods)
+        // Allow deletion if teacher, the assignee of the story, or the sprint's creator
+        UserStory existing = userStoryService.getUserStoryById(storyId);
+        Long assigneeId = existing.getAssignee() != null ? existing.getAssignee().getId() : null;
+        Long sprintOwnerId = null;
+        try { sprintOwnerId = existing.getSprint().getCreatedBy() != null ? existing.getSprint().getCreatedBy().getId() : null; } catch (Exception e) { }
         if (!"TEACHER".equals(currentUserRole)) {
-            // Best-effort: deny if not teacher (fine-tune later)
-            return ResponseEntity.status(403).build();
+            if ((assigneeId == null || !assigneeId.equals(currentUserId)) && (sprintOwnerId == null || !sprintOwnerId.equals(currentUserId))) {
+                return ResponseEntity.status(403).build();
+            }
         }
         userStoryService.deleteUserStory(storyId);
         return ResponseEntity.ok().build();

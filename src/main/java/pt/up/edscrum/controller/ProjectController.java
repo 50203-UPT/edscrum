@@ -119,8 +119,10 @@ public class ProjectController {
                 return ResponseEntity.status(403).body("Forbidden");
             }
 
-            // Use the session user id to verify Product Owner role
-            if (!projectService.isUserProductOwner(currentUserId, id)) {
+            // Determine the effective acting user: either the studentId (when teacher overrides)
+            // or the current session user. Use that to verify Product Owner role.
+            Long actingUserId = (studentId != null) ? studentId : currentUserId;
+            if (!projectService.isUserProductOwner(actingUserId, id)) {
                 return ResponseEntity.status(403).body("Apenas o Product Owner pode concluir o projeto.");
             }
             projectService.completeProject(id);
@@ -149,7 +151,9 @@ public class ProjectController {
                 return ResponseEntity.status(403).body("Forbidden");
             }
 
-            if (!projectService.isUserProductOwner(currentUserId, id)) {
+            Long actingUserIdReopen = (studentId != null) ? studentId : currentUserId;
+
+            if (!projectService.isUserProductOwner(actingUserIdReopen, id)) {
                 return ResponseEntity.status(403).body("Apenas o Product Owner pode reabrir o projeto.");
             }
             projectService.reopenProject(id);

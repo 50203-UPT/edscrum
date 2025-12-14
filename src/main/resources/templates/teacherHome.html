@@ -1477,6 +1477,57 @@
 </script>
 <script th:inline="javascript">
     lucide.createIcons();
+    // Safe sessionStorage helpers (may be blocked by browser Tracking Prevention)
+    function safeSessionSet(key, value) {
+        try { sessionStorage.setItem(key, value); } catch (e) { }
+    }
+    function safeSessionGet(key) {
+        try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    }
+    function safeSessionRemove(key) {
+        try { sessionStorage.removeItem(key); } catch (e) { }
+    }
+
+    // Show a temporary alert on the page (bypasses sessionStorage)
+    function showAlert(type, message, duration = 4500) {
+        try {
+            const topContainer = document.querySelector('.container.mt-3') || document.body;
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show shadow-sm border-0`;
+            alert.setAttribute('role', 'alert');
+            if (type === 'success') { alert.style.backgroundColor = '#d1e7dd'; alert.style.color = '#0f5132'; }
+            if (type === 'danger') { alert.style.backgroundColor = '#f8d7da'; alert.style.color = '#842029'; }
+            alert.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5 inline me-2"></i><span>${message}</span>` +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            topContainer.insertBefore(alert, topContainer.firstChild);
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => { try { alert.remove(); } catch(e) {} }, duration);
+        } catch (e) {
+            // silent
+        }
+    }
+    // Focus sentinel to move focus out of modals before hiding to avoid focus-trap recursion
+    function ensureModalFocusSentinel() {
+        if (!document.getElementById('modalFocusSentinel')) {
+            const s = document.createElement('div');
+            s.id = 'modalFocusSentinel';
+            s.tabIndex = -1;
+            s.style.position = 'fixed';
+            s.style.left = '-9999px';
+            document.body.appendChild(s);
+        }
+    }
+
+    function safeHideModalInstance(modalInstance) {
+        try {
+            ensureModalFocusSentinel();
+            const active = document.activeElement;
+            if (active && typeof active.blur === 'function') try { active.blur(); } catch(e){}
+            const sentinel = document.getElementById('modalFocusSentinel');
+            if (sentinel) try { sentinel.focus(); } catch(e){}
+        } catch (e) {}
+        try { if (modalInstance && typeof modalInstance.hide === 'function') modalInstance.hide(); } catch(e){}
+    }
     let unreadNotificationCount = 0; // Global variable to store unread count
     /*<![CDATA[*/
     const userProfileImageMap = /*[[${userProfileImageMap}]]*/ {};
@@ -1553,6 +1604,38 @@
         // Atualizar ID para eliminar
         document.getElementById('deleteProjectIdFromModal').value = projectId;
     }
+
+    // Helper to open project details by ID (doesn't require a DOM project element)
+    function openProjectDetailsModalById(projectId) {
+        currentProjectId = projectId;
+        // Ensure modal elements show a loading state
+        const projectModalName = document.getElementById('projectModalName');
+        if (projectModalName) projectModalName.textContent = 'A carregar...';
+        const desc = document.getElementById('projectModalDescription'); if (desc) desc.textContent = '';
+        const sprintsList = document.getElementById('projectModalSprintsList'); if (sprintsList) sprintsList.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        const teamContent = document.getElementById('projectModalTeamContent'); if (teamContent) teamContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+        fetch('/projects/' + projectId + '/details')
+            .then(response => response.json())
+            .then(data => {
+                currentProjectData = data;
+                populateProjectModal(data);
+                // show modal (create instance if needed)
+                const projectModalEl = document.getElementById('projectDetailsModal');
+                if (projectModalEl) {
+                    let modal = bootstrap.Modal.getInstance(projectModalEl);
+                    if (!modal) modal = new bootstrap.Modal(projectModalEl);
+                    try { modal.show(); } catch (e) {}
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar detalhes do projeto:', error);
+                const projectModalName = document.getElementById('projectModalName');
+                if (projectModalName) projectModalName.textContent = 'Erro ao carregar';
+            });
+        const deleteField = document.getElementById('deleteProjectIdFromModal');
+        if (deleteField) deleteField.value = projectId;
+    }
     
     function populateProjectModal(data) {
         // Preencher header do modal
@@ -1588,50 +1671,13 @@
                 // Only show delete when project is in PLANEAMENTO
                 deleteBtn.style.display = (status === 'PLANEAMENTO') ? '' : 'none';
             }
-            // Adiciona botões de ação (concluir/reabrir) com modal de confirmação
+            // Action buttons are populated later once we have members/sprints and
+            // have determined whether the current teacher is the Product Owner.
+            // Clear any previous action buttons here and let the later logic
+            // (which validates Product Owner role) add the appropriate buttons.
             const projectActionsContainer = document.getElementById('projectActionsContainer');
-            if (!projectActionsContainer) return;
-            projectActionsContainer.innerHTML = '';
-            if (status === 'EM_CURSO') {
-                const completeBtn = document.createElement('button');
-                completeBtn.type = 'button';
-                completeBtn.className = 'btn btn-success rounded-pill px-4 fw-bold';
-                completeBtn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 me-1"></i> Concluir Projeto';
-                completeBtn.onclick = function() {
-                    window.pendingCompleteProjectId = data.id;
-                    const projectModalEl = document.getElementById('projectDetailsModal');
-                    const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                    if (projectModalInstance) projectModalInstance.hide();
-
-                    const confirmModalEl = document.getElementById('completeProjectConfirmationModal');
-                    const confirmModal = new bootstrap.Modal(confirmModalEl);
-                    confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-                        if (projectModalInstance) projectModalInstance.show();
-                    }, { once: true });
-
-                    confirmModal.show();
-                };
-                projectActionsContainer.appendChild(completeBtn);
-            } else if (status === 'CONCLUIDO') {
-                const reopenBtn = document.createElement('button');
-                reopenBtn.type = 'button';
-                reopenBtn.className = 'btn btn-warning rounded-pill px-4 fw-bold';
-                reopenBtn.innerHTML = '<i data-lucide="rotate-ccw" class="w-4 h-4 me-1"></i> Reabrir Projeto';
-                reopenBtn.onclick = function() {
-                    window.pendingReopenProjectId = data.id;
-                    const projectModalEl = document.getElementById('projectDetailsModal');
-                    const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                    if (projectModalInstance) projectModalInstance.hide();
-
-                    const confirmModalEl = document.getElementById('reopenProjectConfirmationModal');
-                    const confirmModal = new bootstrap.Modal(confirmModalEl);
-                    confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-                        if (projectModalInstance) projectModalInstance.show();
-                    }, { once: true });
-
-                    confirmModal.show();
-                };
-                projectActionsContainer.appendChild(reopenBtn);
+            if (projectActionsContainer) {
+                projectActionsContainer.innerHTML = '';
             }
             lucide.createIcons();
         }, 200);
@@ -1730,12 +1776,12 @@
                                             window.pendingCompleteProjectId = data.id;
                                             const projectModalEl = document.getElementById('projectDetailsModal');
                                             const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                                            if (projectModalInstance) projectModalInstance.hide();
+                                            if (projectModalInstance) safeHideModalInstance(projectModalInstance);
 
                                             const confirmModalEl = document.getElementById('completeProjectConfirmationModal');
                                             const confirmModal = new bootstrap.Modal(confirmModalEl);
                                             confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-                                                if (projectModalInstance) projectModalInstance.show();
+                                                if (projectModalInstance) setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0);
                                             }, { once: true });
 
                                             confirmModal.show();
@@ -1757,12 +1803,12 @@
                                             window.pendingReopenProjectId = data.id;
                                             const projectModalEl = document.getElementById('projectDetailsModal');
                                             const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                                            if (projectModalInstance) projectModalInstance.hide();
+                                            if (projectModalInstance) safeHideModalInstance(projectModalInstance);
 
                                             const confirmModalEl = document.getElementById('reopenProjectConfirmationModal');
                                             const confirmModal = new bootstrap.Modal(confirmModalEl);
                                             confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-                                                if (projectModalInstance) projectModalInstance.show();
+                                                if (projectModalInstance) setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0);
                                             }, { once: true });
 
                                             confirmModal.show();
@@ -1777,15 +1823,51 @@
                                 
         
                                 lucide.createIcons();
-        
-                            }    function loadProjectSprintsFromData(sprints) {
-        const container = document.getElementById('projectModalSprintsList');
-        console.log('loadProjectSprintsFromData chamada, container:', container, 'sprints:', sprints);
-        
-        if (!container) {
-            console.error('Container projectModalSprintsList não encontrado!');
-            return;
-        }
+
+                                // Mostrar mensagens guardadas no sessionStorage (útil quando o modal é reaberto após ação AJAX)
+                                try {
+                                    const topContainer = document.querySelector('.container.mt-3');
+                                    const successMsg = safeSessionGet('successMessage');
+                                    const errorMsg = safeSessionGet('errorMessage');
+                                    if (successMsg && topContainer) {
+                                        const alert = document.createElement('div');
+                                        alert.className = 'alert alert-success alert-dismissible fade show shadow-sm border-0';
+                                        alert.setAttribute('role', 'alert');
+                                        alert.style.backgroundColor = '#d1e7dd';
+                                        alert.style.color = '#0f5132';
+                                        alert.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span>' + successMsg + '</span>' +
+                                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                                        topContainer.insertBefore(alert, topContainer.firstChild);
+                                        if (window.lucide) lucide.createIcons();
+                                        setTimeout(() => { try { alert.remove(); } catch(e){} }, 3500);
+                                        safeSessionRemove('successMessage');
+                                    }
+                                    if (errorMsg && topContainer) {
+                                        const alert = document.createElement('div');
+                                        alert.className = 'alert alert-danger alert-dismissible fade show shadow-sm border-0';
+                                        alert.setAttribute('role', 'alert');
+                                        alert.style.backgroundColor = '#f8d7da';
+                                        alert.style.color = '#842029';
+                                        alert.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i><span>' + errorMsg + '</span>' +
+                                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                                        topContainer.insertBefore(alert, topContainer.firstChild);
+                                        if (window.lucide) lucide.createIcons();
+                                        setTimeout(() => { try { alert.remove(); } catch(e){} }, 5000);
+                                        safeSessionRemove('errorMessage');
+                                    }
+                                } catch (e) {
+                                    console.error('Erro ao mostrar mensagens de sessão', e);
+                                }
+                            }
+
+                            function loadProjectSprintsFromData(sprints) {
+                                const container = document.getElementById('projectModalSprintsList');
+                                console.log('loadProjectSprintsFromData chamada, container:', container, 'sprints:', sprints);
+
+                                if (!container) {
+                                    console.error('Container projectModalSprintsList não encontrado!');
+                                    return;
+                                }
         
         if (!sprints || sprints.length === 0) {
             container.innerHTML = '<div class="text-center py-4 text-muted"><i data-lucide="inbox" class="w-12 h-12 mb-2"></i><p>Ainda não há sprints criadas.</p></div>';
@@ -1821,6 +1903,38 @@
         }
         
         lucide.createIcons();
+
+        // Intercept the assign-team form to submit via AJAX and refresh modal
+        const assignForm = container.querySelector('form[action="/projects/assign-team"]');
+        if (assignForm) {
+            assignForm.addEventListener('submit', function (ev) {
+                ev.preventDefault();
+                const formData = new FormData(assignForm);
+                fetch(assignForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                }).then(response => {
+                    if (response.ok) {
+                        // Close the assign form modal if any, then reload project details
+                        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+                        if (projectModal) safeHideModalInstance(projectModal);
+                        const assignModalEl = container.closest('.modal');
+                        if (assignModalEl) {
+                            const assignModal = bootstrap.Modal.getInstance(assignModalEl);
+                            if (assignModal) assignModal.hide();
+                        }
+                        const projId = formData.get('projectId');
+                        if (projId) openProjectDetailsModalById(projId);
+                    } else {
+                        alert('Erro ao associar equipa.');
+                    }
+                }).catch(err => {
+                    console.error('Erro ao associar equipa:', err);
+                    alert('Erro de conexão.');
+                });
+            });
+        }
     }
     
     function loadProjectTeamFromData(data) {
@@ -1982,7 +2096,7 @@
             container.innerHTML = `
                 <div class="text-center py-5 border border-dashed rounded-3 bg-light">
                     <div class="mb-3 p-3 bg-white rounded-circle d-inline-block shadow-sm">
-                        <i data-lucide="users-x" class="w-10 h-10 text-muted opacity-50"></i>
+                        <i data-lucide="users" class="w-10 h-10 text-muted opacity-50"></i>
                     </div>
                     <h5 class="fw-bold text-dark">Sem equipas fechadas disponíveis</h5>
                     <p class="text-muted small mb-3">Crie e feche uma equipa primeiro nas abas anteriores.</p>
@@ -2040,12 +2154,15 @@
         })
         .then(response => {
             if (response.ok) {
-                // Fechar modais e recarregar página
+                // Close remove modal and refresh project details via AJAX
                 const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeTeamFromProjectModal'));
                 if (removeModal) removeModal.hide();
-                const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
-                if (projectModal) projectModal.hide();
-                window.location.reload();
+                const projId = pendingRemoveProjectId;
+                pendingRemoveProjectId = null;
+                pendingRemoveTeamId = null;
+                if (projId) {
+                    openProjectDetailsModalById(projId);
+                }
             } else {
                 alert('Erro ao remover equipa.');
             }
@@ -2068,7 +2185,7 @@
 
         confirmModalEl.addEventListener('hidden.bs.modal', function onHidden() {
             if (projectModal) {
-                projectModal.show();
+                setTimeout(() => { try { projectModal.show(); } catch(e){} }, 0);
             }
         }, { once: true });
 
@@ -2121,16 +2238,19 @@
                 // Atualiza a modal do projeto sem recarregar a página inteira
                 openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
                 // Mensagem de sucesso
-                sessionStorage.setItem('successMessage', 'Projeto concluído com sucesso!');
+                safeSessionSet('successMessage', 'Projeto concluído com sucesso!');
+                showAlert('success', 'Projeto concluído com sucesso!');
             } else {
                 response.text().then(text => {
-                    sessionStorage.setItem('errorMessage', 'Erro ao concluir projeto: ' + text);
+                    const msg = 'Erro ao concluir projeto: ' + text;
+                    safeSessionSet('errorMessage', msg);
+                    showAlert('danger', msg);
                     openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
                 });
             }
         })
         .catch(error => {
-            sessionStorage.setItem('errorMessage', 'Erro de rede ao concluir projeto.');
+            safeSessionSet('errorMessage', 'Erro de rede ao concluir projeto.');
             openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
         });
     }
@@ -2145,10 +2265,13 @@
                 const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
                 if (modal) modal.hide();
                 openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
-                sessionStorage.setItem('successMessage', 'Projeto reaberto com sucesso!');
+                safeSessionSet('successMessage', 'Projeto reaberto com sucesso!');
+                showAlert('success', 'Projeto reaberto com sucesso!');
             } else {
                 response.text().then(text => {
-                    sessionStorage.setItem('errorMessage', 'Erro ao reabrir projeto: ' + text);
+                    const msg = 'Erro ao reabrir projeto: ' + text;
+                    safeSessionSet('errorMessage', msg);
+                    showAlert('danger', msg);
                     const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
                     if (modal) modal.hide();
                     openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
@@ -2156,7 +2279,7 @@
             }
         })
         .catch(error => {
-            sessionStorage.setItem('errorMessage', 'Erro de rede ao reabrir projeto.');
+            safeSessionSet('errorMessage', 'Erro de rede ao reabrir projeto.');
             const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
             if (modal) modal.hide();
             openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
@@ -2815,11 +2938,11 @@
             if (projectModalInstance && document.body.contains(projectModalEl)) {
                 projectModalEl.addEventListener('hidden.bs.modal', function onProjectHidden() {
                     if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
-                        awardModal.show();
+                        setTimeout(() => { try { awardModal.show(); } catch(e){} }, 0);
                     }
                     projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
                 }, { once: true });
-                projectModalInstance.hide();
+                safeHideModalInstance(projectModalInstance);
             }
         } else {
             if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
@@ -2829,13 +2952,12 @@
         // Quando o modal de prémio fechar, reabrir o de detalhes do projeto (prefer reabrir a mesma instância se houver)
         awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
             if (projectModalInstance) {
-                try { projectModalInstance.show(); }
-                catch (e) { openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`)); }
+                try { setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0); }
+                catch (e) { setTimeout(() => openProjectDetailsModalById(projectId), 0); }
             } else {
-                const projectModalEl2 = document.getElementById('projectDetailsModal');
-                if (projectModalEl2 && document.body.contains(projectModalEl2)) {
-                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
-                }
+                // Use the ID-based opener so we reload via AJAX even if the
+                // originating project element is not present in the DOM.
+                setTimeout(() => openProjectDetailsModalById(projectId), 0);
             }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
         });
@@ -2860,7 +2982,7 @@
         awardSelect.disabled = true;
         const submitBtn = document.querySelector('#assignAwardToStudentInTeamModal button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
-        fetch(`/awards/available-for-student?projectId=${projectId}`, {
+        fetch(`/awards/available-for-student?studentId=${memberId}&projectId=${projectId}`, {
             credentials: 'same-origin'
         })
             .then(response => response.json())
@@ -2909,7 +3031,7 @@
                     }
                     projectModalEl.removeEventListener('hidden.bs.modal', onProjectHidden);
                 }, { once: true });
-                projectModalInstance.hide();
+                safeHideModalInstance(projectModalInstance);
             }
         } else {
             if (awardModalEl && document.body.contains(awardModalEl) && !awardModalEl.classList.contains('show')) {
@@ -2919,12 +3041,12 @@
         // Quando o modal de prémio fechar, reabrir o de detalhes do projeto (prefer reabrir a mesma instância se houver)
         awardModalEl.addEventListener('hidden.bs.modal', function onHidden() {
             if (projectModalInstance) {
-                try { projectModalInstance.show(); }
-                catch (e) { openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`)); }
+                try { setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0); }
+                catch (e) { setTimeout(() => openProjectDetailsModalById(projectId), 0); }
             } else {
                 const projectModalEl2 = document.getElementById('projectDetailsModal');
                 if (projectModalEl2 && document.body.contains(projectModalEl2)) {
-                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                    setTimeout(() => openProjectDetailsModalById(projectId), 0);
                 }
             }
             awardModalEl.removeEventListener('hidden.bs.modal', onHidden);
@@ -3359,6 +3481,81 @@
                 }
             });
         }
+        // Mostrar mensagens guardadas no sessionStorage (por ações AJAX que reabrem o modal)
+        try {
+            const topContainer = document.querySelector('.container.mt-3');
+            const successMsg = safeSessionGet('successMessage');
+            const errorMsg = safeSessionGet('errorMessage');
+
+            if (successMsg && topContainer) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show shadow-sm border-0';
+                alert.setAttribute('role', 'alert');
+                alert.style.backgroundColor = '#d1e7dd';
+                alert.style.color = '#0f5132';
+                alert.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 inline me-2"></i><span>' + successMsg + '</span>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                topContainer.insertBefore(alert, topContainer.firstChild);
+                if (window.lucide) lucide.createIcons();
+                setTimeout(() => { try { alert.remove(); } catch(e){} }, 3500);
+                safeSessionRemove('successMessage');
+            }
+
+            if (errorMsg && topContainer) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger alert-dismissible fade show shadow-sm border-0';
+                alert.setAttribute('role', 'alert');
+                alert.style.backgroundColor = '#f8d7da';
+                alert.style.color = '#842029';
+                alert.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 inline me-2"></i><span>' + errorMsg + '</span>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                topContainer.insertBefore(alert, topContainer.firstChild);
+                if (window.lucide) lucide.createIcons();
+                setTimeout(() => { try { alert.remove(); } catch(e){} }, 5000);
+                safeSessionRemove('errorMessage');
+            }
+        } catch (e) {
+            console.error('Erro ao mostrar mensagens de sessão', e);
+        }
+
+        // Helper to submit assign-team forms via AJAX (used by injected forms)
+        function submitAssignTeamForm(form) {
+            try {
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                }).then(response => {
+                    if (response.ok) {
+                        // Hide assign modal (if any) and refresh project details
+                        const assignModalEl = form.closest('.modal');
+                        if (assignModalEl) {
+                            const assignModal = bootstrap.Modal.getInstance(assignModalEl);
+                            if (assignModal) assignModal.hide();
+                        }
+                        const projectModal = bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'));
+                        if (projectModal) projectModal.hide();
+                        const projId = formData.get('projectId');
+                        if (projId) openProjectDetailsModalById(projId);
+                    } else {
+                        alert('Erro ao associar equipa.');
+                    }
+                }).catch(err => {
+                    console.error('Erro ao associar equipa:', err);
+                    alert('Erro de conexão.');
+                });
+            } catch (e) { console.error('submitAssignTeamForm error', e); }
+        }
+
+        // Delegated submit handler as a robust fallback for dynamically injected forms
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.getAttribute && form.getAttribute('action') && form.getAttribute('action').indexOf('/projects/assign-team') !== -1) {
+                e.preventDefault();
+                submitAssignTeamForm(form);
+            }
+        });
     });
 </script>
 <!-- Modal para Adicionar Membro à Equipa -->

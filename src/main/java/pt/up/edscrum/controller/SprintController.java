@@ -128,6 +128,30 @@ public class SprintController {
     }
 
     /**
+     * Inicia um sprint que está em PLANEAMENTO, colocando-o em EM_CURSO.
+     * Reusa a lógica de reabertura para garantir que apenas o owner ou o teacher
+     * podem realizar a ação.
+     *
+     * @param sprintId ID do sprint
+     * @return Sprint iniciado
+     */
+    @PostMapping("/{sprintId}/start")
+    public ResponseEntity<Sprint> startSprint(@PathVariable Long sprintId, HttpSession session) {
+        Long currentUserId = (Long) session.getAttribute("currentUserId");
+        String currentUserRole = (String) session.getAttribute("currentUserRole");
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        Sprint existing = sprintService.getSprintById(sprintId);
+        Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
+        Long courseTeacherId = null;
+        try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
+        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
+            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        }
+        Sprint s = sprintService.reopenSprint(sprintId);
+        return ResponseEntity.ok(s);
+    }
+
+    /**
      * Elimina um sprint pelo ID.
      *
      * @param sprintId ID do sprint a eliminar

@@ -6,6 +6,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Sprint Dashboard</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
@@ -167,8 +169,8 @@
                         <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
                     </div>
                     <div class="d-flex gap-2 justify-content-end">
-                        <!-- Apenas estudantes que NÃO são Product Owner e NÃO são professores podem ver os botões de ação -->
-                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
+                        <!-- Mostrar botão de nova User Story para estudantes (não-professor) quando sprint não está concluído -->
+                        <button th:if="${student != null and teacher == null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
                             <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova User Story
                         </button>
                         <button th:if="${canComplete and student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
@@ -177,7 +179,7 @@
                         <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Sprint
                         </button>
-                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'PLANEAMENTO'}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
+                        <button th:if="${(teacher != null or (student != null and sprint.createdBy != null and student.id == sprint.createdBy.id)) and sprint.status.name() == 'PLANEAMENTO'}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
                             <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Sprint
                         </button>
                     </div>
@@ -588,6 +590,8 @@
         const projectId = /*[[${projectId}]]*/ 0;
         const userId = /*[[${teacher != null ? teacher.id : student.id}]]*/ 0;
         const isTeacher = /*[[${teacher != null}]]*/ false;
+        const sprintStatus = /*[[${sprint.status.name()}]]*/ 'PLANEAMENTO';
+        const sprintOwnerId = /*[[${sprint.createdBy != null ? sprint.createdBy.id : 0}]]*/ 0;
     </script>
     <script>
         lucide.createIcons();
@@ -596,6 +600,44 @@
         document.addEventListener('DOMContentLoaded', function() {
             fetchNotifications();
         });
+
+        // Helper to read CSRF token/header from meta tags or cookie and perform fetch with CSRF header
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+
+        function getCsrf() {
+            const tokenMeta = document.querySelector('meta[name="_csrf"]');
+            const headerMeta = document.querySelector('meta[name="_csrf_header"]');
+            if (tokenMeta && headerMeta) {
+                return { token: tokenMeta.getAttribute('content'), header: headerMeta.getAttribute('content') };
+            }
+            // Fallback to common cookie name used by Spring's CookieCsrfTokenRepository
+            const cookieNames = ['XSRF-TOKEN', 'XSRF_TOKEN', 'CSRF-TOKEN', 'X-CSRF-TOKEN'];
+            for (const name of cookieNames) {
+                const val = getCookie(name);
+                if (val) {
+                    return { token: val, header: 'X-XSRF-TOKEN' };
+                }
+            }
+            // If only token meta exists, use a common header name
+            if (tokenMeta) {
+                return { token: tokenMeta.getAttribute('content'), header: 'X-CSRF-TOKEN' };
+            }
+            return { token: null, header: null };
+        }
+
+        function csrfFetch(url, options = {}) {
+            const csrf = getCsrf();
+            options.headers = options.headers || {};
+            if (csrf && csrf.token && csrf.header) {
+                options.headers[csrf.header] = csrf.token;
+            }
+            // ensure cookies are sent (session, csrf cookie if any)
+            options.credentials = options.credentials || 'same-origin';
+            return fetch(url, options);
+        }
 
         // DRAG AND DROP LOGIC
         function drag(ev) {
@@ -638,7 +680,7 @@
                 draggedElement.classList.remove('dragging');
 
                 // CHAMADA API PARA ATUALIZAR STATUS
-                fetch(`/api/stories/${storyId}/move?status=${newStatus}`, {
+                csrfFetch(`/api/stories/${storyId}/move?status=${newStatus}`, {
                     method: 'POST'
                 }).then(response => {
                     if (response.ok) {
@@ -673,7 +715,7 @@
                 status: 'TODO'
             };
 
-            fetch('/api/stories', {
+            csrfFetch('/api/stories', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -682,7 +724,25 @@
             })
             .then(response => {
                 if (response.ok) {
-                    location.reload();
+                    if (typeof sprintStatus !== 'undefined' && sprintStatus === 'PLANEAMENTO') {
+                        // move sprint to EM_CURSO after creating the first story (server endpoint /start)
+                        csrfFetch(`/sprints/${sprintId}/start`, { method: 'POST' })
+                            .then(r => {
+                                if (r.ok) {
+                                    console.log('Sprint started');
+                                    location.reload();
+                                } else {
+                                    return r.text().then(text => {
+                                        console.error('Start sprint failed', r.status, text);
+                                        alert('Não foi possível iniciar o sprint: ' + (text || r.status));
+                                        location.reload();
+                                    });
+                                }
+                            })
+                            .catch(err => { console.error('Failed to start sprint:', err); alert('Erro ao iniciar sprint: ' + err); location.reload(); });
+                    } else {
+                        location.reload();
+                    }
                 } else {
                     alert('Erro ao criar User Story');
                 }
@@ -730,7 +790,7 @@
                 assignee: assigneeId ? { id: parseInt(assigneeId) } : null
             };
 
-            fetch(`/api/stories/${storyId}`, {
+            csrfFetch(`/api/stories/${storyId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -773,27 +833,25 @@
         function executeDeleteStory() {
             const storyId = document.getElementById('editStoryId').value;
 
-            fetch(`/api/stories/${storyId}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert('Erro ao eliminar User Story');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Erro ao eliminar User Story');
-            });
+            csrfFetch(`/api/stories/${storyId}`, { method: 'DELETE' })
+                .then(async response => {
+                    if (response.ok) {
+                        location.reload();
+                        return;
+                    }
+                    const text = await response.text().catch(() => '');
+                    console.error('Delete failed', response.status, text);
+                    alert('Erro ao eliminar User Story: ' + (text || response.status));
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao eliminar User Story: ' + error);
+                });
         }
 
         // Completar Sprint
         function confirmCompleteSprint() {
-            fetch(`/sprints/${sprintId}/complete`, {
-                method: 'POST'
-            })
+            csrfFetch(`/sprints/${sprintId}/complete`, { method: 'POST' })
             .then(response => {
                 if (response.ok) {
                     location.reload();
@@ -809,9 +867,7 @@
         }
 
         function confirmReopenSprint() {
-            fetch(`/sprints/${sprintId}/reopen`, {
-                method: 'POST'
-            })
+            csrfFetch(`/sprints/${sprintId}/reopen`, { method: 'POST' })
             .then(response => {
                 if (response.ok) {
                     location.reload();
@@ -825,9 +881,7 @@
         }
 
         function confirmDeleteSprint() {
-            fetch(`/sprints/${sprintId}`, {
-                method: 'DELETE'
-            })
+            csrfFetch(`/sprints/${sprintId}`, { method: 'DELETE' })
             .then(response => {
                 if (response.ok) {
                     // Redirecionar para a home correta

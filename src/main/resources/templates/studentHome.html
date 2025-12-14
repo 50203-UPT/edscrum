@@ -1755,6 +1755,29 @@
         });
     }
 
+    // Focus sentinel + safe hide helper to avoid focus trap recursion when hiding modals
+    function ensureModalFocusSentinel() {
+        if (!document.getElementById('modalFocusSentinel')) {
+            const s = document.createElement('div');
+            s.id = 'modalFocusSentinel';
+            s.tabIndex = -1;
+            s.style.position = 'fixed';
+            s.style.left = '-9999px';
+            document.body.appendChild(s);
+        }
+    }
+
+    function safeHideModalInstance(modalInstance) {
+        try {
+            ensureModalFocusSentinel();
+            const active = document.activeElement;
+            if (active && typeof active.blur === 'function') try { active.blur(); } catch(e){}
+            const sentinel = document.getElementById('modalFocusSentinel');
+            if (sentinel) try { sentinel.focus(); } catch(e){}
+        } catch (e) {}
+        try { if (modalInstance && typeof modalInstance.hide === 'function') modalInstance.hide(); } catch(e){}
+    }
+
     let currentProjectId = null;
 
     function setupCompleteProjectModal(button) {
@@ -1765,9 +1788,9 @@
             const confirmModalEl = document.getElementById('completeProjectModal');
             if (projectModalEl && confirmModalEl) {
                 const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                if (projectModalInstance) projectModalInstance.hide();
+                if (projectModalInstance) safeHideModalInstance(projectModalInstance);
                 const onHidden = function() {
-                    if (projectModalInstance) projectModalInstance.show();
+                    if (projectModalInstance) setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0);
                     confirmModalEl.removeEventListener('hidden.bs.modal', onHidden);
                 };
                 confirmModalEl.addEventListener('hidden.bs.modal', onHidden);
@@ -1807,9 +1830,9 @@
             const confirmModalEl = document.getElementById('reopenProjectModal');
             if (projectModalEl && confirmModalEl) {
                 const projectModalInstance = bootstrap.Modal.getInstance(projectModalEl);
-                if (projectModalInstance) projectModalInstance.hide();
+                if (projectModalInstance) safeHideModalInstance(projectModalInstance);
                 const onHidden = function() {
-                    if (projectModalInstance) projectModalInstance.show();
+                    if (projectModalInstance) setTimeout(() => { try { projectModalInstance.show(); } catch(e){} }, 0);
                     confirmModalEl.removeEventListener('hidden.bs.modal', onHidden);
                 };
                 confirmModalEl.addEventListener('hidden.bs.modal', onHidden);
