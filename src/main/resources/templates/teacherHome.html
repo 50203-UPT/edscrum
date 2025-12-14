@@ -1737,29 +1737,21 @@
         // Award buttons: only visible if status === 'EM_CURSO'
         setTimeout(() => {
             document.querySelectorAll('.btn-outline-primary.rounded-pill').forEach(btn => {
-                if (btn.textContent.includes('Atribuir')) {
-                    btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
-                }
+            if (btn.textContent.includes('Atribuir')) {
+                btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
+            }
             });
             document.querySelectorAll('.btn-outline-success.rounded-pill').forEach(btn => {
-                if (btn.title === 'Atribuir Prémio') {
-                    btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
-                }
+            if (btn.title === 'Atribuir Prémio') {
+                btn.style.display = (status === 'EM_CURSO') ? '' : 'none';
+            }
             });
             const deleteBtn = document.querySelector('#projectDetailsModal .btn-danger');
             if (deleteBtn && deleteBtn.textContent.includes('Eliminar Projeto')) {
-                // Only show delete when project is in PLANEAMENTO
                 deleteBtn.style.display = (status === 'PLANEAMENTO') ? '' : 'none';
             }
-            // Action buttons are populated later once we have members/sprints and
-            // have determined whether the current teacher is the Product Owner.
-            // Clear any previous action buttons here and let the later logic
-            // (which validates Product Owner role) add the appropriate buttons.
-            const projectActionsContainer = document.getElementById('projectActionsContainer');
-            if (projectActionsContainer) {
-                projectActionsContainer.innerHTML = '';
-            }
-            lucide.createIcons();
+    
+            if (window.lucide) lucide.createIcons();
         }, 200);
         // Lógica para os modais de confirmação de concluir/reabrir projeto
         document.addEventListener('DOMContentLoaded', function() {
@@ -2312,60 +2304,143 @@
     }
 
     function confirmCompleteProjectTeacher(projectId) {
+        // Log para confirmar que a função iniciou (verifique na consola F12)
+        console.log("A tentar concluir projeto ID:", projectId);
+
         fetch('/projects/' + projectId + '/complete', {
             method: 'PUT',
             credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
-                // Atualiza a modal do projeto sem recarregar a página inteira
-                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
-                // Mensagem de sucesso
+                console.log("Sucesso no servidor. A atualizar interface...");
+
+                // 1. ATUALIZAÇÃO VISUAL NA LISTA DE PROJETOS
+                // Procura o cartão do projeto específico usando o atributo data-project-id
+                const projectCard = document.querySelector(`.project-list-item[data-project-id="${projectId}"]`);
+                
+                if (projectCard) {
+                    // Atualizar a "bolinha" de estado (Status Dot)
+                    const dot = projectCard.querySelector('.rounded-circle');
+                    if (dot) {
+                        dot.className = 'rounded-circle bg-success'; // Força a classe correta
+                    }
+
+                    // Atualizar o Badge de texto (Badge Status)
+                    const badge = projectCard.querySelector('.badge');
+                    if (badge) {
+                        // Remove classes antigas
+                        badge.classList.remove('bg-warning', 'text-dark', 'bg-secondary');
+                        // Adiciona classes de sucesso
+                        badge.classList.add('bg-success');
+                        // Atualiza o texto
+                        badge.textContent = 'CONCLUIDO';
+                    }
+                } else {
+                    console.warn("Aviso: Não foi possível encontrar o cartão do projeto na lista para o ID", projectId);
+                }
+
+                // 2. Atualizar o Modal de Detalhes (recarrega os dados do modal)
+                // Usa a função auxiliar por ID que é mais segura
+                if (typeof openProjectDetailsModalById === 'function') {
+                    openProjectDetailsModalById(projectId);
+                }
+
+                // 3. Feedback ao utilizador
                 safeSessionSet('successMessage', 'Projeto concluído com sucesso!');
                 showAlert('success', 'Projeto concluído com sucesso!');
+
             } else {
                 response.text().then(text => {
                     const msg = 'Erro ao concluir projeto: ' + text;
                     safeSessionSet('errorMessage', msg);
                     showAlert('danger', msg);
-                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                    // Em caso de erro, recarrega o modal para garantir consistência
+                    if (typeof openProjectDetailsModalById === 'function') {
+                        openProjectDetailsModalById(projectId);
+                    }
                 });
             }
         })
         .catch(error => {
+            console.error("Erro no fetch:", error);
             safeSessionSet('errorMessage', 'Erro de rede ao concluir projeto.');
-            openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            if (typeof openProjectDetailsModalById === 'function') {
+                openProjectDetailsModalById(projectId);
+            }
         });
     }
 
     function confirmReopenProjectTeacher(projectId) {
+        console.log("A tentar reabrir projeto ID:", projectId);
+
         fetch('/projects/' + projectId + '/reopen', {
             method: 'PUT',
             credentials: 'same-origin'
         })
         .then(response => {
             if (response.ok) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
+                console.log("Sucesso no servidor. A atualizar interface...");
+
+                // 1. Fechar o modal de confirmação
+                const modalEl = document.getElementById('reopenProjectConfirmationModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
                 if (modal) modal.hide();
-                openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+
+                // 2. ATUALIZAÇÃO VISUAL NA LISTA DE PROJETOS
+                // Encontrar o cartão do projeto na lista
+                const projectCard = document.querySelector(`.project-list-item[data-project-id="${projectId}"]`);
+                
+                if (projectCard) {
+                    // Atualizar a "bolinha" de estado para AMARELO
+                    const dot = projectCard.querySelector('.rounded-circle');
+                    if (dot) {
+                        dot.className = 'rounded-circle bg-warning'; // Força amarelo
+                    }
+
+                    // Atualizar o Badge de texto para "EM CURSO" (Amarelo com texto escuro)
+                    const badge = projectCard.querySelector('.badge');
+                    if (badge) {
+                        // Limpar classes antigas (verde ou cinza)
+                        badge.classList.remove('bg-success', 'bg-secondary', 'text-white');
+                        
+                        // Adicionar classes de "Em Curso"
+                        badge.classList.add('bg-warning', 'text-dark');
+                        
+                        // Atualizar o texto
+                        badge.textContent = 'EM CURSO';
+                    }
+                } else {
+                    console.warn("Aviso: Cartão do projeto não encontrado na lista.");
+                }
+
+                // 3. Atualizar o Modal de Detalhes (recarrega os botões e dados dentro do modal)
+                if (typeof openProjectDetailsModalById === 'function') {
+                    openProjectDetailsModalById(projectId);
+                }
+
+                // 4. Feedback
                 safeSessionSet('successMessage', 'Projeto reaberto com sucesso!');
                 showAlert('success', 'Projeto reaberto com sucesso!');
+
             } else {
                 response.text().then(text => {
                     const msg = 'Erro ao reabrir projeto: ' + text;
                     safeSessionSet('errorMessage', msg);
                     showAlert('danger', msg);
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
-                    if (modal) modal.hide();
-                    openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+                    // Recarregar modal para garantir consistência
+                    if (typeof openProjectDetailsModalById === 'function') {
+                        openProjectDetailsModalById(projectId);
+                    }
                 });
             }
         })
         .catch(error => {
+            console.error("Erro no fetch:", error);
             safeSessionSet('errorMessage', 'Erro de rede ao reabrir projeto.');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reopenProjectConfirmationModal'));
-            if (modal) modal.hide();
-            openProjectDetailsModal(document.querySelector(`[data-project-id="${projectId}"]`));
+            if (typeof openProjectDetailsModalById === 'function') {
+                openProjectDetailsModalById(projectId);
+            }
         });
     }
 
