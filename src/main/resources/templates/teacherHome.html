@@ -843,6 +843,8 @@
                         </div>
                     </div>
 
+                    <div id="newTeamError" class="alert alert-danger" style="display:none; margin-top:10px;"></div>
+
                     <div class="modal-footer border-0 px-0 pb-0">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Criar Equipa</button>
@@ -1533,7 +1535,9 @@
                 container.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">Sem dados de ranking para equipas neste curso.</td></tr>';
                 return;
             }
-            container.innerHTML = list.map((r, idx) => `
+            container.innerHTML = list.map((r, idx) => {
+                const teamXP = (typeof computeTeamManualXP === 'function') ? (computeTeamManualXP(r.teamAwards || r.awards || r.awardsList) || r.totalPoints) : r.totalPoints;
+                return `
                 <tr>
                     <td class="ps-4" style="width: 80px;">
                         ${idx === 0 ? '<div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 32px; height: 32px;">1</div>' :
@@ -1546,9 +1550,9 @@
                             <h6 class="mb-0 fw-bold text-dark">${r.name}</h6>
                         </div>
                     </td>
-                    <td class="text-end pe-4"><h5 class="mb-0 fw-bold text-dark">${r.totalPoints}</h5></td>
+                    <td class="text-end pe-4"><h5 class="mb-0 fw-bold text-dark">${teamXP}</h5></td>
                 </tr>
-            `).join('');
+            `; }).join('');
         } catch (e) {
             console.error('Erro ao carregar ranking de equipas', e);
             container.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Erro ao carregar ranking de equipas.</td></tr>';
@@ -1654,6 +1658,31 @@
     let currentProjectId = null;
     let currentTeacherId = /*[[${teacher.id}]]*/ null;
     let currentProjectData = null;
+    // Global helper: compute manual XP from awards array (counts only MANUAL awards assigned by this teacher when info available)
+    function computeManualXPForAwards(awards) {
+        if (!awards || !Array.isArray(awards)) return 0;
+        return awards.reduce((sum, a) => {
+            const type = a.type || a.awardType || '';
+            const pts = Number(a.points || a.awardPoints || (a.award && a.award.points) || a.pointsValue || a.value || a.xp || 0) || 0;
+            const assignedByTeacher = (a.assignedByTeacher === true) || (a.assignedByRole === 'TEACHER') || (typeof currentTeacherId !== 'undefined' && currentTeacherId !== null && a.assignedById != null && Number(a.assignedById) === Number(currentTeacherId));
+            // Count manual awards only when assigned by this teacher (if assigner info exists) or when assigner info is not present
+            if (type === 'MANUAL' && (assignedByTeacher || (a.assignedByTeacher === undefined && a.assignedByRole === undefined && a.assignedById === undefined))) {
+                return sum + pts;
+            }
+            return sum;
+        }, 0);
+    }
+
+    // Compute team manual XP: counts all MANUAL awards in the provided list (used only for team totals)
+    function computeTeamManualXP(awards) {
+        if (!awards || !Array.isArray(awards)) return 0;
+        return awards.reduce((sum, a) => {
+            const type = a.type || a.awardType || '';
+            const pts = Number(a.points || a.awardPoints || (a.award && a.award.points) || a.pointsValue || a.value || a.xp || 0) || 0;
+            if (type === 'MANUAL') return sum + pts;
+            return sum;
+        }, 0);
+    }
     
     function openProjectDetailsModal(projectElement) {
         // Extrair dados básicos do elemento
@@ -1753,6 +1782,7 @@
     
             if (window.lucide) lucide.createIcons();
         }, 200);
+        
         // Lógica para os modais de confirmação de concluir/reabrir projeto
         document.addEventListener('DOMContentLoaded', function() {
             const completeBtn = document.getElementById('confirmCompleteProjectTeacherBtn');
@@ -2067,6 +2097,9 @@
                         </button>
                     `;
 
+                    // Compute individual XP from manual awards assigned by this teacher when possible
+                    const individualXP = (member.awards && Array.isArray(member.awards)) ? computeManualXPForAwards(member.awards) : (member.individualXP || 0);
+
                     return `
                         <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 border">
                             <div class="d-flex align-items-center gap-3">
@@ -2084,7 +2117,7 @@
                                     </div>
                                     <div class="text-end">
                                         <div class="small text-muted">XP</div>
-                                        <div class="fw-bold text-primary">${member.individualXP || 0}</div>
+                                        <div class="fw-bold text-primary">${individualXP}</div>
                                     </div>
                                 `}
                                 ${awardButtonHtml}
@@ -2097,6 +2130,8 @@
             }
             
             const teamId = data.teamId || '';
+            // Compute team total XP only from manual awards (team-level). Use team-specific helper.
+            const teamManualXP = computeTeamManualXP(data.teamAwards);
             let removeButtonHtml = '';
             if (data.status === 'PLANEAMENTO') {
                 removeButtonHtml = `<button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="removeTeamFromProject('${data.id}', '${teamId}')">
@@ -2106,19 +2141,21 @@
 
             container.innerHTML = `
                 <div class="row g-4 mb-4">
-                    <div class="col-md-6">
-                        <div class="p-4 bg-primary text-white rounded-4 h-100">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h5 class="fw-bold text-white mb-1">${teamName}</h5>
-                                    <span class="opacity-75">Pontuação Total</span>
-                                </div>
-                                <i data-lucide="shield" class="w-8 h-8 opacity-50"></i>
+                    <div class="col-12">
+                        <div class="p-4 bg-white rounded-4 h-100 border">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Membros</h6>
+                                ${removeButtonHtml}
                             </div>
-                            <h2 class="display-4 fw-bold mt-3 mb-0 text-white">${data.teamTotalXP || 0}</h2>
+                            <div class="d-flex flex-column gap-2">
+                                ${membersHtml}
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                </div>
+
+                <div class="row g-4 mt-4">
+                    <div class="col-12">
                         <div class="p-4 bg-white rounded-4 h-100 border">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold text-dark mb-0">Prémios da Equipa</h6>
@@ -2135,11 +2172,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold text-dark mb-0">Membros</h6>
-                    ${removeButtonHtml}
-                </div>
-                ${membersHtml}
             `;
         }
         
@@ -2346,9 +2378,8 @@
                     openProjectDetailsModalById(projectId);
                 }
 
-                // 3. Feedback ao utilizador
+                // 3. Feedback ao utilizador (persistir para leitura após reload/reopen do modal)
                 safeSessionSet('successMessage', 'Projeto concluído com sucesso!');
-                showAlert('success', 'Projeto concluído com sucesso!');
 
             } else {
                 response.text().then(text => {
@@ -2419,9 +2450,8 @@
                     openProjectDetailsModalById(projectId);
                 }
 
-                // 4. Feedback
+                // 4. Feedback (persistir para leitura após reload/reopen do modal)
                 safeSessionSet('successMessage', 'Projeto reaberto com sucesso!');
-                showAlert('success', 'Projeto reaberto com sucesso!');
 
             } else {
                 response.text().then(text => {
@@ -2703,15 +2733,36 @@
         // Collect all selected members (excluding empty values)
         const allMembers = [poId, smId, ...devIds].filter(v => v !== "");
 
+        // Find or create inline error container inside the modal
+        const modal = document.getElementById('newTeamModal');
+        const errorDiv = modal ? modal.querySelector('#newTeamError') : null;
+        function showError(msg) {
+            if (errorDiv) {
+                errorDiv.textContent = msg;
+                errorDiv.style.display = 'block';
+            } else {
+                alert(msg);
+            }
+        }
+
+        // Clear previous error
+        if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
+
         // Validation: No duplicate members (only if there are members selected)
         if (allMembers.length > 0 && new Set(allMembers).size !== allMembers.length) {
-            alert('Não pode haver membros duplicados na equipa!');
+            showError('Não pode haver membros duplicados na equipa!');
             return false;
         }
 
         // Validation: Max 10 members total (1 PO + 1 SM + 8 Devs)
         if (allMembers.length > 10) {
-            alert('A equipa não pode ter mais de 10 membros!');
+            showError('A equipa não pode ter mais de 10 membros!');
+            return false;
+        }
+
+        // Require at least one member selected when creating a team
+        if (allMembers.length === 0) {
+            showError('Por favor selecione pelo menos um membro (PO, SM ou Developer) ao criar a equipa.');
             return false;
         }
 
@@ -2823,6 +2874,10 @@
             const studentCoursesMap = /*[[${studentCoursesMap}]]*/ {};
             const courseTakenIds = (takenMap[courseId] || []);
 
+            // Teachers (if any) - include so a teacher can be added as Product Owner
+            const availableTeachers = allStudents.filter(s => s.role === 'TEACHER');
+
+            // Students enrolled in the course and not already taken
             const availableStudents = allStudents.filter(s => {
                 const studentCourseList = studentCoursesMap[s.id] ? String(studentCoursesMap[s.id]).split(',') : [];
                 const isEnrolled = studentCourseList.includes(String(courseId));
@@ -2830,17 +2885,79 @@
                 return s.role === 'STUDENT' && isEnrolled && !isTaken;
             });
 
-            if (availableStudents.length === 0) {
-                studentSelect.innerHTML = '<option value="">Nenhum aluno disponível.</option>';
+            // Build options: prefer showing a placeholder, then teachers (labelled), then students
+            studentSelect.innerHTML = '<option value="">Selecione um aluno ou professor...</option>';
+
+            // Add teachers first (they are not constrained by course enrollment)
+            availableTeachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher.id;
+                option.textContent = `${teacher.name} (Professor)`;
+                option.setAttribute('data-role', 'TEACHER');
+                studentSelect.appendChild(option);
+            });
+
+            // Then add available students
+            if (availableStudents.length === 0 && availableTeachers.length === 0) {
+                studentSelect.innerHTML = '<option value="">Nenhum aluno ou professor disponível.</option>';
             } else {
-                studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
                 availableStudents.forEach(student => {
                     const option = document.createElement('option');
                     option.value = student.id;
                     option.textContent = `${student.name} (${student.studentTag})`;
+                    option.setAttribute('data-role', 'STUDENT');
+                    // preserve courses attribute if needed
+                    if (studentCoursesMap && studentCoursesMap[student.id]) {
+                        option.setAttribute('data-courses', studentCoursesMap[student.id]);
+                    }
                     studentSelect.appendChild(option);
                 });
             }
+
+            // When selection changes, restrict allowed roles if a teacher is chosen
+            studentSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                const roleSelectElem = document.getElementById('addMemberRoleSelect');
+                errorDiv.style.display = 'none';
+
+                // Re-enable all role options by default
+                Array.from(roleSelectElem.options).forEach(o => o.disabled = false);
+
+                if (!selected || !selected.value) {
+                    // Re-apply taken-role disables
+                    if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                    if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                    roleSelectElem.value = '';
+                    return;
+                }
+
+                const selRole = selected.getAttribute('data-role');
+                if (selRole === 'TEACHER') {
+                    // Teacher can only be Product Owner
+                    if (poId && poId !== '') {
+                        errorDiv.textContent = 'Esta equipa já tem um Product Owner atribuído; não é possível adicionar outro professor como PO.';
+                        errorDiv.style.display = 'block';
+                        // Reset selection
+                        this.value = '';
+                        roleSelectElem.value = '';
+                        // Re-apply taken-role disables
+                        if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                        if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                        return;
+                    }
+
+                    // Set role to PRODUCT_OWNER and disable others
+                    roleSelectElem.value = 'PRODUCT_OWNER';
+                    Array.from(roleSelectElem.options).forEach(o => {
+                        if (o.value === '' ) { o.disabled = false; return; }
+                        o.disabled = o.value !== 'PRODUCT_OWNER';
+                    });
+                } else {
+                    // Student selected: re-apply taken-role disables
+                    if (poId && poId !== '') roleSelectElem.querySelector('option[value="PRODUCT_OWNER"]').disabled = true;
+                    if (smId && smId !== '') roleSelectElem.querySelector('option[value="SCRUM_MASTER"]').disabled = true;
+                }
+            });
         } catch (error) {
             console.error('Error loading students for modal:', error);
             studentSelect.innerHTML = '<option value="">Erro ao carregar alunos.</option>';

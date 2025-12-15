@@ -452,6 +452,14 @@ public class TeamService {
             team.setClosed(false);
         }
 
+        // If team has no members left (no PO, no SM, no developers) -> delete the team
+        boolean hasDevelopers = team.getDevelopers() != null && !team.getDevelopers().isEmpty();
+        if (team.getProductOwner() == null && team.getScrumMaster() == null && !hasDevelopers) {
+            // delete team via deleteTeam to ensure related entities (scores, teamAwards) are removed first
+            deleteTeam(team.getId());
+            return null;
+        }
+
         return teamRepository.save(team);
     }
 }

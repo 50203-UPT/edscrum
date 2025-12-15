@@ -40,6 +40,11 @@ public class UserStory {
     @JsonIgnoreProperties({"userStories", "teams", "enrollments"})
     private User assignee; // Pode ser null (Unassigned)
 
+    @ManyToOne
+    @JoinColumn(name = "created_by_id")
+    @JsonIgnoreProperties({"userStories", "teams", "enrollments"})
+    private User createdBy; // Quem criou a user story (opcional)
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -103,5 +108,13 @@ public class UserStory {
 
     public void setAssignee(User assignee) {
         this.assignee = assignee;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 }

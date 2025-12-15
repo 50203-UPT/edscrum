@@ -15,7 +15,11 @@ import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpSession;
 
 import pt.up.edscrum.model.Sprint;
+import pt.up.edscrum.model.Team;
 import pt.up.edscrum.service.SprintService;
+import pt.up.edscrum.service.UserService;
+import pt.up.edscrum.service.TeamService;
+import pt.up.edscrum.model.User;
 
 @RestController
 @RequestMapping("/sprints")
@@ -23,9 +27,13 @@ import pt.up.edscrum.service.SprintService;
 public class SprintController {
 
     private final SprintService sprintService;
+    private final UserService userService;
+    private final TeamService teamService;
 
-    public SprintController(SprintService sprintService) {
+    public SprintController(SprintService sprintService, UserService userService, TeamService teamService) {
         this.sprintService = sprintService;
+        this.userService = userService;
+        this.teamService = teamService;
     }
 
     /**
@@ -55,6 +63,11 @@ public class SprintController {
         if (currentUserId == null) return ResponseEntity.status(401).build();
         if (sprint.getCreatedBy() != null && sprint.getCreatedBy().getId() != null && !currentUserId.equals(sprint.getCreatedBy().getId()) && !"TEACHER".equals(currentUserRole)) {
             return ResponseEntity.status(403).build();
+        }
+        // If createdBy not provided (session-based auth), set current user as creator
+        if (sprint.getCreatedBy() == null && currentUserId != null) {
+            User creator = userService.getUserById(currentUserId);
+            sprint.setCreatedBy(creator);
         }
         Sprint created = sprintService.createSprint(projectId, sprint);
         return ResponseEntity.status(201).body(created);
@@ -98,8 +111,28 @@ public class SprintController {
         Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
         Long courseTeacherId = null;
         try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
-        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
-            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        // Allow teacher, course teacher, owner, or any member of the project's teams
+        boolean isProjectTeamMember = false;
+        try {
+            if (existing.getProject() != null && existing.getProject().getTeams() != null) {
+                for (Team t : existing.getProject().getTeams()) {
+                    if (t.getScrumMaster() != null && t.getScrumMaster().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getProductOwner() != null && t.getProductOwner().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getDevelopers() != null) {
+                        for (User d : t.getDevelopers()) {
+                            if (d != null && d.getId() != null && d.getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                        }
+                        if (isProjectTeamMember) break;
+                    }
+                }
+            }
+        } catch (Exception e) { }
+
+        boolean isCourseTeacher = (courseTeacherId != null && courseTeacherId.equals(currentUserId));
+        if (!"TEACHER".equals(currentUserRole) && !isCourseTeacher) {
+            if ((ownerId == null || !ownerId.equals(currentUserId)) && !isProjectTeamMember) {
+                return ResponseEntity.status(403).build();
+            }
         }
         Sprint s = sprintService.completeSprint(sprintId);
         return ResponseEntity.ok(s);
@@ -120,8 +153,28 @@ public class SprintController {
         Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
         Long courseTeacherId = null;
         try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
-        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
-            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        // Allow teacher, course teacher, owner, or any member of the project's teams
+        boolean isProjectTeamMember = false;
+        try {
+            if (existing.getProject() != null && existing.getProject().getTeams() != null) {
+                for (Team t : existing.getProject().getTeams()) {
+                    if (t.getScrumMaster() != null && t.getScrumMaster().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getProductOwner() != null && t.getProductOwner().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getDevelopers() != null) {
+                        for (User d : t.getDevelopers()) {
+                            if (d != null && d.getId() != null && d.getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                        }
+                        if (isProjectTeamMember) break;
+                    }
+                }
+            }
+        } catch (Exception e) { }
+
+        boolean isCourseTeacher = (courseTeacherId != null && courseTeacherId.equals(currentUserId));
+        if (!"TEACHER".equals(currentUserRole) && !isCourseTeacher) {
+            if ((ownerId == null || !ownerId.equals(currentUserId)) && !isProjectTeamMember) {
+                return ResponseEntity.status(403).build();
+            }
         }
         Sprint s = sprintService.reopenSprint(sprintId);
         return ResponseEntity.ok(s);
@@ -144,8 +197,28 @@ public class SprintController {
         Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
         Long courseTeacherId = null;
         try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
-        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
-            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+        // Allow teacher, course teacher, owner, or any member of the project's teams
+        boolean isProjectTeamMember = false;
+        try {
+            if (existing.getProject() != null && existing.getProject().getTeams() != null) {
+                for (Team t : existing.getProject().getTeams()) {
+                    if (t.getScrumMaster() != null && t.getScrumMaster().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getProductOwner() != null && t.getProductOwner().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getDevelopers() != null) {
+                        for (User d : t.getDevelopers()) {
+                            if (d != null && d.getId() != null && d.getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                        }
+                        if (isProjectTeamMember) break;
+                    }
+                }
+            }
+        } catch (Exception e) { }
+
+        boolean isCourseTeacher = (courseTeacherId != null && courseTeacherId.equals(currentUserId));
+        if (!"TEACHER".equals(currentUserRole) && !isCourseTeacher) {
+            if ((ownerId == null || !ownerId.equals(currentUserId)) && !isProjectTeamMember) {
+                return ResponseEntity.status(403).build();
+            }
         }
         Sprint s = sprintService.reopenSprint(sprintId);
         return ResponseEntity.ok(s);
@@ -165,8 +238,28 @@ public class SprintController {
         Long ownerId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
         Long courseTeacherId = null;
         try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
-        if (!"TEACHER".equals(currentUserRole) || (courseTeacherId != null && !courseTeacherId.equals(currentUserId))) {
-            if (ownerId == null || !ownerId.equals(currentUserId)) return ResponseEntity.status(403).build();
+
+        // Allow deletion for teacher, owner, or any member of the project's teams
+        boolean isProjectTeamMember = false;
+        try {
+            if (existing.getProject() != null && existing.getProject().getTeams() != null) {
+                for (Team t : existing.getProject().getTeams()) {
+                    if (t.getScrumMaster() != null && t.getScrumMaster().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getProductOwner() != null && t.getProductOwner().getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                    if (t.getDevelopers() != null) {
+                        for (User d : t.getDevelopers()) {
+                            if (d != null && d.getId() != null && d.getId().equals(currentUserId)) { isProjectTeamMember = true; break; }
+                        }
+                        if (isProjectTeamMember) break;
+                    }
+                }
+            }
+        } catch (Exception e) { }
+
+        if (!"TEACHER".equals(currentUserRole) && (courseTeacherId == null || !courseTeacherId.equals(currentUserId))) {
+            if ((ownerId == null || !ownerId.equals(currentUserId)) && !isProjectTeamMember) {
+                return ResponseEntity.status(403).build();
+            }
         }
         sprintService.deleteSprint(sprintId);
         return ResponseEntity.noContent().build();

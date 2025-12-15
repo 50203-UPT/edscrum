@@ -5,6 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.model.Sprint;
+import pt.up.edscrum.enums.SprintStatus;
+import pt.up.edscrum.enums.ProjectStatus;
+import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.model.UserStory;
 import pt.up.edscrum.repository.SprintRepository;
@@ -46,14 +49,34 @@ public class UserStoryService {
         if (userStory.getSprint() != null && userStory.getSprint().getId() != null) {
             Sprint sprint = sprintRepository.findById(userStory.getSprint().getId())
                     .orElseThrow(() -> new RuntimeException("Sprint não encontrado"));
+
+            // Se o sprint estiver em PLANEAMENTO, passar para EM_CURSO
+            if (sprint.getStatus() == SprintStatus.PLANEAMENTO) {
+                sprint.setStatus(SprintStatus.EM_CURSO);
+
+                // Se o projeto associado estiver em PLANEAMENTO, também iniciar o projeto
+                Project project = sprint.getProject();
+                if (project != null && project.getStatus() == ProjectStatus.PLANEAMENTO) {
+                    project.setStatus(ProjectStatus.EM_CURSO);
+                }
+
+                sprintRepository.save(sprint);
+            }
+
             userStory.setSprint(sprint);
         }
 
-        // Garantir que o assignee existe, se fornecido
-        if (userStory.getAssignee() != null && userStory.getAssignee().getId() != null) {
-            User assignee = userRepository.findById(userStory.getAssignee().getId())
-                    .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
-            userStory.setAssignee(assignee);
+        // Garantir que o assignee existe, se fornecido. Suporta "id" ou "email" no payload.
+        if (userStory.getAssignee() != null) {
+            if (userStory.getAssignee().getId() != null) {
+                User assignee = userRepository.findById(userStory.getAssignee().getId())
+                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+                userStory.setAssignee(assignee);
+            } else if (userStory.getAssignee().getEmail() != null) {
+                User assignee = userRepository.findByEmail(userStory.getAssignee().getEmail())
+                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+                userStory.setAssignee(assignee);
+            }
         }
 
         // Status default é TODO
@@ -104,10 +127,16 @@ public class UserStoryService {
         existing.setPriority(updatedStory.getPriority());
         existing.setStoryPoints(updatedStory.getStoryPoints());
 
-        if (updatedStory.getAssignee() != null && updatedStory.getAssignee().getId() != null) {
-            User assignee = userRepository.findById(updatedStory.getAssignee().getId())
-                    .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
-            existing.setAssignee(assignee);
+        if (updatedStory.getAssignee() != null) {
+            if (updatedStory.getAssignee().getId() != null) {
+                User assignee = userRepository.findById(updatedStory.getAssignee().getId())
+                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+                existing.setAssignee(assignee);
+            } else if (updatedStory.getAssignee().getEmail() != null) {
+                User assignee = userRepository.findByEmail(updatedStory.getAssignee().getEmail())
+                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+                existing.setAssignee(assignee);
+            }
         }
 
         return userStoryRepository.save(existing);

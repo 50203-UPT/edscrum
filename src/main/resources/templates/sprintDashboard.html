@@ -5,9 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>EduScrum - Sprint Dashboard</title>
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
+    <title>Sprint Dashboard</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
@@ -83,15 +81,12 @@
         .btn-back-custom {
             display: flex; align-items: center; justify-content: center;
             width: 42px; height: 42px; border-radius: 12px;
-            color: #6c757d; transition: all 0.18s ease; text-decoration: none; margin-right: 8px;
-            background-color: transparent; border: 1px solid transparent;
+            color: #6c757d; transition: all 0.2s ease; text-decoration: none; margin-right: 8px;
         }
-        /* Hover: apply role-specific background color */
         .btn-back-custom:hover {
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12); transform: translateY(-1px);
+            background-color: transparent; color: #6c757d;
+            box-shadow: none; transform: none;
         }
-        .btn-back-custom.teacher:hover { background-color: #0d6efd; color: #ffffff; border-color: rgba(13,110,253,0.12); }
-        .btn-back-custom.student:hover { background-color: #198754; color: #ffffff; border-color: rgba(25,135,84,0.12); }
         
         /* Dragging visuals */
         .kanban-column.drag-over { background-color: #e2e8f0; border-style: dashed; }
@@ -110,10 +105,10 @@
 
     <nav th:class="'d-flex justify-content-between align-items-center p-3 bg-white border-bottom sticky-top ' + (${teacher != null ? 'navbar-teacher' : 'navbar-student'})" style="z-index: 1000;">
         <div class="d-flex align-items-center gap-3">
-            <a th:if="${teacher != null}" th:href="@{/view/teacher/home}" class="btn-back-custom teacher" title="Voltar">
+            <a th:if="${teacher != null}" th:href="@{/view/teacher/home}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
-            <a th:if="${student != null}" th:href="@{/view/student/home(tab='projects')}" class="btn-back-custom student" title="Voltar">
+            <a th:if="${student != null}" th:href="@{/view/student/home(tab='projects')}" class="btn-back-custom" title="Voltar">
                 <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
             </a>
             <div th:class="'text-white p-2 rounded-3 shadow-sm ' + (${teacher != null ? 'bg-primary' : 'bg-success'})">
@@ -125,7 +120,22 @@
             </div>
         </div>
         
-        <!-- profile area removed for sprint dashboard -->
+        <div class="d-flex align-items-center gap-4">
+            <div class="vr text-muted opacity-25" style="height: 30px;"></div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <div class="profile-name fw-bold text-dark" th:text="${teacher != null ? teacher.name : student.name}">Utilizador</div>
+                    <div class="profile-email small text-muted" th:text="${teacher != null ? teacher.email : student.email}">email@upt.pt</div>
+                </div>
+                <img th:if="${(teacher != null ? teacher.profileImage : student.profileImage) != null}" 
+                     th:src="@{'/uploads/profile-images/' + ${teacher != null ? teacher.profileImage : student.profileImage}}" 
+                     class="rounded-circle shadow-sm border" style="width: 42px; height: 42px; object-fit: cover;">
+                <div th:unless="${(teacher != null ? teacher.profileImage : student.profileImage) != null}" 
+                     th:class="'profile-avatar ' + (${teacher != null ? 'bg-primary' : 'bg-success'}) + ' text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm'" 
+                     style="width: 42px; height: 42px; font-size: 1.2rem;" 
+                     th:text="${#strings.substring((teacher != null ? teacher.name : student.name),0,1)}">U</div>
+            </div>
+        </div>
     </nav>
 
     <!-- Notifications removed from this page -->
@@ -149,17 +159,17 @@
                         <span class="text-muted small fw-bold"><i data-lucide="calendar" class="w-3 h-3 inline me-1"></i> <span th:text="${sprint.startDate} + ' - ' + ${sprint.endDate}">Datas</span></span>
                     </div>
                     <div class="d-flex gap-2 justify-content-end">
-                        <!-- Mostrar botão de nova User Story para estudantes (não-professor) quando sprint não está concluído -->
-                        <button th:if="${student != null and teacher == null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
+                        <!-- Apenas estudantes que NÃO são Product Owner e NÃO são professores podem ver os botões de ação -->
+                        <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#newUserStoryModal">
                             <i data-lucide="plus" class="w-4 h-4 inline me-1"></i> Nova User Story
                         </button>
-                        <button th:if="${canComplete and student != null and teacher == null and student.id != productOwnerId and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
+                        <button th:if="${canComplete and student != null and teacher == null and sprint.status.name() != 'CONCLUIDO'}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#completeSprintModal">
                             <i data-lucide="check-circle" class="w-4 h-4 inline me-1"></i> Concluir Sprint
                         </button>
                         <button th:if="${student != null and teacher == null and student.id != productOwnerId and sprint.status.name() == 'CONCLUIDO'}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSprintModal">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 inline me-1"></i> Reabrir Sprint
                         </button>
-                        <button th:if="${(teacher != null or (student != null and sprint.createdBy != null and student.id == sprint.createdBy.id)) and sprint.status.name() == 'PLANEAMENTO'}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
+                        <button th:if="${student != null and teacher == null and sprint.status.name() == 'PLANEAMENTO'}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm btn-sm" data-bs-toggle="modal" data-bs-target="#deleteSprintModal">
                             <i data-lucide="trash-2" class="w-4 h-4 inline me-1"></i> Eliminar Sprint
                         </button>
                     </div>
@@ -203,7 +213,7 @@
                      th:id="'story-' + ${story.id}" th:data-id="${story.id}" 
                      th:data-name="${story.name}" th:data-description="${story.description}"
                      th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
-                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
+                     th:data-assignee="${story.assignee != null ? story.assignee.email : ''}">
                     
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#5</span>
@@ -244,7 +254,7 @@
                      th:id="'story-' + ${story.id}" th:data-id="${story.id}"
                      th:data-name="${story.name}" th:data-description="${story.description}"
                      th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
-                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
+                     th:data-assignee="${story.assignee != null ? story.assignee.email : ''}">
                     
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
@@ -283,7 +293,7 @@
                      th:id="'story-' + ${story.id}" th:data-id="${story.id}"
                      th:data-name="${story.name}" th:data-description="${story.description}"
                      th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
-                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
+                     th:data-assignee="${story.assignee != null ? story.assignee.email : ''}">
                      <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">LOW</span>
@@ -322,7 +332,7 @@
                      th:id="'story-' + ${story.id}" th:data-id="${story.id}"
                      th:data-name="${story.name}" th:data-description="${story.description}"
                      th:data-priority="${story.priority}" th:data-points="${story.storyPoints}"
-                     th:data-assignee="${story.assignee != null ? story.assignee.id : ''}">
+                     th:data-assignee="${story.assignee != null ? story.assignee.email : ''}">
                      <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small fw-bold" th:text="'US-' + ${story.id}">#</span>
                         <span class="priority-badge" th:classappend="'prio-' + ${story.priority}" th:text="${story.priority}">HIGH</span>
@@ -489,7 +499,7 @@
                             <label class="form-label fw-bold small">Atribuir a</label>
                             <select id="storyAssignee" class="form-select bg-light border-0 py-2">
                                 <option value="">Não atribuído</option>
-                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}"
+                                <option th:each="member : ${teamMembers}" th:value="${member.email}" th:text="${member.name}"
                                         th:disabled="${productOwnerId != null && member.id == productOwnerId}">Membro</option>
                             </select>
                         </div>
@@ -548,7 +558,7 @@
                             <label class="form-label fw-bold small">Atribuir a</label>
                             <select id="editStoryAssignee" class="form-select bg-light border-0 py-2">
                                 <option value="">Não atribuído</option>
-                                <option th:each="member : ${teamMembers}" th:value="${member.id}" th:text="${member.name}"
+                                <option th:each="member : ${teamMembers}" th:value="${member.email}" th:text="${member.name}"
                                         th:disabled="${productOwnerId != null && member.id == productOwnerId}">Membro</option>
                             </select>
                         </div>
@@ -568,56 +578,12 @@
     <script th:inline="javascript">
         const sprintId = /*[[${sprint.id}]]*/ 0;
         const projectId = /*[[${projectId}]]*/ 0;
-        const userId = /*[[${teacher != null ? teacher.id : student.id}]]*/ 0;
         const isTeacher = /*[[${teacher != null}]]*/ false;
-        const sprintStatus = /*[[${sprint.status.name()}]]*/ 'PLANEAMENTO';
-        const sprintOwnerId = /*[[${sprint.createdBy != null ? sprint.createdBy.id : 0}]]*/ 0;
     </script>
     <script>
         lucide.createIcons();
 
-        // Load notifications on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchNotifications();
-        });
-
-        // Helper to read CSRF token/header from meta tags or cookie and perform fetch with CSRF header
-        function getCookie(name) {
-            const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
-            return match ? decodeURIComponent(match[1]) : null;
-        }
-
-        function getCsrf() {
-            const tokenMeta = document.querySelector('meta[name="_csrf"]');
-            const headerMeta = document.querySelector('meta[name="_csrf_header"]');
-            if (tokenMeta && headerMeta) {
-                return { token: tokenMeta.getAttribute('content'), header: headerMeta.getAttribute('content') };
-            }
-            // Fallback to common cookie name used by Spring's CookieCsrfTokenRepository
-            const cookieNames = ['XSRF-TOKEN', 'XSRF_TOKEN', 'CSRF-TOKEN', 'X-CSRF-TOKEN'];
-            for (const name of cookieNames) {
-                const val = getCookie(name);
-                if (val) {
-                    return { token: val, header: 'X-XSRF-TOKEN' };
-                }
-            }
-            // If only token meta exists, use a common header name
-            if (tokenMeta) {
-                return { token: tokenMeta.getAttribute('content'), header: 'X-CSRF-TOKEN' };
-            }
-            return { token: null, header: null };
-        }
-
-        function csrfFetch(url, options = {}) {
-            const csrf = getCsrf();
-            options.headers = options.headers || {};
-            if (csrf && csrf.token && csrf.header) {
-                options.headers[csrf.header] = csrf.token;
-            }
-            // ensure cookies are sent (session, csrf cookie if any)
-            options.credentials = options.credentials || 'same-origin';
-            return fetch(url, options);
-        }
+        // Notifications removed for this page
 
         // DRAG AND DROP LOGIC
         function drag(ev) {
@@ -660,7 +626,7 @@
                 draggedElement.classList.remove('dragging');
 
                 // CHAMADA API PARA ATUALIZAR STATUS
-                csrfFetch(`/api/stories/${storyId}/move?status=${newStatus}`, {
+                fetch(`/api/stories/${storyId}/move?status=${newStatus}`, {
                     method: 'POST'
                 }).then(response => {
                     if (response.ok) {
@@ -684,18 +650,28 @@
             e.preventDefault();
             
             const assigneeId = document.getElementById('storyAssignee').value;
-            
+
+            // Build assignee object: support numeric IDs or textual identifiers (username/email)
+            let assigneeObj = null;
+            if (assigneeId) {
+                if (/^\d+$/.test(assigneeId)) {
+                    assigneeObj = { id: parseInt(assigneeId) };
+                } else {
+                    assigneeObj = { email: assigneeId };
+                }
+            }
+
             const userStory = {
                 name: document.getElementById('storyName').value,
                 description: document.getElementById('storyDescription').value,
                 priority: document.getElementById('storyPriority').value,
                 storyPoints: parseInt(document.getElementById('storyPoints').value),
                 sprint: { id: sprintId },
-                assignee: assigneeId ? { id: parseInt(assigneeId) } : null,
+                assignee: assigneeObj,
                 status: 'TODO'
             };
 
-            csrfFetch('/api/stories', {
+            fetch('/api/stories', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -704,27 +680,12 @@
             })
             .then(response => {
                 if (response.ok) {
-                    if (typeof sprintStatus !== 'undefined' && sprintStatus === 'PLANEAMENTO') {
-                        // move sprint to EM_CURSO after creating the first story (server endpoint /start)
-                        csrfFetch(`/sprints/${sprintId}/start`, { method: 'POST' })
-                            .then(r => {
-                                if (r.ok) {
-                                    console.log('Sprint started');
-                                    location.reload();
-                                } else {
-                                    return r.text().then(text => {
-                                        console.error('Start sprint failed', r.status, text);
-                                        alert('Não foi possível iniciar o sprint: ' + (text || r.status));
-                                        location.reload();
-                                    });
-                                }
-                            })
-                            .catch(err => { console.error('Failed to start sprint:', err); alert('Erro ao iniciar sprint: ' + err); location.reload(); });
-                    } else {
-                        location.reload();
-                    }
+                    location.reload();
                 } else {
-                    alert('Erro ao criar User Story');
+                    response.text().then(txt => {
+                        const msg = txt || ('Erro ao criar User Story (status ' + response.status + ')');
+                        alert(msg);
+                    });
                 }
             })
             .catch(error => {
@@ -761,16 +722,26 @@
             
             const storyId = document.getElementById('editStoryId').value;
             const assigneeId = document.getElementById('editStoryAssignee').value;
-            
+
+            // Build assignee object: support numeric IDs or textual identifiers (username/email)
+            let editAssigneeObj = null;
+            if (assigneeId) {
+                if (/^\d+$/.test(assigneeId)) {
+                    editAssigneeObj = { id: parseInt(assigneeId) };
+                } else {
+                    editAssigneeObj = { email: assigneeId };
+                }
+            }
+
             const userStory = {
                 name: document.getElementById('editStoryName').value,
                 description: document.getElementById('editStoryDescription').value,
                 priority: document.getElementById('editStoryPriority').value,
                 storyPoints: parseInt(document.getElementById('editStoryPoints').value),
-                assignee: assigneeId ? { id: parseInt(assigneeId) } : null
+                assignee: editAssigneeObj
             };
 
-            csrfFetch(`/api/stories/${storyId}`, {
+            fetch(`/api/stories/${storyId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -781,7 +752,10 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    alert('Erro ao atualizar User Story');
+                    response.text().then(txt => {
+                        const msg = txt || ('Erro ao atualizar User Story (status ' + response.status + ')');
+                        alert(msg);
+                    });
                 }
             })
             .catch(error => {
@@ -813,69 +787,100 @@
         function executeDeleteStory() {
             const storyId = document.getElementById('editStoryId').value;
 
-            csrfFetch(`/api/stories/${storyId}`, { method: 'DELETE' })
-                .then(async response => {
-                    if (response.ok) {
-                        location.reload();
-                        return;
-                    }
-                    const text = await response.text().catch(() => '');
-                    console.error('Delete failed', response.status, text);
-                    alert('Erro ao eliminar User Story: ' + (text || response.status));
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erro ao eliminar User Story: ' + error);
-                });
+            fetch(`/api/stories/${storyId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao eliminar User Story');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao eliminar User Story');
+            });
         }
 
         // Completar Sprint
         function confirmCompleteSprint() {
-            csrfFetch(`/sprints/${sprintId}/complete`, { method: 'POST' })
+            fetch(`/sprints/${sprintId}/complete`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
             .then(response => {
                 if (response.ok) {
                     location.reload();
-                } else {
-                    return response.json().then(data => {
-                        console.error(data.message || 'Não é possível completar a sprint.');
-                    });
+                    return;
                 }
+                if (response.status === 403) {
+                    alert('Não tem permissão para completar a sprint.');
+                    return;
+                }
+                return response.text().then(txt => {
+                    if (txt) {
+                        try { const obj = JSON.parse(txt); console.error(obj.message || txt); }
+                        catch(e) { console.error(txt); }
+                    } else {
+                        console.error('Não é possível completar a sprint.');
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error:', error);
+                alert('Erro ao completar a sprint.');
             });
         }
 
         function confirmReopenSprint() {
-            csrfFetch(`/sprints/${sprintId}/reopen`, { method: 'POST' })
+            fetch(`/sprints/${sprintId}/reopen`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
             .then(response => {
                 if (response.ok) {
                     location.reload();
-                } else {
-                    console.error('Erro ao reabrir sprint.');
+                    return;
                 }
+                if (response.status === 403) {
+                    alert('Não tem permissão para reabrir a sprint.');
+                    return;
+                }
+                return response.text().then(txt => { if (txt) console.error(txt); else console.error('Erro ao reabrir sprint.'); });
             })
             .catch(error => {
                 console.error('Error:', error);
+                alert('Erro ao reabrir sprint.');
             });
         }
 
         function confirmDeleteSprint() {
-            csrfFetch(`/sprints/${sprintId}`, { method: 'DELETE' })
+            fetch(`/sprints/${sprintId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
             .then(response => {
                 if (response.ok) {
-                    // Redirecionar para a home correta
                     if (isTeacher) {
-                        window.location.href = '/view/teacher/home';
+                        window.location.href = `/view/teacher/home`;
                     } else {
-                        window.location.href = '/view/student/home?tab=projects';
+                        window.location.href = `/view/student/home?tab=projects`;
                     }
-                } else {
-                    console.error('Erro ao eliminar sprint.');
+                    return;
                 }
+                if (response.status === 403) {
+                    alert('Não tem permissão para eliminar a sprint.');
+                    return;
+                }
+                return response.text().then(txt => { if (txt) console.error(txt); else console.error('Erro ao eliminar sprint.'); });
             })
             .catch(error => {
                 console.error('Error:', error);
+                alert('Erro ao eliminar sprint.');
             });
         }
 
