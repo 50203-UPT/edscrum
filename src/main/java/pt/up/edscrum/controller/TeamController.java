@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpSession;
 import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
@@ -226,16 +227,19 @@ public class TeamController {
     }
 
     @PostMapping("/{teamId}/add-member")
-    public ResponseEntity<?> addMemberByTeacher(@PathVariable Long teamId, @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> addMemberByTeacher(
+            @PathVariable Long teamId, 
+            @RequestBody Map<String, Object> payload,
+            HttpSession session) { // Spring injeta a sessão
         try {
+            // Validação de Sessão
+            if (session == null || session.getAttribute("currentUserId") == null) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+            
             Long studentId = Long.valueOf(payload.get("studentId").toString());
             String role = (String) payload.get("role");
 
-            // Validate that the caller is a teacher
-            jakarta.servlet.http.HttpSession session = null;
-            try { session = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest().getSession(false); } catch (Exception e) { session = null; }
-            if (session == null) return ResponseEntity.status(401).body("Unauthorized");
-            Long currentUserId = (Long) session.getAttribute("currentUserId");
             String currentUserRole = (String) session.getAttribute("currentUserRole");
             if (!"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).body("Forbidden");
 

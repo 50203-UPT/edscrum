@@ -186,13 +186,17 @@ class UserStoryServiceTest {
     // TESTES: EXCEPTIONS NO CREATE
     // ===========================================
 
-    @Test
+   @Test
     void testCreateUserStory_Fail_SprintNotFound() {
         UserStory us = new UserStory();
+        us.setName("Story Fail");
+        
+        // Criar um objeto Sprint com um ID fixo que sabemos não existir (e.g. 99999L)
         Sprint fakeSprint = new Sprint();
-        fakeSprint.setId(999L);
+        fakeSprint.setId(99999L); 
         us.setSprint(fakeSprint);
 
+        // O serviço vai tentar fazer sprintRepo.findById(99999L) e deve falhar
         Exception e = assertThrows(RuntimeException.class, () -> {
             userStoryService.createUserStory(us);
         });

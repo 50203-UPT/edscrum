@@ -17,6 +17,7 @@ public interface TeamAwardRepository extends JpaRepository<TeamAward, Long> {
      */
     List<TeamAward> findByTeamId(Long teamId);
 
+    List<TeamAward> findAllByTeamId(Long teamId);
     /**
      * Procura um `TeamAward` por equipa, prémio e projeto.
      *

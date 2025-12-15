@@ -1,123 +1,193 @@
 package pt.up.edscrum.edscrum.Controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.transaction.annotation.Transactional;
 
+import pt.up.edscrum.controller.AuthController;
+import pt.up.edscrum.dto.LoginRequest;
 import pt.up.edscrum.model.User;
-import pt.up.edscrum.repository.AwardRepository;
-import pt.up.edscrum.repository.CourseRepository;
-import pt.up.edscrum.repository.EnrollmentRepository;
-import pt.up.edscrum.repository.NotificationRepository;
-import pt.up.edscrum.repository.ProjectRepository;
-import pt.up.edscrum.repository.ScoreRepository;
-import pt.up.edscrum.repository.SprintRepository;
-import pt.up.edscrum.repository.StudentAwardRepository;
-import pt.up.edscrum.repository.TeamAwardRepository;
-import pt.up.edscrum.repository.TeamRepository;
-import pt.up.edscrum.repository.UserRepository;
-import pt.up.edscrum.repository.UserStoryRepository;
-import pt.up.edscrum.service.AuthService;
+import pt.up.edscrum.repository.*; // Importar todos
 
+/**
+ * Testes de integração para o AuthController.
+ * <p>
+ * Verifica o processo de login e recuperação de password,
+ * garantindo a limpeza correta da base de dados para evitar conflitos de FK.
+ * </p>
+ */
 @SpringBootTest
 @Transactional
-public class AuthControllerTest {
+class AuthControllerTest {
 
-    @Autowired
-    private AuthService authService;
+    @Autowired private AuthController authController;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    // Repositórios necessários para limpeza (Foreign Keys que bloqueiam delete user)
+    @Autowired private NotificationRepository notificationRepo;
+    @Autowired private EnrollmentRepository enrollmentRepo;
+    @Autowired private ScoreRepository scoreRepo;
+    @Autowired private StudentAwardRepository studentAwardRepo;
+    @Autowired private TeamAwardRepository teamAwardRepo;
+    @Autowired private UserStoryRepository userStoryRepo;
+    @Autowired private SprintRepository sprintRepo;
+    @Autowired private TeamRepository teamRepo;
+    @Autowired private ProjectRepository projectRepo;
+    @Autowired private CourseRepository courseRepo;
+    @Autowired private AwardRepository awardRepo;
 
-    @Autowired
-    private TeamRepository teamRepository;
+    private User testUser;
+    private MockHttpSession session;
 
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private TeamAwardRepository teamAwardRepository;
-
-    @Autowired
-    private StudentAwardRepository studentAwardRepository;
-
-    @Autowired
-    private ScoreRepository scoreRepository;
-
-    @Autowired
-    private AwardRepository awardRepository;
-
-    @Autowired
-    private SprintRepository sprintRepository;
-
-    @Autowired
-    private UserStoryRepository userStoryRepository;
-
-    @Autowired
-    private EnrollmentRepository enrollmentRepository; // Inject EnrollmentRepository
-
-    @Autowired
-    private NotificationRepository notificationRepository; // Inject NotificationRepository
-
+    /**
+     * Configuração inicial: Limpa todas as tabelas dependentes antes dos utilizadores.
+     * Isto resolve o erro "Constraint Violation" na tabela notifications.
+     */
     @BeforeEach
     void setUp() {
-        // Limpar tabelas na ordem correta para não violar FK
-        notificationRepository.deleteAll(); // Delete notifications first
-        userStoryRepository.deleteAll();
-        sprintRepository.deleteAll();
-        teamAwardRepository.deleteAll();
-        studentAwardRepository.deleteAll();
-        scoreRepository.deleteAll();
-        enrollmentRepository.deleteAll(); // Delete enrollments before courses/users
-        teamRepository.deleteAll();
-        projectRepository.deleteAll();
-        awardRepository.deleteAll();
-        courseRepository.deleteAll();
+        // 1. Limpar dependências (filhos)
+        notificationRepo.deleteAll(); // <--- CRÍTICO: Resolve o erro principal
+        studentAwardRepo.deleteAll();
+        teamAwardRepo.deleteAll();
+        scoreRepo.deleteAll();
+        userStoryRepo.deleteAll();
+        enrollmentRepo.deleteAll();
+        
+        // 2. Limpar tabelas intermédias
+        sprintRepo.deleteAll();
+        teamRepo.deleteAll();
+        awardRepo.deleteAll();
+        projectRepo.deleteAll();
+        courseRepo.deleteAll();
+        
+        // 3. Agora é seguro limpar utilizadores
         userRepository.deleteAll();
+
+        // Criar utilizador para o teste atual
+        testUser = new User();
+        testUser.setName("Auth Test");
+        testUser.setEmail("auth@upt.pt");
+        testUser.setPassword("securePass");
+        testUser.setRole("STUDENT");
+        userRepository.save(testUser);
+
+        session = new MockHttpSession();
     }
 
-    private User createAndSaveUser(String name, String email, String password, String role) {
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setPassword(password); // senha em texto para testes
-        user.setRole(role);
+    // ==========================================
+    // LOGIN TESTS
+    // ==========================================
 
-        // Salvar User isoladamente para evitar transient property error
-        return userRepository.save(user);
+    @Test
+    void testLogin_Success() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("auth@upt.pt");
+        req.setPassword("securePass");
+
+        ResponseEntity<?> resp = authController.login(req, session);
+
+        assertEquals(200, resp.getStatusCode().value());
+        User loggedUser = (User) resp.getBody();
+        assertEquals("Auth Test", loggedUser.getName());
+        
+        assertEquals(testUser.getId(), session.getAttribute("currentUserId"));
     }
 
     @Test
-    void testLogin_withValidCredentials_returnsUser() {
-        User u = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
+    void testLogin_Fail_WrongPassword() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("auth@upt.pt");
+        req.setPassword("wrong");
 
-        User loggedInUser = authService.login("user@test.com", "password123");
-
-        assertNotNull(loggedInUser);
-        assertEquals(u.getEmail(), loggedInUser.getEmail());
+        ResponseEntity<?> resp = authController.login(req, session);
+        assertEquals(401, resp.getStatusCode().value());
     }
 
     @Test
-    void testLogin_withInvalidPassword_returnsNull() {
-        createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
+    void testLogin_Fail_UserNotFound() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("404@upt.pt");
+        req.setPassword("123");
 
-        User loggedInUser = authService.login("user@test.com", "wrongpassword");
+        ResponseEntity<?> resp = authController.login(req, session);
+        assertEquals(401, resp.getStatusCode().value());
+    }
 
-        assertNull(loggedInUser);
+    // ==========================================
+    // RECOVERY TESTS
+    // ==========================================
+
+    @Test
+    void testSendCode_Success() {
+        ResponseEntity<?> resp = authController.sendCode("auth@upt.pt");
+        assertEquals(200, resp.getStatusCode().value());
+        
+        User u = userRepository.findById(testUser.getId()).get();
+        assertNotNull(u.getResetCode());
     }
 
     @Test
-    void testLogin_withNonExistentUser_returnsNull() {
-        User loggedInUser = authService.login("nonexistent@test.com", "anypassword");
+    void testSendCode_NotFound() {
+        ResponseEntity<?> resp = authController.sendCode("ghost@upt.pt");
+        assertEquals(404, resp.getStatusCode().value());
+    }
 
-        assertNull(loggedInUser);
+    @Test
+    void testResendCode() {
+        ResponseEntity<?> resp = authController.resendCode("auth@upt.pt");
+        assertEquals(200, resp.getStatusCode().value());
+    }
+
+    @Test
+    void testVerifyCode_Success() {
+        testUser.setResetCode("12345");
+        testUser.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(testUser);
+
+        ResponseEntity<?> resp = authController.verifyCode("auth@upt.pt", "12345");
+        assertEquals(200, resp.getStatusCode().value());
+    }
+
+    @Test
+    void testVerifyCode_Fail_WrongCode() {
+        testUser.setResetCode("12345");
+        testUser.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(testUser);
+
+        ResponseEntity<?> resp = authController.verifyCode("auth@upt.pt", "99999");
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    void testVerifyCode_Fail_Expired() {
+        testUser.setResetCode("12345");
+        testUser.setResetCodeExpiry(LocalDateTime.now().minusMinutes(1));
+        userRepository.save(testUser);
+
+        ResponseEntity<?> resp = authController.verifyCode("auth@upt.pt", "12345");
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    void testVerifyCode_UserNotFound() {
+        ResponseEntity<?> resp = authController.verifyCode("ghost@upt.pt", "12345");
+        assertEquals(404, resp.getStatusCode().value());
+    }
+    
+    @Test
+    void testVerifyCode_NoCodeSet() {
+        testUser.setResetCode(null);
+        userRepository.save(testUser);
+        
+        ResponseEntity<?> resp = authController.verifyCode("auth@upt.pt", "12345");
+        assertEquals(400, resp.getStatusCode().value());
     }
 }
