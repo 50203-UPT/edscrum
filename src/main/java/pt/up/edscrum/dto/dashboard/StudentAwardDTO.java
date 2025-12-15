@@ -2,6 +2,10 @@ package pt.up.edscrum.dto.dashboard;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa um prémio (award) atribuído a um estudante para efeitos
+ * de apresentação no dashboard.
+ */
 public class StudentAwardDTO {
 
     private String awardName;

@@ -45,16 +45,15 @@ public class UserStoryService {
      * @return user story persistida
      */
     public UserStory createUserStory(UserStory userStory) {
-        // Garantir que o sprint existe
         if (userStory.getSprint() != null && userStory.getSprint().getId() != null) {
             Sprint sprint = sprintRepository.findById(userStory.getSprint().getId())
                     .orElseThrow(() -> new RuntimeException("Sprint não encontrado"));
 
-            // Se o sprint estiver em PLANEAMENTO, passar para EM_CURSO
+            
             if (sprint.getStatus() == SprintStatus.PLANEAMENTO) {
                 sprint.setStatus(SprintStatus.EM_CURSO);
 
-                // Se o projeto associado estiver em PLANEAMENTO, também iniciar o projeto
+                
                 Project project = sprint.getProject();
                 if (project != null && project.getStatus() == ProjectStatus.PLANEAMENTO) {
                     project.setStatus(ProjectStatus.EM_CURSO);
@@ -66,7 +65,7 @@ public class UserStoryService {
             userStory.setSprint(sprint);
         }
 
-        // Garantir que o assignee existe, se fornecido. Suporta "id" ou "email" no payload.
+        
         if (userStory.getAssignee() != null) {
             if (userStory.getAssignee().getId() != null) {
                 User assignee = userRepository.findById(userStory.getAssignee().getId())
@@ -79,7 +78,7 @@ public class UserStoryService {
             }
         }
 
-        // Status default é TODO
+        
         if (userStory.getStatus() == null) {
             userStory.setStatus(UserStoryStatus.TODO);
         }

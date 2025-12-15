@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import pt.up.edscrum.model.Project;
 
+/**
+ * Repositório para operações sobre `Project`.
+ */
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     /**

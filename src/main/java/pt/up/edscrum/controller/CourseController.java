@@ -11,6 +11,9 @@ import pt.up.edscrum.repository.CourseRepository;
 
 @RestController
 @RequestMapping("/courses")
+/**
+ * API REST mínima para acesso a cursos.
+ */
 public class CourseController {
 
     private final CourseRepository courseRepository;

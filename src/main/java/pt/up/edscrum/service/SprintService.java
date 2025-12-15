@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import pt.up.edscrum.enums.NotificationType; // Importação
+import pt.up.edscrum.enums.NotificationType;
 import pt.up.edscrum.enums.ProjectStatus;
 import pt.up.edscrum.enums.UserStoryStatus;
 import pt.up.edscrum.model.Project;
@@ -27,7 +27,6 @@ public class SprintService {
     private final ProjectRepository projectRepository;
     private final UserStoryRepository userStoryRepository;
 
-    // Serviço de Notificações
     private final NotificationService notificationService;
 
     public SprintService(SprintRepository sprintRepository, ProjectRepository projectRepository,
@@ -163,7 +162,6 @@ public class SprintService {
         sprint.setStatus(pt.up.edscrum.enums.SprintStatus.CONCLUIDO);
         Sprint savedSprint = sprintRepository.save(sprint);
 
-        // --- NOTIFICAÇÃO DE SPRINT CONCLUÍDA ---
         notifyProjectMembersOfSprintCompletion(savedSprint);
 
         return savedSprint;
@@ -205,7 +203,6 @@ public class SprintService {
 
         sprint.setStatus(pt.up.edscrum.enums.SprintStatus.EM_CURSO);
 
-        // Se o projeto estiver concluído, reabri-lo automaticamente
         Project project = sprint.getProject();
         if (project != null && project.getStatus() == pt.up.edscrum.enums.ProjectStatus.CONCLUIDO) {
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.EM_CURSO);

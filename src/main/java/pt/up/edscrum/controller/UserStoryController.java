@@ -25,6 +25,10 @@ import jakarta.servlet.http.HttpSession;
 @RestController
 @RequestMapping("/api/stories")
 @CrossOrigin(origins = "*")
+/**
+ * API para criação, atualização e movimentação de user stories dentro de
+ * sprints e projetos.
+ */
 public class UserStoryController {
 
     private final UserStoryService userStoryService;
@@ -50,7 +54,6 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // If assignee supplied by email (no id), resolve to a user id for permission checks
         if (userStory.getAssignee() != null && userStory.getAssignee().getId() == null && userStory.getAssignee().getEmail() != null) {
             Optional<User> opt = userService.getUserByEmail(userStory.getAssignee().getEmail());
             if (opt.isPresent()) {
@@ -64,7 +67,7 @@ public class UserStoryController {
             if (currentUserId.equals(userStory.getAssignee().getId())) isAllowed = true;
             if ("TEACHER".equals(currentUserRole)) isAllowed = true;
 
-            // If sprint provided, check if current user is member of any project team
+                    
             try {
                 if (!isAllowed && userStory.getSprint() != null && userStory.getSprint().getId() != null) {
                     var sprint = sprintService.getSprintById(userStory.getSprint().getId());
@@ -85,7 +88,7 @@ public class UserStoryController {
 
             if (!isAllowed) return ResponseEntity.status(403).build();
         }
-        // Se o criador não for fornecido (remoção de IDs nas URLs), usar o utilizador autenticado
+        
         if (userStory.getCreatedBy() == null && currentUserId != null) {
             User creator = userService.getUserById(currentUserId);
             userStory.setCreatedBy(creator);
@@ -106,7 +109,7 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // Allow if assignee equals current user or teacher
+        
         UserStory existing = userStoryService.getUserStoryById(storyId);
         boolean isProjectTeamMember = false;
         try {
@@ -147,7 +150,7 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // If updating assignee, support assignee provided by email; resolve for permission checks
+        
         if (userStory.getAssignee() != null && userStory.getAssignee().getId() == null && userStory.getAssignee().getEmail() != null) {
             Optional<User> opt = userService.getUserByEmail(userStory.getAssignee().getEmail());
             if (opt.isPresent()) {
@@ -162,7 +165,7 @@ public class UserStoryController {
             if (currentUserId.equals(userStory.getAssignee().getId())) isAllowed = true;
             if ("TEACHER".equals(currentUserRole)) isAllowed = true;
 
-            // For updates, check the sprint of the existing story
+            
             try {
                 if (!isAllowed) {
                     UserStory existing = userStoryService.getUserStoryById(storyId);
@@ -198,14 +201,14 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // Allow deletion if teacher, the assignee of the story, or the sprint's creator
+        
         UserStory existing = userStoryService.getUserStoryById(storyId);
         Long assigneeId = existing.getAssignee() != null ? existing.getAssignee().getId() : null;
         Long sprintOwnerId = null;
         try { sprintOwnerId = existing.getSprint().getCreatedBy() != null ? existing.getSprint().getCreatedBy().getId() : null; } catch (Exception e) { }
         Long creatorId = existing.getCreatedBy() != null ? existing.getCreatedBy().getId() : null;
 
-        // Verificar se o utilizador pertence a alguma equipa do projeto (PO/SM/developer)
+        
         boolean isProjectTeamMember = false;
         try {
             if (existing.getSprint() != null && existing.getSprint().getProject() != null) {

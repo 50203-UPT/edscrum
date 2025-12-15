@@ -9,6 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
 @Entity
+/**
+ * Entidade que representa a inscrição de um estudante num curso.
+ */
 public class Enrollment {
 
     @Id
@@ -22,7 +25,7 @@ public class Enrollment {
     @JsonBackReference
     private Course course;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

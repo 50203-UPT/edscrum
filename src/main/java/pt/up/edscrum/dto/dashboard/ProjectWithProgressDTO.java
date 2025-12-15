@@ -5,6 +5,10 @@ import java.util.List;
 
 import pt.up.edscrum.enums.ProjectStatus;
 
+/**
+ * DTO que representa um projeto com informação de progresso e sprints para
+ * exibição no dashboard.
+ */
 public class ProjectWithProgressDTO {
     private Long id;
     private String name;
@@ -12,15 +16,14 @@ public class ProjectWithProgressDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private ProjectStatus status;
-    private int progress; // 0-100
+    private int progress;
     private List<SprintWithProgressDTO> sprints;
     private List<MemberWithRoleDTO> members;
 
-    // Add course info for dashboard display
+    /** Informações do curso para exibição no dashboard */
     private Long courseId;
     private String courseName;
-
-    // Getters e Setters
+    /** Getters e setters */
     public Long getId() {
         return id;
     }

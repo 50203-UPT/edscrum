@@ -18,6 +18,10 @@ import pt.up.edscrum.service.AuthService;
 
 @RestController
 @RequestMapping("/auth")
+/**
+ * Endpoints de autenticação: login, envio/validação de códigos de
+ * recuperação e gestão de sessão básica.
+ */
 public class AuthController {
 
     private final AuthService authService;
@@ -43,7 +47,6 @@ public class AuthController {
             return ResponseEntity.status(401).body("Credenciais inválidas");
         }
 
-        // Store authenticated user in session for REST logins
         session.setAttribute("currentUserId", user.getId());
         session.setAttribute("currentUserRole", user.getRole());
 
@@ -66,15 +69,12 @@ public class AuthController {
 
         User user = userOpt.get();
 
-        // Gerar código de 5 dígitos
         String code = String.format("%05d", new Random().nextInt(100000));
 
-        // Guardar na BD com validade de 1 minuto
         user.setResetCode(code);
         user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(1));
         userRepository.save(user);
 
-        // --- SIMULAÇÃO DE EMAIL NA CONSOLA ---
         System.out.println("=========================================");
         System.out.println("EMAIL PARA: " + email);
         System.out.println("CÓDIGO DE RECUPERAÇÃO: " + code);
@@ -111,17 +111,13 @@ public class AuthController {
 
         User user = userOpt.get();
 
-        // Verificar se o código existe e corresponde
         if (user.getResetCode() == null || !user.getResetCode().equals(code)) {
             return ResponseEntity.badRequest().body("Código incorreto.");
         }
-
-        // Verificar se o código já expirou
         if (user.getResetCodeExpiry() != null && user.getResetCodeExpiry().isBefore(LocalDateTime.now())) {
             return ResponseEntity.badRequest().body("O código expirou. Por favor, peça um novo.");
         }
-
-        // Se chegou aqui, está validado
+        
         return ResponseEntity.ok("Código válido.");
     }
 }

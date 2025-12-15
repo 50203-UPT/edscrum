@@ -6,6 +6,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
+/**
+ * Representa a atribuição de um prémio a uma equipa num dado projeto.
+ */
 @Entity
 public class TeamAward {
 
@@ -20,9 +23,9 @@ public class TeamAward {
     private Award award;
 
     @ManyToOne
-    private Project project; // Projeto onde o prémio foi atribuído
+    private Project project;
 
-    private int pointsEarned; // Pontos que o prémio valia na altura
+    private int pointsEarned;
 
     public Project getProject() {
         return project;
@@ -32,7 +35,7 @@ public class TeamAward {
         this.project = project;
     }
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

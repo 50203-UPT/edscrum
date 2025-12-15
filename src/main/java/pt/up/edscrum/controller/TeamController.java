@@ -25,6 +25,12 @@ import pt.up.edscrum.service.TeamService;
 
 @RestController
 @RequestMapping("/api/teams")
+/**
+ * Controlador REST para operações relacionadas com equipas.
+ * Fornece endpoints para gerir equipas, membros e consultas relacionadas com
+ * equipas no contexto de disciplinas. Algumas ações usam controlo de acesso
+ * baseado em sessão.
+ */
 public class TeamController {
 
     private final TeamService teamService;
@@ -210,13 +216,11 @@ public class TeamController {
         
         Map<String, String> response = new HashMap<>();
         try {
-            // Get student user
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
-            
-            // Add student to team with specified role
+
             teamService.addStudentToTeamWithRole(teamId, studentId, student, role);
-            
+
             response.put("success", "Juntaste-te à equipa com sucesso!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -231,7 +235,6 @@ public class TeamController {
             Long studentId = Long.valueOf(payload.get("studentId").toString());
             String role = (String) payload.get("role");
 
-            // Validate that the caller is a teacher
             jakarta.servlet.http.HttpSession session = null;
             try { session = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest().getSession(false); } catch (Exception e) { session = null; }
             if (session == null) return ResponseEntity.status(401).body("Unauthorized");
@@ -260,11 +263,10 @@ public class TeamController {
         List<User> students = enrollments.stream()
                 .map(Enrollment::getStudent)
                 .filter(student -> "STUDENT".equals(student.getRole()))
-                // Filter out students who already have a team in this course
                 .filter(student -> teamService.getStudentTeamInCourse(student.getId(), courseId) == null)
                 .collect(Collectors.toList());
         
-        // Get the course teacher
+        
         User teacher = null;
         if (!enrollments.isEmpty() && enrollments.get(0).getCourse() != null) {
             teacher = enrollments.get(0).getCourse().getTeacher();

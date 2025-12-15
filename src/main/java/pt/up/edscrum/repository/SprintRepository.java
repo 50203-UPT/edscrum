@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import pt.up.edscrum.model.Sprint;
 
+/**
+ * Repositório para manipulação de `Sprint`.
+ */
 public interface SprintRepository extends JpaRepository<Sprint, Long> {
 
     /**

@@ -20,6 +20,11 @@ import pt.up.edscrum.service.ProjectService;
 
 @RestController
 @RequestMapping("/projects")
+/**
+ * Controlador REST para operações sobre `Project`.
+ * Expõe endpoints para CRUD, conclusão/reabertura de projetos e gestão de
+ * associações de equipas.
+ */
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -114,13 +119,11 @@ public class ProjectController {
             String currentUserRole = (String) session.getAttribute("currentUserRole");
             if (currentUserId == null) return ResponseEntity.status(401).body("Unauthorized");
 
-            // Ensure the acting user is the one in session (or teacher)
+            
             if (studentId != null && !currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
                 return ResponseEntity.status(403).body("Forbidden");
             }
 
-            // Determine the effective acting user: either the studentId (when teacher overrides)
-            // or the current session user. Use that to verify Product Owner role.
             Long actingUserId = (studentId != null) ? studentId : currentUserId;
             if (!projectService.isUserProductOwner(actingUserId, id)) {
                 return ResponseEntity.status(403).body("Apenas o Product Owner pode concluir o projeto.");
@@ -150,7 +153,6 @@ public class ProjectController {
             if (studentId != null && !currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) {
                 return ResponseEntity.status(403).body("Forbidden");
             }
-
             Long actingUserIdReopen = (studentId != null) ? studentId : currentUserId;
 
             if (!projectService.isUserProductOwner(actingUserIdReopen, id)) {

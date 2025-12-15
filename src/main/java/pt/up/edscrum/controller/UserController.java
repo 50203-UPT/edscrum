@@ -18,6 +18,10 @@ import pt.up.edscrum.service.UserService;
 
 @RestController
 @RequestMapping("/users")
+/**
+ * API para gestão de utilizadores (CRUD) com controlo de acesso em endpoints
+ * que requerem sessão/role.
+ */
 public class UserController {
 
     private final UserService userService;

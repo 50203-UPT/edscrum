@@ -11,6 +11,10 @@ import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.Team;
 import pt.up.edscrum.model.User;
 
+/**
+ * Repositório para leitura de pontuações (`Score`) e queries específicas de
+ * ranking e histórico de pontos.
+ */
 public interface ScoreRepository extends JpaRepository<Score, Long> {
 
     /**
@@ -79,6 +83,5 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
      */
     List<Score> findAllByUserIsNotNullOrderByTotalPointsDesc();
     
-    // Encontrar Scores por Team ID (para eliminar antes de apagar equipa)
-    List<Score> findByTeamId(Long teamId);
+        List<Score> findByTeamId(Long teamId);
 }

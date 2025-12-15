@@ -36,6 +36,10 @@ import pt.up.edscrum.service.TeamService;
 import pt.up.edscrum.service.UserService;
 import pt.up.edscrum.utils.FileStorageService;
 
+/**
+ * Controlador web principal que expõe rotas públicas e vistas (login,
+ * dashboards, gestão de utilizadores/cursos/equipas, etc.).
+ */
 @Controller
 public class WebController {
 
@@ -160,7 +164,6 @@ public class WebController {
             return "index";
         }
 
-        // Store authenticated user in session to prevent ID swapping via URL
         session.setAttribute("currentUserId", user.getId());
         session.setAttribute("currentUserRole", user.getRole());
 
@@ -179,7 +182,6 @@ public class WebController {
      */
     @PostMapping("/auth/web/register")
     public String webRegister(@ModelAttribute User user, Model model) {
-        // Check if email already exists to avoid DB constraint exception
         if (user.getEmail() != null && userService.getUserByEmail(user.getEmail()).isPresent()) {
             model.addAttribute("error", "Email já registado. Inicie sessão ou use outro email.");
             model.addAttribute("submittedName", user.getName());
@@ -211,11 +213,9 @@ public class WebController {
      */
     @PostMapping("/auth/web/send-code")
     public String processSendCode(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
-        // Gera o código na BD
         boolean success = authService.generateResetCode(email);
 
         if (success) {
-            // Passa o email para a próxima página (flash attribute esconde-o da URL mas mantém os dados)
             redirectAttributes.addFlashAttribute("email", email);
             redirectAttributes.addFlashAttribute("successMessage", "Código enviado! Verifique a base de dados.");
             return "redirect:/verify-code";
@@ -233,7 +233,6 @@ public class WebController {
      */
     @GetMapping("/verify-code")
     public String showVerifyCodePage(Model model) {
-        // Se o email não vier do passo anterior, manda voltar ao início
         if (!model.containsAttribute("email")) {
             return "redirect:/forgot-password";
         }
@@ -260,7 +259,6 @@ public class WebController {
             redirectAttributes.addFlashAttribute("successMessage", "Código aceite. Defina a nova palavra-passe.");
             return "redirect:/reset-password";
         } else {
-            // Se falhar, mantém o email na página para o user não ter de escrever tudo de novo
             redirectAttributes.addFlashAttribute("email", email);
             redirectAttributes.addFlashAttribute("errorMessage", "Código incorreto. Tente novamente.");
             return "redirect:/verify-code";
@@ -295,12 +293,10 @@ public class WebController {
             RedirectAttributes redirectAttributes) {
 
         authService.updatePassword(email, newPassword);
-        // Mensagem de sucesso que aparecerá no ecrã de Login
         redirectAttributes.addFlashAttribute("successMessage", "Palavra-passe alterada com sucesso! Faça login.");
         return "redirect:/";
     }
-
-    // 1. Dashboard Geral (Home)
+    
     /**
      * Exibe a dashboard principal do professor com cursos, equipas, prémios e
      * rankings.
@@ -322,7 +318,7 @@ public class WebController {
         User teacher = userService.getUserById(teacherId);
         model.addAttribute("teacher", teacher);
 
-        // 1. Buscar Cursos e Equipas
+        
         List<Course> teacherCourses = courseService.getCoursesByTeacher(teacherId);
         List<Team> allTeams = teamService.getAllTeams();
 
@@ -330,7 +326,7 @@ public class WebController {
         model.addAttribute("teams", allTeams);
         model.addAttribute("awards", awardService.getAllAwards());
 
-        // Agrupar equipas por curso (para a vista de equipas organizadas por curso)
+        
         Map<Long, List<Team>> teamsByCourse = allTeams.stream()
                 .filter(t -> t.getCourse() != null)
                 .collect(Collectors.groupingBy(t -> t.getCourse().getId()));
@@ -339,15 +335,14 @@ public class WebController {
         List<Team> availableTeams = new ArrayList<>();
         if (teacherCourses != null) {
             for (Course c : teacherCourses) {
-                // Para cada curso, busca as equipas livres e adiciona à lista geral
                 availableTeams.addAll(teamService.getAvailableTeamsByCourse(c.getId()));
             }
         }
-        model.addAttribute("availableTeams", availableTeams); // Envia para o modal
+        model.addAttribute("availableTeams", availableTeams);
 
         List<RankingDTO> rankings = new ArrayList<>();
 
-        // Valores padrão (para não dar erro se estiver vazio)
+        
         model.addAttribute("totalStudents", 0);
         model.addAttribute("activeTeamsCount", 0);
         model.addAttribute("averageScore", 0);
@@ -356,7 +351,7 @@ public class WebController {
         model.addAttribute("scoreVariation", 0);
 
         if (!teacherCourses.isEmpty()) {
-            // Agregar rankings de todos os cursos do professor, evitando duplicados
+            
             java.util.Map<Long, RankingDTO> byStudent = new java.util.HashMap<>();
             for (Course c : teacherCourses) {
                 List<RankingDTO> rlist = dashboardService.getStudentRanking(c.getId());
@@ -365,7 +360,7 @@ public class WebController {
                     if (existing == null) {
                         byStudent.put(r.getId(), new RankingDTO(r.getId(), r.getName(), r.getTotalPoints()));
                     } else {
-                        // Mantém a maior pontuação encontrada (evita duplicados entre cursos)
+                        
                         if (r.getTotalPoints() > existing.getTotalPoints()) {
                             byStudent.put(r.getId(), new RankingDTO(r.getId(), r.getName(), r.getTotalPoints()));
                         }
@@ -376,7 +371,7 @@ public class WebController {
             rankings = new ArrayList<>(byStudent.values());
             rankings.sort((r1, r2) -> Long.compare(r2.getTotalPoints(), r1.getTotalPoints()));
 
-            // Se houver dados, calcula as estatísticas agregadas
+            
             if (!rankings.isEmpty()) {
                 model.addAttribute("totalStudents", rankings.size());
                 List<Long> courseIds = teacherCourses.stream().map(Course::getId).toList();
@@ -400,10 +395,7 @@ public class WebController {
 
         model.addAttribute("studentRankings", rankings);
 
-        // CORREÇÃO: Usar getAllUsers() em vez de getAllStudents() para garantir que todos aparecem no modal
         model.addAttribute("students", userService.getAllUsers());
-
-        // Necessário para o bloqueio dinâmico no modal de criação
         model.addAttribute("takenMap", teamService.getTakenStudentsMap());
 
         java.util.Map<Long, List<User>> enrolledStudentsMap = new java.util.HashMap<>();
@@ -431,7 +423,7 @@ public class WebController {
         return "teacherHome";
     }
 
-    // 2. Dashboard de Curso Específico
+    
     /**
      * Mostra dashboard específico de um curso para o professor.
      *
@@ -441,12 +433,12 @@ public class WebController {
      */
     @GetMapping("/view/teacher/course/{courseId}")
     public String teacherDashboard(@PathVariable Long courseId, Model model, HttpSession session) {
-        // Ensure only teachers can view this course dashboard
+        
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return "redirect:/";
         if (!"TEACHER".equals(currentUserRole)) return "redirect:/view/student/home";
-        // Optional: verify course belongs to teacher
+        
         Course course = courseService.getCourseById(courseId);
         if (course != null && course.getTeacher() != null && !course.getTeacher().getId().equals(currentUserId)) {
             return "redirect:/view/teacher/home";
@@ -479,8 +471,7 @@ public class WebController {
         if (!currentUserId.equals(teacherId) || !"TEACHER".equals(currentUserRole)) {
             return "redirect:/view/teacher/home";
         }
-        // Authorization: ensure the teacherId matches session user
-        // (we cannot inject session here directly in signature changeless path, so fetch via RequestContext)
+        
 
         try {
             User teacher = userService.getUserById(teacherId);
@@ -508,7 +499,7 @@ public class WebController {
      */
     @PostMapping("/projects/create")
     public String createProjectWeb(
-            @ModelAttribute Project project, // Recebe name, sprintGoals, startDate, endDate
+            @ModelAttribute Project project,
             @RequestParam Long courseId,
             @RequestParam Long teacherId,
             @RequestParam(required = false) Long teamId,
@@ -518,7 +509,11 @@ public class WebController {
     }
 
 
-    // Helper with session validation
+    /**
+     * Helper que cria um projeto com validação de sessão/operação.
+     * Verifica permissões de docente quando a sessão está presente e associa
+     * o projeto ao curso e (opcionalmente) a uma equipa.
+     */
     public String createProjectWebWithSession(
             Project project,
             Long courseId,
@@ -540,10 +535,8 @@ public class WebController {
             Course course = courseService.getCourseById(courseId);
             project.setCourse(course);
 
-            // Define estado inicial
             project.setStatus(pt.up.edscrum.enums.ProjectStatus.PLANEAMENTO);
 
-            // Grava o Projeto
             Project savedProject = projectService.createProject(project);
 
             if (teamId != null) {
@@ -574,9 +567,7 @@ public class WebController {
             @RequestParam Long projectId,
             @RequestParam Long teacherId,
             RedirectAttributes redirectAttributes) {
-        // Validate session teacher
-        // If session not available, proceed but ideally should be validated by front controller
-        // Attempt to get session via ThreadLocal? Keep simple: no-op here to avoid breaking callers
+        
         try {
             projectService.deleteProject(projectId);
             redirectAttributes.addFlashAttribute("successMessage", "Projeto eliminado e equipas desassociadas com sucesso!");
@@ -584,7 +575,6 @@ public class WebController {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao eliminar projeto: " + e.getMessage());
         }
 
-        // Volta sempre para a dashboard do professor
         return "redirect:/view/teacher/home";
     }
 
@@ -601,7 +591,7 @@ public class WebController {
     @PostMapping("/sprints/create")
     public String createSprintWeb(
             @RequestParam Long projectId,
-            @RequestParam(required = false) Long studentId, // Alunos criam sprints
+            @RequestParam(required = false) Long studentId,
             @ModelAttribute Sprint sprint,
             RedirectAttributes redirectAttributes,
             HttpSession session) {
@@ -615,32 +605,29 @@ public class WebController {
         }
 
         try {
-            // Define estado inicial
             sprint.setStatus(pt.up.edscrum.enums.SprintStatus.PLANEAMENTO);
 
-            // Associa quem criou (se fornecido) ou utiliza o utilizador autenticado
+            
             if (studentId != null) {
                 sprint.setCreatedBy(userService.getUserById(studentId));
             } else {
-                // Se não foi fornecido studentId (remoção de IDs na URL), usar o currentUser
+                
                 if (currentUserId != null) {
                     sprint.setCreatedBy(userService.getUserById(currentUserId));
                 }
             }
             Sprint saved = sprintService.createSprint(projectId, sprint);
 
-            // Trigger prémios automáticos relacionados com sprints
+            
             if (studentId != null) {
                 awardService.handleSprintCreated(studentId, projectId);
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Sprint criada com sucesso!");
             
-            // Redireciona para o dashboard da nova sprint (session-based)
             return "redirect:/view/sprint/" + saved.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao criar sprint: " + e.getMessage());
-            // Em caso de erro, volta para a página do aluno
             return "redirect:/view/student/home";
         }
     }
@@ -662,8 +649,8 @@ public class WebController {
     public String createTeamWeb(
             @RequestParam String name,
             @RequestParam Long courseId,
-            @RequestParam(required = false) Long teacherId, // Opcional para estudantes
-            @RequestParam(required = false) Long studentId, // Opcional para professores
+            @RequestParam(required = false) Long teacherId,
+            @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) Long scrumMasterId,
             @RequestParam(required = false) Long productOwnerId,
@@ -689,12 +676,12 @@ public class WebController {
             if (developerIds != null && !developerIds.isEmpty()) {
                 List<User> devs = new ArrayList<>();
                 for (Long devId : developerIds) {
-                    // Filtrar IDs nulos ou vazios
+                    
                     if (devId != null) {
                         devs.add(userService.getUserById(devId));
                     }
                 }
-                // Apenas adicionar se há developers selecionados
+                
                 if (!devs.isEmpty()) {
                     team.setDevelopers(devs);
                 }
@@ -702,14 +689,14 @@ public class WebController {
 
             teamService.createTeam(team);
 
-            // Prémios automáticos: Formaste a tua primeira equipa?
+            
             try {
                 if (scrumMasterId != null) {
                     List<Team> teamsOfSM = teamService.findTeamsByUserId(scrumMasterId);
                     if (teamsOfSM != null && teamsOfSM.size() == 1) {
                         awardService.assignAutomaticAwardToStudentByName("Arquiteto de Equipas", "Formaste a tua primeira equipa.", 30, scrumMasterId, null);
                     }
-                    // Se o team está associado a um projeto, e é a primeira vez como líder num projeto
+                    
                     if (projectId != null) {
                         awardService.assignAutomaticAwardToStudentByName("Líder de Projeto (SM)", "Assumiste o papel de Scrum Master num projeto.", 80, scrumMasterId, projectId);
                     }
@@ -724,21 +711,20 @@ public class WebController {
                     }
                 }
             } catch (Exception e) {
-                // Non-fatal
             }
             redirectAttributes.addFlashAttribute("successMessage", "Equipa criada com sucesso!");
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("profileErrorMessage", e.getMessage());
         }
-        // Redireciona para a página correta dependendo se é professor ou estudante
+        
         if (studentId != null) {
             return "redirect:/view/student/home?tab=all-courses";
         }
         return "redirect:/view/teacher/home?tab=teams";
     }
 
-    // --- Apagar Equipa ---
+    
     @PostMapping("/teams/delete")
     public String deleteTeamWeb(
             @RequestParam Long teamId,
@@ -746,7 +732,6 @@ public class WebController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // O serviço de equipas apaga a equipa pelo ID
             teamService.deleteTeam(teamId);
 
             redirectAttributes.addFlashAttribute("successMessage", "Equipa eliminada com sucesso!");
@@ -757,7 +742,7 @@ public class WebController {
         return "redirect:/view/teacher/home?tab=teams";
     }
 
-    // --- Fechar Equipa ---
+        
     @PostMapping("/teams/close")
     public String closeTeamWeb(
             @RequestParam Long teamId,
@@ -806,7 +791,7 @@ public class WebController {
             @RequestParam(required = false) boolean notificationAwards,
             @RequestParam(required = false) boolean notificationRankings) {
 
-        // CORREÇÃO: Adicionar .orElse(null) para extrair o User do Optional
+        
         User teacher = userService.getUserByEmail(email).orElse(null);
 
         if (teacher != null) {
@@ -859,7 +844,7 @@ public class WebController {
             User teacher = userService.getUserById(teacherId);
 
             if (teacher != null) {
-                // Only check current password if changing password
+                
                 if (newPassword != null && !newPassword.isEmpty()) {
                     if (currentPassword == null || !teacher.getPassword().equals(currentPassword)) {
                         throw new Exception("A password atual está incorreta.");
@@ -873,11 +858,11 @@ public class WebController {
                 teacher.setName(name);
                 teacher.setEmail(email);
 
-                // Se o utilizador marcar para remover a imagem
+                
                 if ("true".equals(removeImage)) {
                     teacher.setProfileImage(null);
                 } else if (imageFile != null && !imageFile.isEmpty()) {
-                    // Se houver nova imagem, guardar
+                    
                     String fileName = fileStorageService.saveFile(imageFile);
                     teacher.setProfileImage(fileName);
                 }
@@ -894,7 +879,7 @@ public class WebController {
         return "redirect:/view/teacher/home";
     }
 
-// 3. ATUALIZAR ASSIGN TEAM
+        
     /**
      * Associa uma equipa a um projeto.
      *
@@ -909,7 +894,7 @@ public class WebController {
     public String assignTeamToProject(
             @RequestParam Long projectId,
             @RequestParam Long teamId,
-            @RequestParam Long userId, // Necessário para voltar à página
+            @RequestParam Long userId,
             RedirectAttributes redirectAttributes) {
         try {
             Project project = projectService.getProjectById(projectId);
@@ -922,7 +907,7 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao associar equipa: " + e.getMessage());
         }
-        // Redirecionar para a página do professor (session-based)
+        
         return "redirect:/view/teacher/home";
     }
 
@@ -942,7 +927,7 @@ public class WebController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return "redirect:/";
-        // Only teachers or the student themselves may assign/view awards here
+        
         if (!"TEACHER".equals(currentUserRole) && !currentUserId.equals(studentId)) {
             if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
             return "redirect:/view/student/home";
@@ -969,7 +954,7 @@ public class WebController {
     public String assignAwardToTeamAction(@RequestParam Long teamId,
             @RequestParam Long awardId,
             @RequestParam Long projectId,
-            @RequestParam Long teacherId, // Para redirecionamento
+            @RequestParam Long teacherId,
             RedirectAttributes redirectAttributes,
             HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
@@ -1002,7 +987,7 @@ public class WebController {
     public String assignAwardToStudentInTeamAction(@RequestParam Long studentId,
             @RequestParam Long awardId,
             @RequestParam Long projectId,
-            @RequestParam Long teacherId, // Para redirecionamento
+            @RequestParam Long teacherId,
             RedirectAttributes redirectAttributes,
             HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
@@ -1021,7 +1006,7 @@ public class WebController {
         return "redirect:/view/teacher/home";
     }
 
-    // Rota legacy - redireciona para a home correta (projectDetails foi removido)
+    
     /**
      * Rota legacy que redireciona para a home apropriada conforme o papel do
      * utilizador.
@@ -1037,7 +1022,7 @@ public class WebController {
             String currentUserRole = (String) session.getAttribute("currentUserRole");
             if (currentUserId == null) return "redirect:/";
             if (!currentUserId.equals(userId)) {
-                // prevent ID swapping - redirect to authenticated user's home
+                
                 if ("TEACHER".equals(currentUserRole)) return "redirect:/view/teacher/home";
                 return "redirect:/view/student/home";
             }
@@ -1081,13 +1066,13 @@ public class WebController {
             Sprint sprint = sprintService.getSprintById(sprintId);
             model.addAttribute("sprint", sprint);
 
-            // Buscar membros da equipa do projeto
+            
             Project project = sprint.getProject();
             if (project != null) {
                 model.addAttribute("projectId", project.getId());
             }
             if (project != null && project.getTeams() != null && !project.getTeams().isEmpty()) {
-                Team team = project.getTeams().get(0); // Pega a primeira equipa associada ao projeto
+                Team team = project.getTeams().get(0);
                 List<User> teamMembers = teamService.getTeamMembers(team.getId());
                 model.addAttribute("teamMembers", teamMembers);
 
@@ -1098,11 +1083,11 @@ public class WebController {
                 }
             }
 
-            // Dados calculados
+            
             int progress = sprintService.calculateSprintProgress(sprintId);
             model.addAttribute("sprintProgress", progress);
 
-            // Contadores para o cabeçalho das colunas
+            
             long todoCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("TODO")).count();
             long progressCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("IN_PROGRESS")).count();
             long testingCount = sprint.getUserStories().stream().filter(s -> s.getStatus().name().equals("TESTING")).count();
@@ -1114,7 +1099,7 @@ public class WebController {
             model.addAttribute("doneCount", doneCount);
             model.addAttribute("totalStories", sprint.getUserStories().size());
 
-            // Verificar se todas as stories estão DONE
+            
             boolean allDone = sprint.getUserStories().isEmpty()
                     || sprint.getUserStories().stream().allMatch(s -> s.getStatus().name().equals("DONE"));
             model.addAttribute("canComplete", allDone && !sprint.getUserStories().isEmpty());
@@ -1133,15 +1118,15 @@ public class WebController {
     public String sprintDashboardForUser(@PathVariable Long sprintId, @PathVariable Long userId, Model model, HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         if (currentUserId == null) return "redirect:/";
-        // Se o utilizador autenticado não corresponde ao userId na URL, redireciona para a sua vista
+        
         if (!currentUserId.equals(userId)) {
             return "redirect:/view/sprint/" + sprintId;
         }
-        // Delegar para o método principal que popula o modelo
+        
         return sprintDashboard(sprintId, model, session);
     }
 
-    // --- ÁREA DO ESTUDANTE (CORRIGIDA) ---
+    
     @GetMapping("/view/student/home")
     public String studentHome(Model model, HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
@@ -1153,19 +1138,14 @@ public class WebController {
         }
         Long studentId = currentUserId;
         try {
-            // 1. Tenta obter os dados do serviço
             StudentDashboardDTO data = dashboardService.getStudentDashboard(studentId);
 
-            // 2. Verifica se o resultado é nulo (segurança extra)
             if (data == null) {
                 throw new RuntimeException("Dados do estudante não encontrados ou vazios.");
             }
 
-            // 3. Adiciona ao modelo para o Thymeleaf
             model.addAttribute("student", data);
 
-            // 4. Adiciona contagem total de estudantes para exibição no dashboard
-            // Usa UserService.getAllStudents() (retorna lista) e pega o tamanho.
             try {
                 int totalStudents = userService.getAllStudents() != null ? userService.getAllStudents().size() : 0;
                 model.addAttribute("studentCount", totalStudents);
@@ -1173,7 +1153,6 @@ public class WebController {
                 model.addAttribute("studentCount", 0);
             }
 
-            // Sucesso: Retorna a view
             return "studentHome";
 
         } catch (Exception e) {
@@ -1280,7 +1259,6 @@ public class WebController {
             User student = userService.getUserById(id);
 
             if (student != null) {
-                // Only check current password if changing password
                 if (newPassword != null && !newPassword.isEmpty()) {
                     if (currentPassword == null || !student.getPassword().equals(currentPassword)) {
                         throw new Exception("Password atual incorreta.");
@@ -1294,11 +1272,9 @@ public class WebController {
                 student.setName(name);
                 student.setEmail(email);
 
-                // Se o utilizador marcar para remover a imagem
                 if ("true".equals(removeImage)) {
                     student.setProfileImage(null);
                 } else if (imageFile != null && !imageFile.isEmpty()) {
-                    // Se houver nova imagem, guardar
                     String fileName = fileStorageService.saveFile(imageFile);
                     student.setProfileImage(fileName);
                 }
@@ -1337,34 +1313,25 @@ public class WebController {
             return "redirect:/view/student/home";
         }
         try {
-            // Obter nome do curso antes de inscrever
             Course course = courseService.getCourseById(courseId);
             String courseName = course != null ? course.getName() : "";
 
-            // Chama o serviço do Dashboard (onde pusemos a lógica)
             dashboardService.enrollStudentInCourse(studentId, courseId, accessCode);
 
-            // Se é um pedido AJAX, retornar sucesso com o nome do curso
             if (isAjax) {
                 return ResponseEntity.ok().body(courseName);
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Inscrição realizada com sucesso! Bem-vindo ao curso " + courseName + ".");
         } catch (IllegalArgumentException e) {
-            // Se é um pedido AJAX, retornar erro HTTP para mostrar no modal
             if (isAjax) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
-
-            // Erros de código errado ou curso não encontrado
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            // Se é um pedido AJAX, retornar erro HTTP
             if (isAjax) {
                 return ResponseEntity.status(500).body("Erro inesperado ao inscrever: " + e.getMessage());
             }
-
-            // Outros erros genéricos
             redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao inscrever: " + e.getMessage());
         }
 

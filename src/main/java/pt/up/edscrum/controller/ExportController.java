@@ -26,6 +26,10 @@ import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/export")
+/**
+ * Controlador responsável por exportar relatórios (por exemplo rankings)
+ * em formatos como CSV para professores.
+ */
 public class ExportController {
 
     private final CourseService courseService;
@@ -73,7 +77,6 @@ public class ExportController {
                     }
                 }
             } catch (Exception e) {
-                // ignore
             }
         }
         return studentTeamMap;
@@ -118,7 +121,6 @@ public class ExportController {
 
         StringBuilder sb = new StringBuilder();
 
-        // BOM (UTF-8) so Excel detects encoding correctly
         sb.append('\uFEFF');
 
         final String sep = ";";
@@ -128,7 +130,7 @@ public class ExportController {
         Map<Long, List<String>> studentCoursesMap = getStudentCoursesMap(teacherCourses);
         Map<Long, String> studentTeamMap = getStudentTeamMap(teacherCourses, rankings);
 
-                // File header summary: label, date and time in separate cells
+                
                 LocalDateTime now = LocalDateTime.now();
                 sb.append("Report Generated").append(sep)
                     .append('"').append(now.toLocalDate().format(DateTimeFormatter.ISO_DATE)).append('"').append(sep)
@@ -136,7 +138,7 @@ public class ExportController {
         sb.append("Teacher").append(sep).append('"').append(teacherName).append('"').append("\r\n");
         sb.append("Total Students").append(sep).append(rankings.size()).append("\r\n\r\n");
 
-        // Students table header
+        
         sb.append("Position").append(sep).append("UPT_ID").append(sep).append("StudentTag").append(sep).append("Name").append(sep).append("Email").append(sep).append("Courses").append(sep).append("Team").append(sep).append("TotalPoints").append("\r\n");
 
         for (int i = 0; i < rankings.size(); i++) {
@@ -166,10 +168,9 @@ public class ExportController {
 
         sb.append("\r\n");
 
-        // Teams per course with members and project
         if (teacherCourses != null) {
             for (Course c : teacherCourses) {
-                // Put title and course name in separate cells
+                
                 sb.append("Team Rankings for Course").append(sep).append('"').append(c.getName()).append('"').append("\r\n");
                 sb.append("Position").append(sep).append("TeamID").append(sep).append("TeamName").append(sep).append("Members").append(sep).append("ProjectName").append(sep).append("TotalPoints\r\n");
                 List<RankingDTO> teamRanks = dashboardService.getTeamRanking(c.getId());

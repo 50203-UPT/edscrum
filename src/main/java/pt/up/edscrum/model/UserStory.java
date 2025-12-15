@@ -13,6 +13,10 @@ import jakarta.persistence.ManyToOne;
 import pt.up.edscrum.enums.UserStoryPriority;
 import pt.up.edscrum.enums.UserStoryStatus;
 
+/**
+ * Representa uma User Story no sistema; contém título, descrição,
+ * pontos e ligações a sprint/assignee/creator.
+ */
 @Entity
 public class UserStory {
 
@@ -22,7 +26,7 @@ public class UserStory {
 
     private String name;
     private String description;
-    private Integer storyPoints; // Esforço estimado
+    private Integer storyPoints;
 
     @Enumerated(EnumType.STRING)
     private UserStoryPriority priority;
@@ -38,14 +42,14 @@ public class UserStory {
     @ManyToOne
     @JoinColumn(name = "assignee_id")
     @JsonIgnoreProperties({"userStories", "teams", "enrollments"})
-    private User assignee; // Pode ser null (Unassigned)
+    private User assignee;
 
     @ManyToOne
     @JoinColumn(name = "created_by_id")
     @JsonIgnoreProperties({"userStories", "teams", "enrollments"})
-    private User createdBy; // Quem criou a user story (opcional)
+    private User createdBy;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

@@ -2,6 +2,10 @@ package pt.up.edscrum.dto.dashboard;
 
 import java.util.List;
 
+/**
+ * DTO usado para compor o dashboard do professor com contagens, projetos e
+ * estatísticas.
+ */
 public class TeacherDashboardDTO {
 
     private Long courseId;

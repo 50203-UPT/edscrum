@@ -63,10 +63,8 @@ public class AuthService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
-            // Gerar código de 5 dígitos
             String code = String.format("%05d", new Random().nextInt(100000));
 
-            // Guardar na BD (Válido por 5 minutos)
             user.setResetCode(code);
             user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
             userRepository.save(user);
@@ -91,7 +89,6 @@ public class AuthService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
-            // Verifica se o código existe, se é igual ao inserido e se ainda é válido (data)
             if (user.getResetCode() != null
                     && user.getResetCode().equals(code)
                     && user.getResetCodeExpiry() != null
@@ -117,7 +114,6 @@ public class AuthService {
             User user = userOpt.get();
             user.setPassword(newPassword);
 
-            // Limpa o código para não ser usado outra vez
             user.setResetCode(null);
             user.setResetCodeExpiry(null);
 

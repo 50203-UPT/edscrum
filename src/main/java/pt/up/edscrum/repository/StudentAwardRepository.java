@@ -9,6 +9,10 @@ import pt.up.edscrum.dto.dashboard.AwardStatsDTO;
 import pt.up.edscrum.dto.dashboard.StudentDashboardDTO.AwardDisplayDTO;
 import pt.up.edscrum.model.StudentAward;
 
+/**
+ * Repositório para operações relacionadas com prémios atribuídos a
+ * estudantes (`StudentAward`).
+ */
 public interface StudentAwardRepository extends JpaRepository<StudentAward, Long> {
 
     @Query("SELECT new pt.up.edscrum.dto.dashboard.AwardStatsDTO(sa.award.name, COUNT(sa)) "

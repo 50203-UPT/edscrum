@@ -10,13 +10,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+/**
+ * Representa um utilizador do sistema (professor ou estudante). Contém
+ * dados de autenticação, preferências e informação de recuperação.
+ */
 @Entity
 public class User {
-
-    /**
-     * Representa um utilizador do sistema (professor ou estudante). Contém
-     * dados de autenticação, preferências e informação de recuperação.
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,7 +24,7 @@ public class User {
     @Column(unique = true)
     private String email;
     private String password;
-    private String role; // TEACHER ou STUDENT
+    private String role;
 
     private boolean notificationAwards = true;
     private boolean notificationRankings = true;
@@ -37,7 +36,7 @@ public class User {
     @JsonIgnore
     private LocalDateTime resetCodeExpiry;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

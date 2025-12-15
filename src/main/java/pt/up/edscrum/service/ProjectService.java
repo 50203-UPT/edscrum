@@ -6,11 +6,15 @@ import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Team;
-import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.TeamRepository;
 
 @Service
+/**
+ * Serviço responsável por operações relacionadas com projetos.
+ * Fornece operações CRUD, transições do ciclo de vida do projeto (concluir/reabrir),
+ * gestão de associações de equipas e verificações auxiliares como validação do product owner.
+ */
 public class ProjectService {
 
     private final ProjectRepository projectRepository;

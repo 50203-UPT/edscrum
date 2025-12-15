@@ -3,6 +3,10 @@ package pt.up.edscrum.dto.dashboard;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * DTO com detalhes completos de um projeto para exibição na UI, incluindo
+ * equipa, sprints, membros e métricas.
+ */
 public class ProjectDetailsDTO {
 
     private Long id;
@@ -13,7 +17,6 @@ public class ProjectDetailsDTO {
     private LocalDate startDate;
     private LocalDate endDate;
 
-    // Dados da Equipa Principal
     private Long teamId;
     private String teamName;
     private int teamTotalXP;
@@ -25,18 +28,17 @@ public class ProjectDetailsDTO {
 
     private List<SprintDTO> sprints;
 
-    // Progresso do projeto
     private int totalStories;
     private int completedStories;
     private int progressPercentage;
 
-   // Classe interna para detalhes dos membros
+    /** Classe interna para detalhes dos membros */
     public static class TeamMemberDTO {
 
         public Long id;
         public String name;
-        public String role;     // Ex: "Scrum Master", "Product Owner" (Papel no Projeto)
-        public String userRole; // Ex: "TEACHER", "STUDENT" (Papel no Sistema)
+        public String role;
+        public String userRole;
         public int individualXP;
         public int awardsCount;
 
@@ -52,24 +54,19 @@ public class ProjectDetailsDTO {
         public Long getId() { return id; }
         public String getName() { return name; }
 
-        // --- CORREÇÃO AQUI ---
-        // getRoleInTeam deve retornar o 'role' (ex: Product Owner) e não o 'userRole'
-        public String getRoleInTeam() { return role; } 
-        
+        public String getRoleInTeam() { return role; }
+
         public String getRoleInProject() { return role; }
 
-        // getRole deve retornar o papel do sistema ou do projeto, dependendo da tua lógica.
-        // Geralmente 'getRole' refere-se ao sistema (STUDENT), mas mantive a coerência com a tua lógica anterior
-        // Se quiseres o papel de sistema usa getUserRole()
-        public String getRole() { return role; } 
-        
-        public String getUserRole() { return userRole; } // Novo getter útil
+        public String getRole() { return role; }
+
+        public String getUserRole() { return userRole; }
 
         public int getIndividualXP() { return individualXP; }
         public int getAwardsCount() { return awardsCount; }
     }
     
-    // Classe interna para sprints simples
+    /** Classe interna para sprints simples */
     public static class SprintDTO {
         public Long id;
         public String name;
@@ -86,7 +83,7 @@ public class ProjectDetailsDTO {
         }
     }
     
-    // Classe interna para awards da equipa
+    /** Classe interna para awards da equipa */
     public static class TeamAwardDTO {
         public String awardName;
         public int pointsEarned;
@@ -97,7 +94,7 @@ public class ProjectDetailsDTO {
         }
     }
     
-    // Classe interna para equipas disponíveis
+    /** Classe interna para equipas disponíveis */
     public static class AvailableTeamDTO {
         public Long id;
         public String name;
@@ -111,7 +108,7 @@ public class ProjectDetailsDTO {
     public ProjectDetailsDTO() {
     }
 
-    // Getters e Setters
+    /** Getters e setters */
     public Long getId() {
         return id;
     }

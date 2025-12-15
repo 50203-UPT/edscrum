@@ -1,19 +1,21 @@
 package pt.up.edscrum.dto.dashboard;
 
+/**
+ * DTO usado para representar posições de ranking (estudante ou equipa) com
+ * pontos agregados.
+ */
 public class RankingDTO {
 
     private Long id;
     private String name;
     private Long totalPoints;
 
-    // Construtor 1: Aceita Long (usado quando fazemos SUM na query)
     public RankingDTO(Long id, String name, Long totalPoints) {
         this.id = id;
         this.name = name;
         this.totalPoints = totalPoints != null ? totalPoints : 0L;
     }
 
-    // Construtor 2: Aceita Integer (usado quando pegamos o valor direto da tabela)
     public RankingDTO(Long id, String name, Integer totalPoints) {
         this.id = id;
         this.name = name;

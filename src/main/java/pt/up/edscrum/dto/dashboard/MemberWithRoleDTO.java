@@ -1,30 +1,33 @@
 package pt.up.edscrum.dto.dashboard;
 
+/**
+ * DTO que descreve um membro de equipa com o seu papel e estatísticas.
+ */
 public class MemberWithRoleDTO {
     private Long id;
     private String name;
     private String role;
-    private String userRole; // Add this field
+    private String userRole;
     private int awardsCount;
     private int individualXP;
 
     public MemberWithRoleDTO() {
     }
 
-    public MemberWithRoleDTO(Long id, String name, String role, String userRole) { // Update constructor
+    public MemberWithRoleDTO(Long id, String name, String role, String userRole) {
         this.id = id;
         this.name = name;
         this.role = role;
-        this.userRole = userRole; // Set userRole
+        this.userRole = userRole;
         this.awardsCount = 0;
         this.individualXP = 0;
     }
 
-    public MemberWithRoleDTO(Long id, String name, String role, String userRole, int awardsCount, int individualXP) { // Update constructor
+    public MemberWithRoleDTO(Long id, String name, String role, String userRole, int awardsCount, int individualXP) {
         this.id = id;
         this.name = name;
         this.role = role;
-        this.userRole = userRole; // Set userRole
+        this.userRole = userRole;
         this.awardsCount = awardsCount;
         this.individualXP = individualXP;
     }
@@ -53,11 +56,11 @@ public class MemberWithRoleDTO {
         this.role = role;
     }
 
-    public String getUserRole() { // Add getter for userRole
+    public String getUserRole() {
         return userRole;
     }
 
-    public void setUserRole(String userRole) { // Add setter for userRole
+    public void setUserRole(String userRole) {
         this.userRole = userRole;
     }
 

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import pt.up.edscrum.enums.NotificationType;
-import pt.up.edscrum.model.Award; // Importação adicionada
+import pt.up.edscrum.model.Award;
 import pt.up.edscrum.model.Project;
 import pt.up.edscrum.model.Score;
 import pt.up.edscrum.model.StudentAward;
@@ -40,7 +40,6 @@ public class AwardService {
     private final ProjectRepository projectRepo;
     private final SprintRepository sprintRepo;
 
-    // Serviço de Notificações Injetado
     private final NotificationService notificationService;
 
     public AwardService(AwardRepository awardRepo, StudentAwardRepository studentAwardRepo,
@@ -94,20 +93,19 @@ public class AwardService {
     public void assignAutomaticAwardToStudentByName(String name, String description, int points, Long studentId, Long projectId) {
         User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // Impedir que um professor que é PO receba prémios automáticos individuais
         if ("TEACHER".equals(student.getRole())) {
             List<Team> teams = teamRepo.findTeamByUserId(student.getId());
             if (teams != null) {
                 for (Team team : teams) {
                     if (team.getProductOwner() != null && team.getProductOwner().getId().equals(student.getId())) {
-                        return; // Silenciosamente ignora a atribuição do prémio
+                        return;
                     }
                 }
             }
         }
         
         Award award = ensureAutomaticAward(name, description, points, "INDIVIDUAL");
-        // Verifica se já existe
+        
         boolean exists = (projectId != null) ? studentAwardRepo.existsByStudentIdAndAwardIdAndProjectId(studentId, award.getId(), projectId)
                 : studentAwardRepo.findAllByStudentId(studentId).stream().anyMatch(sa -> sa.getAward().getId().equals(award.getId()));
 
@@ -126,7 +124,6 @@ public class AwardService {
 
         updateUserScore(sa.getStudent());
 
-        // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
                 student,
                 NotificationType.AWARD,
@@ -166,14 +163,12 @@ public class AwardService {
         ta.setPointsEarned(award.getPoints());
         teamAwardRepo.save(ta);
 
-        // Atualizar score da equipa e dos membros
         updateTeamScore(ta.getTeam());
 
-        // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, true);
     }
 
-    // Helper para notificar membros da equipa
+    
     private void notifyAndUpdateTeamMembers(Team team, Award award, boolean isAutomatic) {
         String title = isAutomatic ? "Prémio de Equipa Automático!" : "Novo Prémio de Equipa!";
         String msg = "A tua equipa '" + team.getName() + "' ganhou o prémio '" + award.getName() + "' (+" + award.getPoints() + " XP).";
@@ -183,7 +178,6 @@ public class AwardService {
             notificationService.createNotification(team.getScrumMaster(), NotificationType.AWARD, title, msg);
         }
         if (team.getProductOwner() != null) {
-            // Garante que o Product Owner só recebe pontos se não for professor
             if (!"TEACHER".equals(team.getProductOwner().getRole())) {
                 updateUserScore(team.getProductOwner());
                 notificationService.createNotification(team.getProductOwner(), NotificationType.AWARD, title, msg);
@@ -208,16 +202,14 @@ public class AwardService {
             return;
         }
 
-        // Count sprints created by user
         List<pt.up.edscrum.model.Sprint> created = sprintRepo.findByCreatedById(studentId);
         int totalCreated = created != null ? created.size() : 0;
-
-        // First sprint
+        
         if (totalCreated == 1) {
             assignAutomaticAwardToStudentByName("Primeiro Salto", "Criaste o teu primeiro sprint! Continua assim.", 20, studentId, projectId);
         }
 
-        // 5 and 10 sprints
+        
         if (totalCreated == 5) {
             assignAutomaticAwardToStudentByName("Sprint Artisan (5)", "Criaste 5 sprints.", 40, studentId, null);
         }
@@ -329,7 +321,7 @@ public class AwardService {
         User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
         Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
 
-        // Impedir que um professor PO receba prémios individuais no âmbito de um projeto
+        
         if ("TEACHER".equals(student.getRole())) {
             List<Team> projectTeams = project.getTeams();
             if (projectTeams != null) {
@@ -356,7 +348,6 @@ public class AwardService {
 
         updateUserScore(student);
 
-        // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
                 student,
                 NotificationType.AWARD,
@@ -375,7 +366,7 @@ public class AwardService {
     public void assignAwardToStudent(Long awardId, Long studentId) {
         User student = userRepo.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // Impedir que um professor que é PO receba prémios (contexto geral)
+        
         if ("TEACHER".equals(student.getRole())) {
             List<Team> teams = teamRepo.findTeamByUserId(student.getId());
             if (teams != null) {
@@ -397,7 +388,6 @@ public class AwardService {
 
         updateUserScore(student);
 
-        // --- NOTIFICAÇÃO ---
         notificationService.createNotification(
                 student,
                 NotificationType.AWARD,
@@ -432,7 +422,6 @@ public class AwardService {
 
         updateTeamScore(team);
 
-        // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, false);
     }
 
@@ -448,7 +437,6 @@ public class AwardService {
 
         updateTeamScore(team);
 
-        // Notificar e atualizar score dos membros
         notifyAndUpdateTeamMembers(team, award, false);
     }
 
@@ -499,7 +487,6 @@ public class AwardService {
         score.setTotalPoints(total);
         scoreRepo.save(score);
 
-        // --- AFTER SAVE: check ranking-based automatic awards ---
         try {
             List<pt.up.edscrum.model.Score> allScores = scoreRepo.findAllByUserIsNotNullOrderByTotalPointsDesc();
             int rank = 0;
@@ -512,14 +499,13 @@ public class AwardService {
 
             if (rank > 0 && rank <= 5) {
                 assignAutomaticAwardToStudentByName("Estrela da Turma (Top 5)", "Entraste no Top 5 do ranking global.", 50, user.getId(), null);
-                // Notificação de Ranking (Opcional, pois o assignAutomaticAward já notifica)
+                
             }
             if (rank > 0 && rank <= 3) {
                 assignAutomaticAwardToStudentByName("Mestre do Podium (Top 3)", "Chegaste ao Top 3 do ranking global.", 120, user.getId(), null);
             }
 
         } catch (Exception e) {
-            // Non-fatal
         }
     }
 

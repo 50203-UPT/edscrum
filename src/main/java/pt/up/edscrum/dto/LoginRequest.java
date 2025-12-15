@@ -1,5 +1,9 @@
 package pt.up.edscrum.dto;
 
+/**
+ * DTO simples usado para transportar credenciais de autenticação (email
+ * e password) em pedidos de login.
+ */
 public class LoginRequest {
 
     private String email;
