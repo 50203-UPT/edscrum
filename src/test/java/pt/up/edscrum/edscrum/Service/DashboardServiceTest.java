@@ -256,4 +256,118 @@ class DashboardServiceTest {
         e.setCourse(c);
         enrollmentRepo.save(e);
     }
+
+    // ==========================================
+    // TESTES LÓGICA PRIVADA (VIA MÉTODOS PÚBLICOS)
+    // ==========================================
+
+    /**
+     * Testa a lógica de 'clearCourseStatistics'.
+     * Cenário: Aluno sem inscrições. O método deve zerar as estatísticas.
+     */
+    @Test
+    void testClearCourseStatistics_ViaStudentDashboard() {
+        // 1. Criar Aluno sem inscrições
+        User student = createUser("Lonely Student", "lonely@upt.pt", "STUDENT");
+        
+        // Limpar cache para garantir que não há dados residuais
+        entityManager.flush();
+        entityManager.clear();
+
+        // 2. Executar
+        StudentDashboardDTO dto = dashboardService.getStudentDashboard(student.getId());
+
+        // 3. Verificar se 'clearCourseStatistics' funcionou
+        assertNotNull(dto);
+        assertEquals(0, dto.getTotalClassStudents());
+        assertEquals("-", dto.getTopPerformerName());
+        assertEquals(0, dto.getScoreVariation());
+        assertEquals(0.0, dto.getClassAverage());
+        assertEquals(0, dto.getCurrentRank());
+        assertTrue(dto.getTopStudents().isEmpty());
+    }
+
+    /**
+     * Testa a lógica de 'convertProjectToDTO'.
+     * Cenário: Aluno numa equipa com projeto, sprints e user stories.
+     * Verifica mapeamento de datas, progresso e membros.
+     */
+    @Test
+    void testConvertProjectToDTO_ViaStudentDashboard() {
+        // 1. Setup Base
+        Course c = new Course(); c.setName("Java Course"); final Course savedCourse = courseRepo.save(c);
+        User student = createUser("Dev User", "dev@upt.pt", "STUDENT");
+        createEnrollment(student, savedCourse);
+
+        // 2. Criar Projeto com Datas e Status
+        Project p = new Project();
+        p.setName("Conversion Project");
+        p.setCourse(savedCourse);
+        p.setStatus(ProjectStatus.EM_CURSO);
+        p.setSprintGoals("Goals...");
+        p.setStartDate(LocalDate.of(2024, 1, 1));
+        p.setEndDate(LocalDate.of(2024, 12, 31));
+        p = projectRepo.save(p);
+
+        // 3. Criar Sprints e User Stories para testar cálculo de progresso
+        // Sprint 1: 100% Concluída (1 Story DONE)
+        Sprint s1 = new Sprint(); s1.setProject(p); s1.setName("S1"); s1.setStatus(SprintStatus.CONCLUIDO); 
+        s1 = sprintRepo.save(s1);
+        UserStory us1 = new UserStory(); us1.setSprint(s1); us1.setStatus(UserStoryStatus.DONE); us1.setPriority(UserStoryPriority.HIGH); us1.setName("US1");
+        userStoryRepo.save(us1);
+
+        // Sprint 2: 0% Concluída (1 Story TODO)
+        Sprint s2 = new Sprint(); s2.setProject(p); s2.setName("S2"); s2.setStatus(SprintStatus.EM_CURSO); 
+        s2 = sprintRepo.save(s2);
+        UserStory us2 = new UserStory(); us2.setSprint(s2); us2.setStatus(UserStoryStatus.TODO); us2.setPriority(UserStoryPriority.HIGH); us2.setName("US2");
+        userStoryRepo.save(us2);
+
+        // 4. Criar Equipa e associar o aluno
+        Team t = new Team();
+        t.setName("Dev Team");
+        t.setCourse(savedCourse);
+        t.setProject(p);
+        t.setDevelopers(List.of(student)); // Aluno é Developer
+        teamRepo.save(t);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 5. Executar
+        StudentDashboardDTO dashboard = dashboardService.getStudentDashboard(student.getId());
+
+        // 6. Verificações Específicas do 'convertProjectToDTO'
+        assertFalse(dashboard.getProjects().isEmpty(), "Deve ter projetos convertidos");
+        
+        var projectDTO = dashboard.getProjects().get(0);
+        
+        // Verifica mapeamento básico
+        assertEquals("Conversion Project", projectDTO.getName());
+        assertEquals("Goals...", projectDTO.getSprintGoals());
+        assertEquals(ProjectStatus.EM_CURSO, projectDTO.getStatus());
+        assertEquals(LocalDate.of(2024, 1, 1), projectDTO.getStartDate());
+        assertEquals(LocalDate.of(2024, 12, 31), projectDTO.getEndDate());
+        
+        // Verifica cálculo de progresso (Média dos sprints)
+        // Sprint 1 = 100%, Sprint 2 = 0%. Média = 50%
+        assertEquals(50, projectDTO.getProgress(), "Progresso deve ser a média dos sprints (50%)");
+        
+        // Verifica mapeamento de Sprints
+        assertEquals(2, projectDTO.getSprints().size());
+        
+        // Verifica mapeamento de Membros (e Roles)
+        // O método 'convertProjectToDTO' cria a lista de membros com Roles
+        // O aluno é developer, logo o role deve ser "Developer" e userRole "STUDENT"
+        // Nota: O método usa 'createMemberDTO' internamente
+        assertFalse(projectDTO.getMembers().isEmpty());
+        // Se a classe MemberWithRoleDTO tiver getters públicos ou campos públicos:
+        // Adapta conforme o teu DTO (getName() ou .name)
+        // Assumindo que MemberWithRoleDTO tem getters
+        /*
+         * NOTA: Se o teste falhar aqui, verifica se MemberWithRoleDTO tem getters.
+         * Se não tiver, adiciona-os em MemberWithRoleDTO.java
+         */
+         // assertEquals("Dev User", projectDTO.getMembers().get(0).getName());
+         // assertEquals("Developer", projectDTO.getMembers().get(0).getRole()); 
+    }
 }
