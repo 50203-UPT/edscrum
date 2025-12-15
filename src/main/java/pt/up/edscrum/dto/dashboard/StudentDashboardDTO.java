@@ -61,6 +61,21 @@ public class StudentDashboardDTO {
             this.description = description;
             this.type = type;
         }
+   public String getName() {
+            return name;
+        }
+
+        public int getPoints() {
+            return points;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getType() {
+            return type;
+        }
     }
 
     public StudentDashboardDTO() {

@@ -1,184 +1,239 @@
-// package pt.up.edscrum.edscrum.Service;
+package pt.up.edscrum.edscrum.Service;
 
-// import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
-// import static org.junit.jupiter.api.Assertions.assertEquals;
-// import static org.junit.jupiter.api.Assertions.assertNotNull;
-// import static org.junit.jupiter.api.Assertions.assertThrows;
-// import static org.junit.jupiter.api.Assertions.assertTrue;
-// import org.junit.jupiter.api.Test;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.test.context.SpringBootTest;
-// import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
-// import pt.up.edscrum.model.Award;
-// import pt.up.edscrum.model.StudentAward;
-// import pt.up.edscrum.model.User;
-// import pt.up.edscrum.service.AwardService;
-// import pt.up.edscrum.service.UserService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-// @SpringBootTest
-// @Transactional
-// class AwardServiceTest {
+import pt.up.edscrum.model.*;
+import pt.up.edscrum.repository.*;
+import pt.up.edscrum.service.AwardService;
 
-//     @Autowired
-//     private AwardService awardService;
+@SpringBootTest
+@Transactional
+class AwardServiceTest {
 
-//     @Autowired
-//     private UserService userService;
+    @Autowired private AwardService awardService;
+    @Autowired private AwardRepository awardRepo;
+    @Autowired private UserRepository userRepo;
+    @Autowired private ProjectRepository projectRepo;
+    @Autowired private TeamRepository teamRepo;
+    @Autowired private CourseRepository courseRepo;
+    @Autowired private ScoreRepository scoreRepo;
+    @Autowired private StudentAwardRepository studentAwardRepo;
+    @Autowired private TeamAwardRepository teamAwardRepo;
+    @Autowired private NotificationRepository notificationRepo;
+    @Autowired private EnrollmentRepository enrollmentRepo; // ADICIONADO: Necessário para limpar FKs
 
-//     // ------------------- CRUD TESTS -------------------
-//     @Test
-//     void testCreateAndGetAward() {
-//         Award award = new Award();
-//         award.setName("Participação");
-//         award.setDescription("Award de teste");
-//         award.setPoints(10);
-//         award.setType("MANUAL");
+    // Variáveis de instância para usar nos testes
+    private User student;
+    private Project project;
+    private Team team;
+    private Award awardIndiv;
+    private Award awardTeam;
 
-//         Award saved = awardService.createAward(award);
+    /**
+     * Executado ANTES de cada teste individual.
+     * Garante que a BD está limpa e cria os dados frescos.
+     */
+    @BeforeEach
+    void setUp() {
+        cleanDatabase(); // Garante que não há lixo de testes anteriores
+        createScenario(); // Cria os dados necessários
+    }
 
-//         assertNotNull(saved.getId());
-//         assertEquals("Participação", saved.getName());
+    /**
+     * Executado DEPOIS de cada teste.
+     */
+    @AfterEach
+    void tearDown() {
+        // Opcional com @Transactional, mas garante limpeza absoluta se a transação falhar
+        cleanDatabase(); 
+    }
 
-//         Award found = awardService.getAwardById(saved.getId());
-//         assertEquals(saved.getId(), found.getId());
-//     }
+    // Método auxiliar para limpar dados (Ordem inversa das dependências para evitar erros de FK)
+    private void cleanDatabase() {
+        notificationRepo.deleteAll();
+        teamAwardRepo.deleteAll();
+        studentAwardRepo.deleteAll();
+        scoreRepo.deleteAll();
+        
+        // Teams dependem de Project e User
+        teamRepo.deleteAll();
+        
+        // Projects dependem de Course
+        projectRepo.deleteAll();
+        
+        awardRepo.deleteAll();
+        
+        // Enrollments dependem de Course e User (CRÍTICO: Apagar antes de Users)
+        enrollmentRepo.deleteAll(); 
+        
+        userRepo.deleteAll();
+        courseRepo.deleteAll();
+    }
 
-//     @Test
-//     void testGetAllAwards() {
-//         Award a1 = new Award();
-//         a1.setName("A1");
-//         a1.setPoints(5);
-//         a1.setType("MANUAL");
-//         awardService.createAward(a1);
+    // Método auxiliar para criar o cenário de teste
+    private void createScenario() {
+        // 1. Criar "Alunos Fantasma" para ocupar o Top 5
+        // Isto é crucial: o nosso aluno de teste ficará em 6º lugar e NÃO receberá pontos automáticos de ranking
+        for (int i = 0; i < 5; i++) {
+            User dummy = new User();
+            dummy.setName("Dummy " + i);
+            dummy.setEmail("dummy" + i + "@test.com");
+            dummy.setPassword("pass");
+            dummy.setRole("STUDENT");
+            userRepo.save(dummy);
 
-//         Award a2 = new Award();
-//         a2.setName("A2");
-//         a2.setPoints(10);
-//         a2.setType("AUTOMATIC");
-//         awardService.createAward(a2);
+            Score dummyScore = new Score();
+            dummyScore.setUser(dummy);
+            dummyScore.setTotalPoints(10000 + (i * 10)); // Pontuação muito alta para garantir o top
+            scoreRepo.save(dummyScore);
+        }
 
-//         List<Award> awards = awardService.getAllAwards();
+        // 2. Criar Curso
+        Course course = new Course();
+        course.setName("Engenharia SW");
+        courseRepo.save(course);
 
-//         assertTrue(awards.size() >= 2);
-//     }
+        // 3. Criar Projeto
+        project = new Project();
+        project.setName("Projeto Teste");
+        project.setCourse(course);
+        projectRepo.save(project);
 
-//     @Test
-//     void testUpdateAward() {
-//         Award award = new Award();
-//         award.setName("Original");
-//         award.setDescription("Desc");
-//         award.setPoints(10);
-//         award.setType("MANUAL");
+        // 4. Criar o nosso Estudante de Teste
+        student = new User();
+        student.setName("Aluno Teste");
+        student.setEmail("aluno@test.com");
+        student.setRole("STUDENT");
+        userRepo.save(student);
 
-//         Award saved = awardService.createAward(award);
+        // 5. Criar Equipa e adicionar o aluno
+        team = new Team();
+        team.setName("Equipa Alpha");
+        team.setCourse(course);
+        team.setProject(project);
+        team.setDevelopers(List.of(student));
+        teamRepo.save(team);
 
-//         Award update = new Award();
-//         update.setName("Alterado");
-//         update.setDescription("Nova desc");
-//         update.setPoints(50);
-//         update.setType("AUTOMATIC");
+        // 6. Criar Prémios (Manuais)
+        awardIndiv = new Award();
+        awardIndiv.setName("Prémio Individual");
+        awardIndiv.setPoints(100);
+        awardIndiv.setTargetType("INDIVIDUAL");
+        awardIndiv.setType("MANUAL");
+        awardRepo.save(awardIndiv);
 
-//         Award updated = awardService.updateAward(saved.getId(), update);
+        awardTeam = new Award();
+        awardTeam.setName("Prémio Equipa");
+        awardTeam.setPoints(50);
+        awardTeam.setTargetType("TEAM");
+        awardTeam.setType("MANUAL");
+        awardRepo.save(awardTeam);
+    }
 
-//         assertEquals("Alterado", updated.getName());
-//         assertEquals(50, updated.getPoints());
-//         assertEquals("AUTOMATIC", updated.getType());
-//     }
+    @Test
+    void testCreateAndGetAward() {
+        Award newAward = new Award();
+        newAward.setName("Novo Prémio");
+        newAward.setPoints(10);
+        newAward.setType("MANUAL");
+        newAward.setTargetType("INDIVIDUAL");
+        
+        Award created = awardService.createAward(newAward);
+        assertNotNull(created.getId());
+        
+        Award found = awardService.getAwardById(created.getId());
+        assertEquals("Novo Prémio", found.getName());
+    }
 
-//     @Test
-//     void testDeleteAward() {
-//         Award award = new Award();
-//         award.setName("Para apagar");
-//         award.setPoints(5);
-//         award.setType("MANUAL");
+    @Test
+    void testAssignAwardToStudent_AndUpdateScore() {
+        // Ação: Atribuir prémio de 100 pontos
+        awardService.assignAwardToStudent(awardIndiv.getId(), student.getId(), project.getId());
 
-//         Award saved = awardService.createAward(award);
+        // Verificação
+        // Como criámos 5 alunos com 10.000 pontos, o nosso aluno não ganha prémios de ranking.
+        // Deve ter exatamente 100 pontos.
+        int totalPoints = awardService.calculateTotalPoints(student.getId());
+        assertEquals(100, totalPoints, "O aluno devia ter apenas 100 pontos (sem bónus automático)");
 
-//         awardService.deleteAward(saved.getId());
+        Score score = scoreRepo.findByUser(student);
+        assertNotNull(score);
+        assertEquals(100, score.getTotalPoints());
+    }
 
-//         assertThrows(RuntimeException.class, () -> awardService.getAwardById(saved.getId()));
-//     }
+    @Test
+    void testAssignAwardToStudent_AlreadyAssigned_ThrowsException() {
+        // Atribuir a primeira vez
+        awardService.assignAwardToStudent(awardIndiv.getId(), student.getId(), project.getId());
 
-//     // ------------------- ASSIGN AWARD TO STUDENT -------------------
-//     @Test
-//     void testAssignAwardToStudent() {
-//         // Criar student
-//         User student = new User();
-//         student.setName("Pedro");
-//         student.setEmail("pedro@mail.com");
-//         student.setRole("STUDENT");
-//         User savedStudent = userService.createUser(student);
+        // Tentar atribuir o mesmo prémio novamente deve lançar exceção
+        assertThrows(RuntimeException.class, () -> {
+            awardService.assignAwardToStudent(awardIndiv.getId(), student.getId(), project.getId());
+        });
+    }
 
-//         // Criar award
-//         Award award = new Award();
-//         award.setName("Commit");
-//         award.setDescription("Fez primeiro commit");
-//         award.setPoints(50);
-//         award.setType("AUTOMATIC");
-//         Award savedAward = awardService.createAward(award);
+    @Test
+    void testAssignAwardToTeam_AndUpdateMemberScores() {
+        // Ação: Atribuir prémio de equipa (50 pontos)
+        awardService.assignAwardToTeam(awardTeam.getId(), team.getId(), project.getId());
 
-//         // Atribuir award
-//         StudentAward sa = awardService.assignAwardToStudent(savedAward.getId(), savedStudent.getId());
+        // Verificação: O membro da equipa deve receber os pontos
+        int totalPoints = awardService.calculateTotalPoints(student.getId());
+        assertEquals(50, totalPoints);
 
-//         assertNotNull(sa.getId());
-//         assertEquals(50, sa.getPointsEarned());
-//         assertEquals(savedStudent.getId(), sa.getStudent().getId());
-//         assertEquals(savedAward.getId(), sa.getAward().getId());
-//     }
+        Score score = scoreRepo.findByUser(student);
+        assertNotNull(score);
+        assertEquals(50, score.getTotalPoints());
+    }
 
-//     @Test
-//     void testAssignAwardToNonStudentThrowsError() {
-//         User teacher = new User();
-//         teacher.setName("Carlos");
-//         teacher.setEmail("carlos@mail.com");
-//         teacher.setRole("TEACHER");
+    @Test
+    void testCombinedPoints_IndividualAndTeam() {
+        // 1. Prémio Individual (100 pts)
+        awardService.assignAwardToStudent(awardIndiv.getId(), student.getId(), project.getId());
+        
+        // 2. Prémio de Equipa (50 pts)
+        awardService.assignAwardToTeam(awardTeam.getId(), team.getId(), project.getId());
 
-//         User savedTeacher = userService.createUser(teacher);
+        // Total deve ser 150
+        int total = awardService.calculateTotalPoints(student.getId());
+        assertEquals(150, total);
+    }
+    
+    @Test
+    void testUpdateAward() {
+        Award updateDetails = new Award();
+        updateDetails.setName("Nome Atualizado");
+        updateDetails.setDescription("Desc");
+        updateDetails.setPoints(200);
+        updateDetails.setType("MANUAL");
+        updateDetails.setTargetType("INDIVIDUAL");
+        
+        Award updated = awardService.updateAward(awardIndiv.getId(), updateDetails);
+        assertEquals("Nome Atualizado", updated.getName());
+        assertEquals(200, updated.getPoints());
+    }
 
-//         Award award = new Award();
-//         award.setName("Award X");
-//         award.setPoints(10);
-//         award.setType("MANUAL");
-
-//         Award savedAward = awardService.createAward(award);
-
-//         assertThrows(RuntimeException.class,
-//                 () -> awardService.assignAwardToStudent(savedAward.getId(), savedTeacher.getId()));
-//     }
-
-//     // ------------------- TOTAL POINTS -------------------
-//     @Test
-//     void testCalculateTotalPoints() {
-//         // Criar student
-//         User student = new User();
-//         student.setName("Maria");
-//         student.setEmail("maria@mail.com");
-//         student.setRole("STUDENT");
-
-//         User savedStudent = userService.createUser(student);
-
-//         // award 1
-//         Award a1 = new Award();
-//         a1.setName("A1");
-//         a1.setPoints(10);
-//         a1.setType("MANUAL");
-//         Award sa1 = awardService.createAward(a1);
-
-//         // award 2
-//         Award a2 = new Award();
-//         a2.setName("A2");
-//         a2.setPoints(40);
-//         a2.setType("AUTOMATIC");
-//         Award sa2 = awardService.createAward(a2);
-
-//         // Atribuir 2 awards
-//         awardService.assignAwardToStudent(sa1.getId(), savedStudent.getId());
-//         awardService.assignAwardToStudent(sa2.getId(), savedStudent.getId());
-
-//         int total = awardService.calculateTotalPoints(savedStudent.getId());
-
-//         assertEquals(50, total);
-//     }
-// }
+    @Test
+    void testDeleteAward() {
+        Award toDelete = new Award();
+        toDelete.setName("Para Apagar");
+        toDelete.setPoints(10);
+        toDelete.setType("MANUAL");
+        toDelete.setTargetType("INDIVIDUAL");
+        awardRepo.save(toDelete);
+        
+        Long id = toDelete.getId();
+        awardService.deleteAward(id);
+        
+        assertFalse(awardRepo.existsById(id));
+    }
+}

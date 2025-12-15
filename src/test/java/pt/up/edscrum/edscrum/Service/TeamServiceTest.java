@@ -18,6 +18,7 @@ import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.AwardRepository;
 import pt.up.edscrum.repository.CourseRepository;
 import pt.up.edscrum.repository.EnrollmentRepository;
+import pt.up.edscrum.repository.NotificationRepository; // ADICIONADO
 import pt.up.edscrum.repository.ProjectRepository;
 import pt.up.edscrum.repository.ScoreRepository;
 import pt.up.edscrum.repository.SprintRepository;
@@ -70,19 +71,33 @@ class TeamServiceTest {
     private UserStoryRepository userStoryRepository;
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+    @Autowired
+    private NotificationRepository notificationRepository; // ADICIONADO
 
     @BeforeEach
     void setUp() {
         // Limpar tabelas na ordem correta para não violar FK
+        // Notificações dependem de Users, logo devem ser apagadas antes dos Users
+        notificationRepository.deleteAll(); 
+        
         userStoryRepository.deleteAll();
         sprintRepository.deleteAll();
         teamAwardRepository.deleteAll();
         studentAwardRepository.deleteAll();
         scoreRepository.deleteAll();
         enrollmentRepository.deleteAll();
+        
+        // Teams dependem de Project e User
         teamRepository.deleteAll();
+        
+        // Projects dependem de Course
         projectRepository.deleteAll();
+        
         awardRepository.deleteAll();
+        
+        // Enrollments dependem de Course e User (já apagado acima, mas garantir ordem)
+        enrollmentRepository.deleteAll();
+        
         courseRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -98,46 +113,50 @@ class TeamServiceTest {
     void testCreateTeamWithMembers() {
         Course c = new Course();
         c.setName("Engenharia");
-        c = courseService.createCourse(c); // Ensure course is managed
+        c = courseService.createCourse(c); 
 
         Project p = new Project();
         p.setName("Projeto 1");
         p.setCourse(c);
-        p = projectService.createProject(p); // Ensure project is managed
+        p = projectService.createProject(p); 
 
         User sm = new User();
         sm.setName("Scrum Master");
         sm.setRole("STUDENT");
-        sm = userService.createUser(sm); // Assign the returned persisted user
-        createAndSaveEnrollment(sm, c); // Enroll SM in the course
+        sm.setEmail("sm@test.com"); // Boa prática adicionar email único
+        sm = userService.createUser(sm); 
+        createAndSaveEnrollment(sm, c); 
 
         User po = new User();
         po.setName("Product Owner");
         po.setRole("STUDENT");
-        po = userService.createUser(po); // Assign the returned persisted user
-        createAndSaveEnrollment(po, c); // Enroll PO in the course
+        po.setEmail("po@test.com");
+        po = userService.createUser(po); 
+        createAndSaveEnrollment(po, c); 
 
         User dev1 = new User();
         dev1.setName("Dev 1");
         dev1.setRole("STUDENT");
-        dev1 = userService.createUser(dev1); // Assign the returned persisted user
-        createAndSaveEnrollment(dev1, c); // Enroll Dev1 in the course
+        dev1.setEmail("dev1@test.com");
+        dev1 = userService.createUser(dev1); 
+        createAndSaveEnrollment(dev1, c); 
 
         User dev2 = new User();
         dev2.setName("Dev 2");
         dev2.setRole("STUDENT");
-        dev2 = userService.createUser(dev2); // Assign the returned persisted user
-        createAndSaveEnrollment(dev2, c); // Enroll Dev2 in the course
+        dev2.setEmail("dev2@test.com");
+        dev2 = userService.createUser(dev2); 
+        createAndSaveEnrollment(dev2, c); 
 
         Team team = new Team();
         team.setName("Team Alpha");
         team.setProject(p);
-        team.setCourse(c); // FIX: Set the course for the team
+        team.setCourse(c); 
         team.setScrumMaster(sm);
         team.setProductOwner(po);
         team.setDevelopers(List.of(dev1, dev2));
 
-        Team saved = teamService.createTeam(team); // Line 85 (or close to it)
+        Team saved = teamService.createTeam(team); 
         assertNotNull(saved.getId());
         assertEquals("Team Alpha", saved.getName());
         assertEquals(2, saved.getDevelopers().size());
@@ -161,15 +180,15 @@ class TeamServiceTest {
 
         Team t = new Team();
         t.setName("Velha Equipa");
-        t.setCourse(c); // Set course for the initial team
-        t.setProject(p); // Set project for the initial team
-        t = teamService.createTeam(t); // Ensure team is managed
+        t.setCourse(c); 
+        t.setProject(p); 
+        t = teamService.createTeam(t); 
 
         // Act: Create an update object that preserves existing associations
         Team update = new Team();
         update.setName("Nova Equipa");
-        update.setCourse(t.getCourse()); // Preserve existing course
-        update.setProject(t.getProject()); // Preserve existing project
+        update.setCourse(t.getCourse()); 
+        update.setProject(t.getProject()); 
 
         Team result = teamService.updateTeam(t.getId(), update);
 

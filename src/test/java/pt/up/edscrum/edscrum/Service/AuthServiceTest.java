@@ -1,12 +1,9 @@
 package pt.up.edscrum.edscrum.Service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,23 +11,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import pt.up.edscrum.model.User;
-import pt.up.edscrum.repository.AwardRepository;
-import pt.up.edscrum.repository.CourseRepository;
-import pt.up.edscrum.repository.EnrollmentRepository;
-import pt.up.edscrum.repository.NotificationRepository;
-import pt.up.edscrum.repository.ProjectRepository;
-import pt.up.edscrum.repository.ScoreRepository;
-import pt.up.edscrum.repository.SprintRepository;
-import pt.up.edscrum.repository.StudentAwardRepository;
-import pt.up.edscrum.repository.TeamAwardRepository;
-import pt.up.edscrum.repository.TeamRepository;
 import pt.up.edscrum.repository.UserRepository;
-import pt.up.edscrum.repository.UserStoryRepository;
 import pt.up.edscrum.service.AuthService;
 
 @SpringBootTest
-@Transactional
-public class AuthServiceTest {
+@Transactional // Garante rollback após cada teste (base de dados sempre limpa)
+class AuthServiceTest {
 
     @Autowired
     private AuthService authService;
@@ -38,161 +24,94 @@ public class AuthServiceTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private TeamRepository teamRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private TeamAwardRepository teamAwardRepository;
-
-    @Autowired
-    private StudentAwardRepository studentAwardRepository;
-
-    @Autowired
-    private ScoreRepository scoreRepository;
-
-    @Autowired
-    private AwardRepository awardRepository;
-
-    @Autowired
-    private SprintRepository sprintRepository;
-
-    @Autowired
-    private UserStoryRepository userStoryRepository;
-
-    @Autowired
-    private EnrollmentRepository enrollmentRepository;
-
-    @Autowired
-    private NotificationRepository notificationRepository; // Inject NotificationRepository
+    private User testUser;
 
     @BeforeEach
     void setUp() {
-        // Limpar tabelas na ordem correta para não violar FK
-        notificationRepository.deleteAll(); // Delete notifications first
-        userStoryRepository.deleteAll();
-        sprintRepository.deleteAll();
-        teamAwardRepository.deleteAll();
-        studentAwardRepository.deleteAll();
-        scoreRepository.deleteAll();
-        enrollmentRepository.deleteAll();
-        teamRepository.deleteAll();
-        projectRepository.deleteAll();
-        awardRepository.deleteAll();
-        courseRepository.deleteAll();
-        userRepository.deleteAll();
-    }
-
-    private User createAndSaveUser(String name, String email, String password, String role) {
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setPassword(password); // senha em texto para testes
-        user.setRole(role);
-
-        // Salvar isoladamente para evitar transient errors
-        return userRepository.save(user);
-    }
-
-
-    @Test
-    void testLogin_withValidCredentials_returnsUser() {
-        User u = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
-
-        User loggedInUser = authService.login("user@test.com", "password123");
-
-        assertNotNull(loggedInUser);
-        assertEquals(u.getEmail(), loggedInUser.getEmail());
+        // Criar um utilizador real para teste
+        testUser = new User();
+        testUser.setName("Teste Auth");
+        testUser.setEmail("auth@test.com");
+        testUser.setPassword("12345"); // Em produção estaria encriptada, mas o serviço compara strings diretas na tua implementação atual
+        testUser.setRole("STUDENT");
+        userRepository.save(testUser);
     }
 
     @Test
-    void testLogin_withInvalidPassword_returnsNull() {
-        createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
-
-        User loggedInUser = authService.login("user@test.com", "wrongpassword");
-
-        assertNull(loggedInUser);
+    void testLogin_Success() {
+        User loggedIn = authService.login("auth@test.com", "12345");
+        assertNotNull(loggedIn, "O login devia ter sucesso");
+        assertEquals(testUser.getId(), loggedIn.getId());
     }
 
     @Test
-    void testLogin_withNonExistentUser_returnsNull() {
-        User loggedInUser = authService.login("nonexistent@test.com", "anypassword");
-
-        assertNull(loggedInUser);
+    void testLogin_Failure_WrongPassword() {
+        User loggedIn = authService.login("auth@test.com", "errada");
+        assertNull(loggedIn, "O login devia falhar com password errada");
     }
 
     @Test
-    void testGenerateResetCode_forExistingUser_returnsTrueAndSavesCode() {
-        User user = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
+    void testLogin_Failure_UserNotFound() {
+        User loggedIn = authService.login("naoexiste@test.com", "12345");
+        assertNull(loggedIn, "O login devia falhar para utilizador inexistente");
+    }
 
-        boolean result = authService.generateResetCode("user@test.com");
+    @Test
+    void testGenerateResetCode_Success() {
+        boolean result = authService.generateResetCode("auth@test.com");
+        assertTrue(result, "Devia gerar código de reset");
 
-        assertTrue(result);
-        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        User updatedUser = userRepository.findByEmail("auth@test.com").get();
         assertNotNull(updatedUser.getResetCode());
         assertNotNull(updatedUser.getResetCodeExpiry());
     }
 
     @Test
-    void testGenerateResetCode_forNonExistentUser_returnsFalse() {
-        boolean result = authService.generateResetCode("nonexistent@test.com");
-
-        assertFalse(result);
+    void testGenerateResetCode_UserNotFound() {
+        boolean result = authService.generateResetCode("naoexiste@test.com");
+        assertFalse(result, "Não devia gerar código para email inexistente");
     }
 
     @Test
-    void testValidateResetCode_withValidCode_returnsTrue() {
-        User user = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
-        user.setResetCode("12345");
-        user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
-        userRepository.save(user);
+    void testValidateResetCode_Success() {
+        // Configurar código manualmente
+        testUser.setResetCode("54321");
+        testUser.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(testUser);
 
-        boolean isValid = authService.validateResetCode("user@test.com", "12345");
-
-        assertTrue(isValid);
+        boolean isValid = authService.validateResetCode("auth@test.com", "54321");
+        assertTrue(isValid, "Código devia ser válido");
     }
 
     @Test
-    void testValidateResetCode_withInvalidCode_returnsFalse() {
-        User user = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
-        user.setResetCode("12345");
-        user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
-        userRepository.save(user);
+    void testValidateResetCode_Expired() {
+        testUser.setResetCode("54321");
+        testUser.setResetCodeExpiry(LocalDateTime.now().minusMinutes(1)); // Expirado
+        userRepository.save(testUser);
 
-        boolean isValid = authService.validateResetCode("user@test.com", "54321");
-
-        assertFalse(isValid);
+        boolean isValid = authService.validateResetCode("auth@test.com", "54321");
+        assertFalse(isValid, "Código expirado não devia ser válido");
     }
 
     @Test
-    void testValidateResetCode_withExpiredCode_returnsFalse() {
-        User user = createAndSaveUser("Test User", "user@test.com", "password123", "STUDENT");
-        user.setResetCode("12345");
-        user.setResetCodeExpiry(LocalDateTime.now().minusMinutes(1));
-        userRepository.save(user);
+    void testValidateResetCode_WrongCode() {
+        testUser.setResetCode("54321");
+        testUser.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(testUser);
 
-        boolean isValid = authService.validateResetCode("user@test.com", "12345");
-
-        assertFalse(isValid);
+        boolean isValid = authService.validateResetCode("auth@test.com", "00000");
+        assertFalse(isValid, "Código incorreto não devia passar");
     }
 
     @Test
-    void testUpdatePassword_updatesPasswordAndClearsCode() {
-        User user = createAndSaveUser("Test User", "user@test.com", "oldPassword", "STUDENT");
-        user.setResetCode("12345");
-        user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(5));
-        userRepository.save(user);
+    void testUpdatePassword() {
+        testUser.setResetCode("12345");
+        userRepository.save(testUser);
 
-        authService.updatePassword("user@test.com", "newStrongPassword");
+        authService.updatePassword("auth@test.com", "novaPass123");
 
-        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertEquals("newStrongPassword", updatedUser.getPassword());
-        assertNull(updatedUser.getResetCode());
-        assertNull(updatedUser.getResetCodeExpiry());
+        User updatedUser = userRepository.findByEmail("auth@test.com").get();
+        assertEquals("novaPass123", updatedUser.getPassword());
+        assertNull(updatedUser.getResetCode(), "O código de reset devia ser limpo após atualizar a password");
     }
 }

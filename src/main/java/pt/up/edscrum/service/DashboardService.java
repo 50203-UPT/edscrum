@@ -371,11 +371,21 @@ public class DashboardService {
     }
 
     private ProjectDetailsDTO.TeamMemberDTO createMemberDTO(User u, String role, Long projectId, int teamProjectXp, int teamAwardsCount) {
+        // 1. Guard clause: Se o utilizador for null, retorna null imediatamente para evitar NPE
+        if (u == null) {
+            return null;
+        }
+
         int individualXP = 0;
         int awardsCount = 0;
 
-        if (u != null && !"TEACHER".equals(u.getRole())) {
-            individualXP = studentAwardRepo.sumPointsByStudentAndProjectId(u.getId(), projectId);
+        // 2. Lógica de cálculo (agora segura, pois sabemos que u não é null)
+        if (!"TEACHER".equals(u.getRole())) {
+            // Nota: sumPointsByStudentAndProjectId deve retornar 0 se não houver registos, 
+            // caso retorne null no repositório, deves tratar isso também (ex: Optional ou COALESCE no SQL).
+            Integer points = studentAwardRepo.sumPointsByStudentAndProjectId(u.getId(), projectId);
+            individualXP = (points != null) ? points : 0;
+            
             awardsCount = (int) studentAwardRepo.countByStudentIdAndProjectId(u.getId(), projectId);
         }
 

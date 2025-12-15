@@ -30,15 +30,15 @@ public class ProjectDetailsDTO {
     private int completedStories;
     private int progressPercentage;
 
-    // Classe interna para detalhes dos membros
+   // Classe interna para detalhes dos membros
     public static class TeamMemberDTO {
 
         public Long id;
         public String name;
-        public String role; // SM, PO, Dev
-        public String userRole; // TEACHER or STUDENT
+        public String role;     // Ex: "Scrum Master", "Product Owner" (Papel no Projeto)
+        public String userRole; // Ex: "TEACHER", "STUDENT" (Papel no Sistema)
         public int individualXP;
-        public int awardsCount; // Quantidade de prémios individuais
+        public int awardsCount;
 
         public TeamMemberDTO(Long id, String name, String role, String userRole, int individualXP, int awardsCount) {
             this.id = id;
@@ -48,6 +48,25 @@ public class ProjectDetailsDTO {
             this.individualXP = individualXP;
             this.awardsCount = awardsCount;
         }
+
+        public Long getId() { return id; }
+        public String getName() { return name; }
+
+        // --- CORREÇÃO AQUI ---
+        // getRoleInTeam deve retornar o 'role' (ex: Product Owner) e não o 'userRole'
+        public String getRoleInTeam() { return role; } 
+        
+        public String getRoleInProject() { return role; }
+
+        // getRole deve retornar o papel do sistema ou do projeto, dependendo da tua lógica.
+        // Geralmente 'getRole' refere-se ao sistema (STUDENT), mas mantive a coerência com a tua lógica anterior
+        // Se quiseres o papel de sistema usa getUserRole()
+        public String getRole() { return role; } 
+        
+        public String getUserRole() { return userRole; } // Novo getter útil
+
+        public int getIndividualXP() { return individualXP; }
+        public int getAwardsCount() { return awardsCount; }
     }
     
     // Classe interna para sprints simples
