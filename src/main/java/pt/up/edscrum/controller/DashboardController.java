@@ -16,6 +16,9 @@ import pt.up.edscrum.service.DashboardService;
 
 @RestController
 @RequestMapping("/dashboard")
+/**
+ * Endpoints para obter dashboards de professor e estudante e rankings.
+ */
 public class DashboardController {
 
     private final DashboardService dashboardService;

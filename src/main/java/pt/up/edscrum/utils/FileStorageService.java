@@ -10,6 +10,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Serviço utilitário responsável pelo armazenamento de ficheiros enviados
+ * (por exemplo imagens de perfil) no sistema de ficheiros local.
+ */
 @Service
 public class FileStorageService {
 
@@ -42,13 +46,10 @@ public class FileStorageService {
             return null;
         }
 
-        // Gera um nome único para evitar ficheiros com o mesmo nome (ex: uuid_avatar.png)
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
 
-        // Define o caminho completo onde guardar
         Path destinationPath = Paths.get(UPLOAD_DIR + fileName);
 
-        // Copia o ficheiro para a pasta
         Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
 
         return fileName;

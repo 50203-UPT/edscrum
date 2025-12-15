@@ -24,6 +24,11 @@ import pt.up.edscrum.repository.EnrollmentRepository;
 import pt.up.edscrum.repository.UserRepository;
 import pt.up.edscrum.service.TeamService;
 
+/**
+ * Controlador REST para operações relacionadas com equipas.
+ * Fornece endpoints para gerir equipas, membros e consultas relacionadas com
+ * equipas no contexto de disciplinas.
+ */
 @RestController
 @RequestMapping("/api/teams")
 public class TeamController {
@@ -98,32 +103,21 @@ public class TeamController {
     }
 
     /**
-     * Get student's team in a specific course
+     * Get student's team in a specific course.
      */
     @GetMapping("/student-team/{studentId}/course/{courseId}")
-        public ResponseEntity<?> getStudentTeamInCourse(
+    public ResponseEntity<?> getStudentTeamInCourse(
             @PathVariable Long studentId,
             @PathVariable Long courseId,
-            jakarta.servlet.http.HttpSession session) {
+            HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
         if (!currentUserId.equals(studentId) && !"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).build();
+        
         Team team = teamService.getStudentTeamInCourse(studentId, courseId);
         
-        Map<String, Object> response = new HashMap<>();
-        if (team != null) {
-            response.put("teamId", team.getId());
-            response.put("name", team.getName());
-            response.put("productOwner", team.getProductOwner());
-            response.put("scrumMaster", team.getScrumMaster());
-            response.put("developers", team.getDevelopers());
-            response.put("currentMemberCount", team.getCurrentMemberCount());
-            response.put("maxMembers", team.getMaxMembers());
-            response.put("isClosed", team.isClosed());
-        }
-        
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(buildTeamResponse(team));
     }
 
     /**
@@ -134,7 +128,7 @@ public class TeamController {
     public ResponseEntity<?> getStudentTeamInCourseSession(
             @PathVariable Long courseId,
             @RequestParam(required = false) Long studentId,
-            jakarta.servlet.http.HttpSession session) {
+            HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
@@ -144,24 +138,12 @@ public class TeamController {
 
         Team team = teamService.getStudentTeamInCourse(targetStudentId, courseId);
 
-        Map<String, Object> response = new HashMap<>();
-        if (team != null) {
-            response.put("teamId", team.getId());
-            response.put("name", team.getName());
-            response.put("productOwner", team.getProductOwner());
-            response.put("scrumMaster", team.getScrumMaster());
-            response.put("developers", team.getDevelopers());
-            response.put("currentMemberCount", team.getCurrentMemberCount());
-            response.put("maxMembers", team.getMaxMembers());
-            response.put("isClosed", team.isClosed());
-        }
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(buildTeamResponse(team));
     }
 
     /**
-     * Get available teams for a course (open and with slots)
-     * Returns detailed info about available roles
+     * Get available teams for a course (open and with slots).
+     * Returns detailed info about available roles.
      */
     @GetMapping("/available-teams/{courseId}")
     public ResponseEntity<List<Map<String, Object>>> getAvailableTeamsByCourse(@PathVariable Long courseId) {
@@ -183,13 +165,13 @@ public class TeamController {
     }
 
     /**
-     * Student joins a team with a specific role
+     * Student joins a team with a specific role.
      */
     @PostMapping("/{teamId}/join")
-        public ResponseEntity<Map<String, String>> joinTeam(
+    public ResponseEntity<Map<String, String>> joinTeam(
             @PathVariable Long teamId,
             @RequestBody Map<String, Object> payload,
-            jakarta.servlet.http.HttpSession session) {
+            HttpSession session) {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
 
@@ -211,13 +193,11 @@ public class TeamController {
         
         Map<String, String> response = new HashMap<>();
         try {
-            // Get student user
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
-            
-            // Add student to team with specified role
+
             teamService.addStudentToTeamWithRole(teamId, studentId, student, role);
-            
+
             response.put("success", "Juntaste-te à equipa com sucesso!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -226,6 +206,9 @@ public class TeamController {
         }
     }
 
+    /**
+     * Adiciona um membro à equipa (Apenas Professor).
+     */
     @PostMapping("/{teamId}/add-member")
     public ResponseEntity<?> addMemberByTeacher(
             @PathVariable Long teamId, 
@@ -237,11 +220,11 @@ public class TeamController {
                 return ResponseEntity.status(401).body("Unauthorized");
             }
             
-            Long studentId = Long.valueOf(payload.get("studentId").toString());
-            String role = (String) payload.get("role");
-
             String currentUserRole = (String) session.getAttribute("currentUserRole");
             if (!"TEACHER".equals(currentUserRole)) return ResponseEntity.status(403).body("Forbidden");
+
+            Long studentId = Long.valueOf(payload.get("studentId").toString());
+            String role = (String) payload.get("role");
 
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
@@ -264,11 +247,9 @@ public class TeamController {
         List<User> students = enrollments.stream()
                 .map(Enrollment::getStudent)
                 .filter(student -> "STUDENT".equals(student.getRole()))
-                // Filter out students who already have a team in this course
                 .filter(student -> teamService.getStudentTeamInCourse(student.getId(), courseId) == null)
                 .collect(Collectors.toList());
         
-        // Get the course teacher
         User teacher = null;
         if (!enrollments.isEmpty() && enrollments.get(0).getCourse() != null) {
             teacher = enrollments.get(0).getCourse().getTeacher();
@@ -280,5 +261,20 @@ public class TeamController {
         
         return ResponseEntity.ok(response);
     }
-}
 
+    // Helper method to build response map
+    private Map<String, Object> buildTeamResponse(Team team) {
+        Map<String, Object> response = new HashMap<>();
+        if (team != null) {
+            response.put("teamId", team.getId());
+            response.put("name", team.getName());
+            response.put("productOwner", team.getProductOwner());
+            response.put("scrumMaster", team.getScrumMaster());
+            response.put("developers", team.getDevelopers());
+            response.put("currentMemberCount", team.getCurrentMemberCount());
+            response.put("maxMembers", team.getMaxMembers());
+            response.put("isClosed", team.isClosed());
+        }
+        return response;
+    }
+}

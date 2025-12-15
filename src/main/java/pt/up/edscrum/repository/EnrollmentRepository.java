@@ -9,6 +9,10 @@ import pt.up.edscrum.model.Enrollment;
 import pt.up.edscrum.model.User;
 
 @Repository
+/**
+ * Repositório para operações sobre inscrições (enrollments) de estudantes em
+ * cursos.
+ */
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     /**

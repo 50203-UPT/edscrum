@@ -17,6 +17,10 @@ import pt.up.edscrum.enums.NotificationType;
 
 @Entity
 @Table(name = "notifications")
+/**
+ * Entidade que representa uma notificação do sistema associada a um
+ * utilizador.
+ */
 public class Notification {
 
     @Id
@@ -41,9 +45,8 @@ public class Notification {
     private LocalDateTime createdAt;
 
     @Column(name = "is_read", nullable = false)
-    private boolean read = false; // "read" é palavra reservada em alguns SQLs, usamos "is_read"
+    private boolean read = false;
 
-    // Construtores
     public Notification() {
     }
 
@@ -56,7 +59,7 @@ public class Notification {
         this.read = false;
     }
 
-    // Getters e Setters
+    /** Getters e setters */
     public Long getId() {
         return id;
     }

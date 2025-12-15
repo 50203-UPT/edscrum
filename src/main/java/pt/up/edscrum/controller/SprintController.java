@@ -23,6 +23,10 @@ import pt.up.edscrum.model.User;
 @RestController
 @RequestMapping("/sprints")
 @CrossOrigin(origins = "*")
+/**
+ * API REST para gestão de sprints: criação, atualização, início,
+ * conclusão e eliminação de sprints.
+ */
 public class SprintController {
 
     private final SprintService sprintService;
@@ -55,7 +59,7 @@ public class SprintController {
         if (sprint.getCreatedBy() != null && sprint.getCreatedBy().getId() != null && !currentUserId.equals(sprint.getCreatedBy().getId()) && !"TEACHER".equals(currentUserRole)) {
             return ResponseEntity.status(403).build();
         }
-        // If createdBy not provided (session-based auth), set current user as creator
+        
         if (sprint.getCreatedBy() == null && currentUserId != null) {
             User creator = userService.getUserById(currentUserId);
             sprint.setCreatedBy(creator);
@@ -99,7 +103,6 @@ public class SprintController {
         Long courseTeacherId = null;
         try { courseTeacherId = existing.getProject().getCourse().getTeacher().getId(); } catch (Exception e) { }
         
-        // Allow teacher, course teacher, owner, or any member of the project's teams
         boolean isProjectTeamMember = false;
         try {
             if (existing.getProject() != null && existing.getProject().getTeams() != null) {

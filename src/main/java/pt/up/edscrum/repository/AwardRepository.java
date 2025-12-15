@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import pt.up.edscrum.model.Award;
 
+/**
+ * Repositório para valores de `Award` (prémios) e consultas auxiliares.
+ */
 public interface AwardRepository extends JpaRepository<Award, Long> {
 
     /**

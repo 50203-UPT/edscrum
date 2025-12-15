@@ -13,6 +13,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
+/**
+ * Representa um curso com informação básica (nome, código, ano/semestre),
+ * o professor responsável e coleções relacionadas (projetos, inscrições, equipas).
+ */
 @Entity
 public class Course {
 
@@ -22,9 +26,9 @@ public class Course {
 
     private String name;
 
-    private String tag;         // NOVO: Identificador Visual (ex: "#QS")
+    private String tag;
 
-    private String code;        // Senha de Acesso (Privada)
+    private String code;
 
     private String description;
     private Integer semester;
@@ -44,7 +48,7 @@ public class Course {
     @OneToMany(mappedBy = "course")
     private List<Team> teams;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

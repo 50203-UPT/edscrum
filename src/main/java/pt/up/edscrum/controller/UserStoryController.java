@@ -17,6 +17,10 @@ import jakarta.servlet.http.HttpSession;
 @RestController
 @RequestMapping("/api/stories")
 @CrossOrigin(origins = "*")
+/**
+ * API para criação, atualização e movimentação de user stories dentro de
+ * sprints e projetos.
+ */
 public class UserStoryController {
 
     private final UserStoryService userStoryService;
@@ -59,8 +63,6 @@ public class UserStoryController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        
-        // Validate Assignee
         if (userStory.getAssignee() != null && userStory.getAssignee().getId() == null && userStory.getAssignee().getEmail() != null) {
             Optional<User> opt = userService.getUserByEmail(userStory.getAssignee().getEmail());
             if (opt.isPresent()) {
@@ -130,7 +132,6 @@ public class UserStoryController {
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
         
-        // Validate Assignee Email
         if (userStory.getAssignee() != null && userStory.getAssignee().getId() == null && userStory.getAssignee().getEmail() != null) {
             Optional<User> opt = userService.getUserByEmail(userStory.getAssignee().getEmail());
             if (opt.isPresent()) {
@@ -145,6 +146,7 @@ public class UserStoryController {
             if (currentUserId.equals(userStory.getAssignee().getId())) isAllowed = true;
             if ("TEACHER".equals(currentUserRole)) isAllowed = true;
 
+            
             try {
                 if (!isAllowed) {
                     UserStory existing = userStoryService.getUserStoryById(storyId);

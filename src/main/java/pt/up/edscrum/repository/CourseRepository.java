@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 
 import pt.up.edscrum.model.Course;
 
+/**
+ * Repositório para operações de leitura/escrita sobre `Course`.
+ */
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
     /**

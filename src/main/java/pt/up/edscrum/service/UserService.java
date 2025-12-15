@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.UserRepository;
 
+/**
+ * Serviço para operações CRUD e utilitárias sobre utilizadores.
+ */
 @Service
 public class UserService {
 

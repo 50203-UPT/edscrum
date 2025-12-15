@@ -15,6 +15,9 @@ import pt.up.edscrum.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/notifications")
+/**
+ * Endpoints para consulta e gestão de notificações de utilizadores.
+ */
 public class NotificationController {
 
     @Autowired
@@ -43,7 +46,6 @@ public class NotificationController {
         Long currentUserId = (Long) session.getAttribute("currentUserId");
         String currentUserRole = (String) session.getAttribute("currentUserRole");
         if (currentUserId == null) return ResponseEntity.status(401).build();
-        // Check ownership: fetch notification
         java.util.Optional<Notification> opt = notificationService.getNotificationById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Notification n = opt.get();

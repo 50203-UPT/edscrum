@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import pt.up.edscrum.repository.UserRepository;
 
 @ControllerAdvice
+/**
+ * Define atributos globais de modelo usados pelas views (ex.: mapa de
+ * imagens de perfil dos utilizadores).
+ */
 public class GlobalModelAttributes {
 
     @Autowired

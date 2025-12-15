@@ -9,6 +9,10 @@ import pt.up.edscrum.repository.NotificationRepository;
 import java.util.List;
 
 @Service
+/**
+ * Serviço para criação e gestão de notificações.
+ * Gera notificações automáticas de acordo com as preferências do utilizador.
+ */
 public class NotificationService {
 
     @Autowired
@@ -20,7 +24,7 @@ public class NotificationService {
     public void createNotification(User user, NotificationType type, String title, String message) {
         if (user == null) return;
 
-        // 1. Verificar Preferências (Assumindo campos existentes na classe User baseados na UI)
+        
         boolean shouldNotify = checkUserPreference(user, type);
 
         if (shouldNotify) {
@@ -30,20 +34,15 @@ public class NotificationService {
     }
 
     private boolean checkUserPreference(User user, NotificationType type) {
-        // Lógica de mapeamento entre Tipo de Notificação e Preferência do User
         switch (type) {
             case AWARD:
-                // Verifica se o user quer notificações de prémios
-                return user.isNotificationAwards(); 
+                return user.isNotificationAwards();
             case RANKING:
             case SYSTEM:
-                // Verifica se o user quer notificações de rankings/sistema
-                return user.isNotificationRankings(); 
+                return user.isNotificationRankings();
             case TEAM:
             case SPRINT:
-                // Assumimos que notificações de Equipa/Sprint são críticas ou usam uma flag geral
-                // Se não houver flag específica, retornamos true ou usamos uma flag geral "notificationsEnabled"
-                return true; 
+                return true;
             default:
                 return true;
         }

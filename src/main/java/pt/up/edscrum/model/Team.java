@@ -14,6 +14,11 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 
+/**
+ * Entidade que representa uma equipa de desenvolvimento dentro de um
+ * projeto/curso, com membros, papéis (scrum master, product owner) e
+ * informação de configuração (tamanho máximo, estado encerrado).
+ */
 @Entity
 public class Team {
 
@@ -33,7 +38,7 @@ public class Team {
     @JsonIgnoreProperties({"projects", "enrollments", "teams"})
     private Course course;
 
-    // Papéis Scrum
+    
     @ManyToOne
     @JoinColumn(name = "scrum_master_id")
     private User scrumMaster;
@@ -42,7 +47,7 @@ public class Team {
     @JoinColumn(name = "product_owner_id")
     private User productOwner;
 
-    // Developers (lista de membros)
+    
     @ManyToMany
     @JoinTable(
             name = "team_developers",
@@ -51,14 +56,12 @@ public class Team {
     )
     private List<User> developers;
 
-    // Team closure and capacity management
+    
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isClosed = false;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 10")
-    private Integer maxMembers = 10; // Default max is 10 (1 PO + 1 SM + 8 Devs)
-
-    // Getters e Setters
+    private Integer maxMembers = 10;
     public Long getId() {
         return id;
     }
@@ -132,7 +135,7 @@ public class Team {
     }
 
     /**
-     * Gets the total number of current team members (PO + SM + Developers)
+     * Retorna o número total de membros atuais da equipa (PO + SM + Developers).
      */
     public int getCurrentMemberCount() {
         int count = 0;
@@ -149,14 +152,14 @@ public class Team {
     }
 
     /**
-     * Checks if team can accept new members
+     * Indica se a equipa pode aceitar novos membros.
      */
     public boolean canAcceptMembers() {
         return !isClosed && getCurrentMemberCount() < maxMembers;
     }
 
     /**
-     * Checks if team is full (equal to max members)
+     * Indica se a equipa atingiu a sua capacidade máxima.
      */
     public boolean isFull() {
         return getCurrentMemberCount() >= maxMembers;

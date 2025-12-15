@@ -1,5 +1,9 @@
 package pt.up.edscrum.dto.dashboard;
 
+/**
+ * DTO simples com métricas de progresso de um projeto (percentagem de
+ * conclusão).
+ */
 public class ProjectProgressDTO {
 
     private Long projectId;

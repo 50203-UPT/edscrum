@@ -4,6 +4,9 @@ import java.time.LocalDate;
 
 import pt.up.edscrum.enums.SprintStatus;
 
+/**
+ * DTO resumido de um sprint incluindo progresso, usado em listas e sumários.
+ */
 public class SprintWithProgressDTO {
     private Long id;
     private String name;
@@ -11,9 +14,9 @@ public class SprintWithProgressDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private SprintStatus status;
-    private int progress; // 0-100
+    private int progress;
 
-    // Getters e Setters
+    /** Getters e setters */
     public Long getId() {
         return id;
     }

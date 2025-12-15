@@ -2,6 +2,9 @@ package pt.up.edscrum.dto.dashboard;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa um registo temporal de pontos de um estudante.
+ */
 public class PointHistoryDTO {
 
     private Long studentId;

@@ -18,6 +18,10 @@ import jakarta.persistence.OneToMany;
 import pt.up.edscrum.enums.SprintStatus;
 
 @Entity
+/**
+ * Entidade que representa um sprint dentro de um projeto, com datas,
+ * estado e user stories associadas.
+ */
 public class Sprint {
 
     @Id
@@ -39,13 +43,13 @@ public class Sprint {
     private Project project;
 
     @ManyToOne
-    private User createdBy; // Usuário que criou o sprint (pode ser nulo para compatibilidade)
+    private User createdBy;
 
     @OneToMany(mappedBy = "sprint", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("sprint")
     private List<UserStory> userStories;
 
-    // Getters & Setters
+    
     public Long getId() {
         return id;
     }
@@ -64,11 +68,11 @@ public class Sprint {
 
     public String getDescription() {
         return description;
-    } // Getter Novo
+    }
 
     public void setDescription(String description) {
         this.description = description;
-    } // Setter Novo
+    }
 
     public LocalDate getStartDate() {
         return startDate;

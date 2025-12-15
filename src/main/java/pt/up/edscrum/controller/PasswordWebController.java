@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import pt.up.edscrum.model.User;
 import pt.up.edscrum.repository.UserRepository;
 
-@Controller // Nota: @Controller e não @RestController, porque serve HTML
+/**
+ * Controlador para páginas de redefinição de password (vistas HTML).
+ */
+@Controller
 public class PasswordWebController {
 
     private final UserRepository userRepository;
@@ -30,10 +33,7 @@ public class PasswordWebController {
      */
     @GetMapping("/resetPassword")
     public String showResetPasswordPage(@RequestParam("email") String email, Model model) {
-        // Passamos o email para o HTML para ele colocar no input hidden
         model.addAttribute("email", email);
-
-        // Retorna o nome do ficheiro HTML (sem .html) que está em resources/templates
         return "resetPassword";
     }
 
@@ -61,13 +61,11 @@ public class PasswordWebController {
 
         user.setPassword(password);
 
-        // Limpar o código de recuperação para não ser usado novamente
         user.setResetCode(null);
         user.setResetCodeExpiry(null);
 
         userRepository.save(user);
 
-        // Redireciona para o login (ou raiz) com um parâmetro de sucesso
         return "redirect:/?resetSuccess";
     }
 }

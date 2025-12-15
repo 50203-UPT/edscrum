@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 import pt.up.edscrum.model.User;
 
 @Repository
+/**
+ * Repositório para consultas sobre `User` (procura por email, role, reset
+ * code, etc.).
+ */
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**

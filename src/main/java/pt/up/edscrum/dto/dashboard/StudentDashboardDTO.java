@@ -4,6 +4,10 @@ import java.util.List;
 
 import pt.up.edscrum.model.Course;
 
+/**
+ * DTO que agrega informação apresentada no dashboard do estudante (pontos,
+ * prémios, cursos e projetos).
+ */
 public class StudentDashboardDTO {
 
     private Long id;
@@ -14,40 +18,35 @@ public class StudentDashboardDTO {
     private boolean notificationRankings;
     private String studentTag;
 
-    // Dados do Curso Principal (onde o aluno está inscrito)
     private Long courseId;
     private String courseName;
 
-    // Dados do Projeto e Equipa
     private Long projectId;
     private String teamName;
     private String roleInTeam;
 
     private int totalPoints;
 
-    // --- NOVOS CAMPOS PARA OS CARTÕES DA VISÃO GERAL ---
-    private int currentRank;            // A tua posição
-    private int totalClassStudents;     // Total de alunos na turma
-    private int totalClassTeams;        // Total de equipas na turma
+    private int currentRank;
+    private int totalClassStudents;
+    private int totalClassTeams;
 
-    private double classAverage;        // Média da turma
+    private double classAverage;
 
-    private String topPerformerName;    // Nome do melhor aluno
-    private int topPerformerScore;      // Pontuação do melhor
+    private String topPerformerName;
+    private int topPerformerScore;
 
-    private int scoreVariation;         // Diferença (Melhor - Pior)
+    private int scoreVariation;
 
-    // Listas de Dados
     private List<AwardDisplayDTO> earnedAwards;
     private List<AwardDisplayDTO> unearnedAwards;
     private List<PointHistoryDTO> pointHistory;
-    private List<RankingDTO> topStudents; // Top 5 para a tabela
+    private List<RankingDTO> topStudents;
 
     private List<ProjectWithProgressDTO> projects;
     private List<Course> enrolledCourses;
     private List<Course> availableCourses;
 
-    // Classe auxiliar para prémios
     public static class AwardDisplayDTO {
 
         public String name;
@@ -81,7 +80,7 @@ public class StudentDashboardDTO {
     public StudentDashboardDTO() {
     }
 
-    // --- GETTERS E SETTERS ---
+    /** Getters e setters */
     public Long getId() {
         return id;
     }
@@ -181,7 +180,7 @@ public class StudentDashboardDTO {
         this.studentTag = studentTag;
     }
     
-    // Getters/Setters Estatísticas
+    /** Getters/Setters Estatísticas */
     public int getCurrentRank() {
         return currentRank;
     }
@@ -238,7 +237,7 @@ public class StudentDashboardDTO {
         this.scoreVariation = scoreVariation;
     }
 
-    // Getters/Setters Listas
+    /** Getters/Setters Listas */
     public List<AwardDisplayDTO> getEarnedAwards() {
         return earnedAwards;
     }

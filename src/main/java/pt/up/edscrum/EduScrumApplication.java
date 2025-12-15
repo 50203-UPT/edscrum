@@ -11,6 +11,10 @@ import pt.up.edscrum.model.Award;
 import pt.up.edscrum.repository.AwardRepository;
 
 @SpringBootApplication
+/**
+ * Entrada da aplicação Spring Boot EduScrum e rotina de seed inicial de
+ * prémios por defeito.
+ */
 public class EduScrumApplication {
 
     public static void main(String[] args) {
@@ -20,7 +24,7 @@ public class EduScrumApplication {
     @Bean
     public CommandLineRunner seedAwards(AwardRepository awardRepository) {
         return args -> {
-            // Lista de prémios a criar
+            
             List<Award> defaults = List.of(
                     createAwardObj("Primeiro Salto", "Criaste o teu primeiro sprint.", 20, "AUTOMATIC", "INDIVIDUAL"),
                     createAwardObj("Sprint Artisan (5)", "Criaste 5 sprints.", 40, "AUTOMATIC", "INDIVIDUAL"),

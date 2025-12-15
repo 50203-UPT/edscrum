@@ -19,6 +19,9 @@ import pt.up.edscrum.service.AwardService;
 @RestController
 @RequestMapping("/awards")
 @CrossOrigin(origins = "*")
+/**
+ * Endpoints para gerir e consultar prémios (awards), atribuições e pontos.
+ */
 public class AwardController {
 
     private final AwardService awardService;

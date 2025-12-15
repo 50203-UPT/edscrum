@@ -4,10 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 
 @Entity
+/**
+ * Entidade que guarda o total de pontos (score) de um utilizador ou equipa.
+ */
 public class Score {
 
     @Id
@@ -22,7 +25,7 @@ public class Score {
     @ManyToOne
     private Team team;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }

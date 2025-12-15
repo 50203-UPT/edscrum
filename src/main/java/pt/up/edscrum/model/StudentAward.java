@@ -7,6 +7,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
 @Entity
+/**
+ * Entidade que representa a atribuição de um prémio a um estudante num
+ * determinado contexto (opcionalmente ligado a um projeto).
+ */
 public class StudentAward {
 
     @Id
@@ -20,9 +24,9 @@ public class StudentAward {
     private Award award;
 
     @ManyToOne
-    private Project project; // Projeto onde o prémio foi atribuído
+    private Project project;
 
-    private int pointsEarned; // guarda a pontuação atribuída
+    private int pointsEarned;
 
     public Project getProject() {
         return project;

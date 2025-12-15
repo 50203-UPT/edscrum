@@ -18,13 +18,12 @@ import jakarta.persistence.OneToMany;
 import pt.up.edscrum.enums.ProjectStatus;
 import pt.up.edscrum.enums.SprintStatus;
 
+/**
+ * Representa um projeto de um curso, contendo sprints, equipas, datas
+ * e utilitários de progresso.
+ */
 @Entity
 public class Project {
-
-    /**
-     * Representa um projeto associado a um curso. Contém sprints, equipas e
-     * datas; fornece um helper `getProgress()` para calcular o progresso.
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,7 +50,7 @@ public class Project {
     @Enumerated(EnumType.STRING)
     private ProjectStatus status = ProjectStatus.PLANEAMENTO;
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }
@@ -124,7 +123,12 @@ public class Project {
         this.status = status;
     }
 
-    // Helper para progresso
+    /**
+     * Calcula o progresso total do projeto como percentagem de sprints
+     * concluídos.
+     *
+     * @return progresso do projeto (0-100)
+     */
     public int getProgress() {
         if (sprints == null || sprints.isEmpty()) {
             return 0;

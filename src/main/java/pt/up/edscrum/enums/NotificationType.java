@@ -1,9 +1,12 @@
 package pt.up.edscrum.enums;
 
+/**
+ * Tipos de notificações possíveis no sistema.
+ */
 public enum NotificationType {
-    AWARD,      // Prémios (Manuais ou Automáticos)
-    TEAM,       // Atribuição a equipas
-    SPRINT,     // Conclusão de Sprints
-    SYSTEM,     // Avisos gerais do sistema
-    RANKING     // Alterações de ranking
+    AWARD,
+    TEAM,
+    SPRINT,
+    SYSTEM,
+    RANKING
 }

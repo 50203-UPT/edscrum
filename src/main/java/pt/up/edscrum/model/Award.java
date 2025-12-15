@@ -19,10 +19,9 @@ public class Award {
     private String name;
     private String description;
     private int points;
-    private String type; // MANUAL ou AUTOMATIC
-    private String targetType; // TEAM ou INDIVIDUAL
+    private String type;
+    private String targetType;
 
-    // Getters e Setters
     public Long getId() {
         return id;
     }
